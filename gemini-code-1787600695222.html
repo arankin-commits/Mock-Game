@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Definitely Not a Supervillain</title>
+<style>
+  :root {
+    --bg-color: #0d0f17;
+    --panel-bg: rgba(20, 24, 38, 0.96);
+    --border: #3b4261;
+    --accent-store: #7aa2f7;
+    --accent-evil: #f7768e;
+    --accent-gold: #e0af68;
+    --accent-green: #9ece6a;
+    --text: #c0caf5;
+  }
+  * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-color);
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #game-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    border: 4px solid var(--border);
+    box-shadow: 0 0 35px rgba(0,0,0,0.9);
+    background: #000;
+  }
+  canvas {
+    image-rendering: pixelated;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 46px;
+    background: rgba(15, 17, 26, 0.92);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: bold;
+    z-index: 10;
+  }
+  .hud-stat { display: flex; align-items: center; gap: 6px; }
+  .hud-money { color: var(--accent-green); }
+  .hud-evil { color: var(--accent-evil); }
+  .hud-suspicion { color: #ff9e64; }
+  #burger-btn {
+    background: #24283b;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  #burger-btn:hover { background: var(--border); color: #fff; }
+
+  #notification-banner {
+    position: absolute;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(122, 162, 247, 0.95);
+    color: #1a1b26;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 15;
+    text-align: center;
+    max-width: 700px;
+  }
+
+  .modal {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 750px;
+    max-height: 540px;
+    background: var(--panel-bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.95);
+  }
+  .modal h2 {
+    color: var(--accent-store);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 6px;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .tab-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab-btn {
+    background: #1a1b26;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .tab-btn.active {
+    background: var(--border);
+    color: #fff;
+    font-weight: bold;
+  }
+  .modal-content {
+    overflow-y: auto;
+    max-height: 380px;
+    font-size: 12px;
+  }
+  .close-btn {
+    background: none; border: none; color: #f7768e;
+    font-size: 18px; font-weight: bold; cursor: pointer;
+  }
+  table { width: 100%; border-collapse: collapse; text-align: left; }
+  th, td { padding: 6px 4px; border-bottom: 1px solid #24283b; vertical-align: middle; }
+  .btn-action {
+    background: var(--accent-store); color: #1a1b26; border: none;
+    padding: 4px 8px; cursor: pointer; font-weight: bold;
+    border-radius: 3px; font-size: 11px;
+  }
+  .btn-action:hover { opacity: 0.9; }
+  .btn-action:disabled { background: #3b4261; color: #7a819b; cursor: not-allowed; }
+  .btn-evil { background: var(--accent-evil); color: #fff; }
+  .btn-danger { background: #f7768e; color: #fff; }
+  .mail-card {
+    background: #1a1b26;
+    border-left: 4px solid var(--accent-evil);
+    padding: 8px 12px;
+    margin-bottom: 8px;
+  }
+  .mail-sender { color: var(--accent-evil); font-weight: bold; }
+  #action-prompt {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 12, 18, 0.9);
+    border: 1px solid #fff;
+    padding: 6px 16px;
+    font-size: 12px;
+    display: none;
+    z-index: 20;
+    border-radius: 20px;
+  }
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #16161e;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  input[type="number"] {
+    background: #16161e;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 3px;
+    width: 50px;
+    font-family: inherit;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  /* Ledger Modal */
+  #modal-daily-report {
+    width: 600px;
+    background: #131722;
+    border: 2px solid var(--accent-store);
+    box-shadow: 0 0 35px rgba(0, 0, 0, 0.95);
+  }
+  .report-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .report-card {
+    background: #1a1f2e;
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 4px;
+  }
+  .report-card h4 {
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--accent-store);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+  }
+  .report-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .profit-positive { color: var(--accent-green); font-weight: bold; }
+  .profit-negative { color: var(--accent-evil); font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <div id="hud">
+    <div class="hud-stat hud-money">$<span id="val-money">250</span></div>
+    <div class="hud-stat hud-evil">Infamy: <span id="val-infamy">10</span></div>
+    <div class="hud-stat hud-suspicion">Suspicion: <span id="val-suspicion">5</span>%</div>
+    <div class="hud-stat">Shoppers: <span id="val-cust-count">0/5</span></div>
+    <div class="hud-stat"><span id="val-phase">Day 1</span></div>
+    <button id="burger-btn" onclick="toggleMenu()">[TAB] Menu</button>
+  </div>
+
+  <div id="notification-banner">TUTORIAL: Walk up to any grocery shelf and press [E] or [SPACE] to restock!</div>
+
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <div id="action-prompt">[E / SPACE] Interact</div>
+
+  <!-- End of Day Comprehensive Report Modal -->
+  <div id="modal-daily-report" class="modal">
+    <h2 id="report-title">Day 1 - Financial Audit & Performance Report</h2>
+    <div class="report-grid">
+      <div class="report-card">
+        <h4>Store Financial Summary</h4>
+        <div class="report-line"><span>Register Revenue:</span><span class="profit-positive" id="rep-rev">+$0</span></div>
+        <div class="report-line"><span>Staff Payroll:</span><span class="profit-negative" id="rep-costs">-$0</span></div>
+        <div class="report-line"><span>Restock / Wholesale:</span><span class="profit-negative" id="rep-stock-costs">-$0</span></div>
+        <hr style="border:0; border-top:1px solid var(--border); margin:6px 0;">
+        <div class="report-line"><span>Net Daily Profit:</span><span id="rep-net-profit">$0</span></div>
+      </div>
+      <div class="report-card">
+        <h4>Customer Traffic Analysis</h4>
+        <div class="report-line"><span>Shoppers Served:</span><span id="rep-served">0</span></div>
+        <div class="report-line"><span>Walkouts (High Prices):</span><span class="profit-negative" id="rep-walkouts">0</span></div>
+        <div class="report-line"><span>Items Sold:</span><span id="rep-items-sold">0</span></div>
+        <div class="report-line"><span>Price Satisfaction:</span><span id="rep-satisfaction">100%</span></div>
+      </div>
+    </div>
+
+    <div class="report-card" style="margin-bottom:10px;">
+      <h4>Villain Underground Intel</h4>
+      <div class="report-line"><span>Suspicion Shift:</span><span id="rep-suspicion">5% (Safe)</span></div>
+      <div class="report-line"><span>Current Slush Fund:</span><span class="profit-positive" id="rep-vault">$250</span></div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn-action" style="padding:8px 16px;" onclick="closeDailyReport()">Review Tomorrow's Stock & Pricing</button>
+      <button class="btn-action btn-evil" style="padding:8px 16px;" onclick="proceedDirectlyToNextDay()">Start Next Day Shift</button>
+    </div>
+  </div>
+
+  <!-- Main Management Modal -->
+  <div id="modal-menu" class="modal">
+    <h2>Management Dashboard <button class="close-btn" onclick="toggleMenu()">✕</button></h2>
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-btn-store-inv" onclick="switchTab('store-inv')">Stock & Pricing</button>
+      <button class="tab-btn" id="tab-btn-store-upgrades" onclick="switchTab('store-upgrades')">Layout & Staff</button>
+      <button class="tab-btn" id="tab-btn-store-finance" onclick="switchTab('store-finance')">Office & Automation</button>
+      <button class="tab-btn" id="tab-btn-lair-intel" onclick="switchTab('lair-intel')">Villain Leaderboard</button>
+      <button class="tab-btn" id="tab-btn-lair-ops" onclick="switchTab('lair-ops')">Lair Labs & Ops</button>
+      <button class="tab-btn" id="tab-btn-rival-mail" onclick="switchTab('rival-mail')">Inbox (<span id="unread-count">1</span>)</button>
+    </div>
+
+    <!-- Inventory & Pricing -->
+    <div id="tab-store-inv" class="modal-content">
+      <p style="font-size:11px; margin-bottom:8px; color:#a9b1d6;">Adjust target shelf capacity and set pricing before shifts start. Prices above market risk customer anger and store suspicion.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Market</th>
+            <th>Active Price</th>
+            <th>Pending Price</th>
+            <th>Shelf Stock / Target</th>
+            <th>Order Stock</th>
+          </tr>
+        </thead>
+        <tbody id="inventory-table"></tbody>
+      </table>
+    </div>
+
+    <!-- Layout & Staff -->
+    <div id="tab-store-upgrades" class="modal-content" style="display:none;">
+      <h4>Store Layout Upgrades</h4>
+      <p style="font-size:11px; margin-bottom:8px;">Expands aisle count and adds active register stations.</p>
+      <div id="layout-upgrade-section" style="margin-bottom:12px;"></div>
+
+      <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+      <h4>Staff Recruitment</h4>
+      <table>
+        <thead><tr><th>Role</th><th>Hired</th><th>Daily Wage</th><th>Action</th></tr></thead>
+        <tbody id="staff-table"></tbody>
+      </table>
+
+      <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+      <h4>Marketing Campaigns (Max 8.0x)</h4>
+      <p style="font-size:11px; margin-bottom:6px;">Current Traffic Multiplier: <strong id="val-marketing-mult">1.0x</strong> / 8.0x</p>
+      <button class="btn-action" id="btn-upgrade-marketing" onclick="upgradeMarketing()">Boost Marketing Campaign ($150)</button>
+    </div>
+
+    <!-- Office & Auto Progress -->
+    <div id="tab-store-finance" class="modal-content" style="display:none;">
+      <div class="toggle-container">
+        <input type="checkbox" id="chk-auto-progress" onchange="toggleAutoProgress(this.checked)" style="cursor:pointer; transform: scale(1.3);">
+        <label for="chk-auto-progress" style="cursor:pointer; font-weight:bold;">
+          Auto-Progress Shifts (Automatically advances days and brings up reports)
+        </label>
+      </div>
+
+      <p>Today's Register Revenue: <strong>$<span id="day-sales">0</span></strong></p>
+      <p>Daily Staff Payroll: <strong>$<span id="day-costs">0</span></strong></p>
+      <p>Shoppers In Store: <strong><span id="cust-in-store-count">0</span></strong> | Remaining Arrivals: <strong><span id="cust-remaining-count">0</span></strong></p>
+
+      <div style="background:#16161e; border:1px solid var(--border); padding:10px; margin:12px 0; border-radius:4px;">
+        <h4>Manual Shift Control</h4>
+        <div id="shift-controls" style="margin-top:8px; display:flex; gap:8px;"></div>
+      </div>
+
+      <h4>Siphon Store Funds</h4>
+      <p style="font-size:11px; margin-bottom:8px;">Siphon profits into criminal slush capital. Raises staff suspicion!</p>
+      <button class="btn-action" onclick="siphonMoney(50)">Siphon $50 (+5% Suspicion)</button>
+      <button class="btn-action" onclick="siphonMoney(200)">Siphon $200 (+20% Suspicion)</button>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="tab-lair-intel" class="modal-content" style="display:none;">
+      <h4>Top Infamy Leaderboard</h4>
+      <table>
+        <thead><tr><th>Rank</th><th>Villain</th><th>Infamy</th><th>Nemesis Target</th><th>Trend</th></tr></thead>
+        <tbody id="leaderboard-table"></tbody>
+      </table>
+      <br>
+      <h4>Active City Superheroes</h4>
+      <div id="heroes-list"></div>
+    </div>
+
+    <!-- Lair Ops -->
+    <div id="tab-lair-ops" class="modal-content" style="display:none;">
+      <h4>Monster Bio-Vats</h4>
+      <p style="font-size:11px; margin-bottom:8px;">Cook experimental beasts. Escape risk is high!</p>
+      <button class="btn-action btn-evil" onclick="breedExperiment()">Synthesize Mutant ($120)</button>
+      <div id="vat-status" style="margin-top:8px; font-weight:bold; color:var(--accent-evil)"></div>
+      <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+      <h4>Villain Operations</h4>
+      <div id="missions-list">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <span>Operation Blackout (Infamy +60)</span>
+          <button class="btn-action btn-evil" onclick="runMission(1)">Launch ($60)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inbox -->
+    <div id="tab-rival-mail" class="modal-content" style="display:none;">
+      <div id="mail-container"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TILE_SIZE = 32;
+const MAP_COLS = 25;
+const MAP_ROWS = 18;
+
+const STATE = {
+  currentMap: 'store',
+  phase: 'day',
+  dayNumber: 1,
+  money: 250,
+  infamy: 10,
+  suspicion: 5,
+  daySales: 0,
+  dayCosts: 0,
+  dayRestockCosts: 0,
+  dayItemsSold: 0,
+  dayWalkouts: 0,
+  dayCustomerDislikes: 0,
+  menuOpen: false,
+  marketingMultiplier: 1.0,
+  dayTotalCustomers: 5,
+  customersSpawnedToday: 0,
+  customersServedToday: 0,
+  spawnCooldown: 2, 
+  tutorialStep: 1, 
+  autoProgress: false,
+  storeTier: 1,
+  officeDoorOpen: false,
+  nightTimer: 0,
+  checkoutProgress: 0,
+  checkoutDuration: 0,
+  activeCheckoutCust: null
+};
+
+const STORE_TIERS = [
+  { tier: 1, name: "Corner Mart", cost: 0, shelves: 3, registers: 1, maxStockBoost: 0 },
+  { tier: 2, name: "Supermarket Express", cost: 400, shelves: 6, registers: 2, maxStockBoost: 15 },
+  { tier: 3, name: "Mega Mart", cost: 950, shelves: 8, registers: 3, maxStockBoost: 30 }
+];
+
+const player = {
+  x: 12 * TILE_SIZE,
+  y: 9 * TILE_SIZE,
+  speed: 1.5,
+  vx: 0,
+  vy: 0,
+  dir: 'down',
+  walkFrame: 0,
+  isMoving: false,
+  skinColor: '#fcd0a1',
+  shirtColor: '#3b4261',
+  pantsColor: '#1f2335',
+  hairColor: '#45281e'
+};
+
+let PRODUCTS = [
+  { id: 'cereal', name: 'Doom-Flakes', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 15, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68' },
+  { id: 'soda', name: 'Toxic-Cola', cost: 3, marketPrice: 8, price: 8, pendingPrice: 8, stock: 18, targetStock: 18, pendingTargetStock: 18, baseMax: 30, unlocked: true, unlockCost: 0, color: '#7aa2f7' },
+  { id: 'meat', name: 'Mystery Meat', cost: 10, marketPrice: 24, price: 24, pendingPrice: 24, stock: 8, targetStock: 8, pendingTargetStock: 8, baseMax: 15, unlocked: true, unlockCost: 0, color: '#f7768e' },
+  { id: 'apples', name: 'Bio-Apples', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a' },
+  { id: 'milk', name: 'Synthetic Milk', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5' },
+  { id: 'bread', name: 'Bunker Bread', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887' },
+  { id: 'chips', name: 'Radioactive Chips', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 20, pendingTargetStock: 20, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64' },
+  { id: 'soup', name: 'Slime Broth Cans', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca' },
+  { id: 'frozen', name: 'Cryo-Dinners', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de' },
+  { id: 'energy', name: 'Overcharge Tonic', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 12, pendingTargetStock: 12, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7' },
+  { id: 'coffee', name: 'Midnight Espresso', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89' },
+  { id: 'battery', name: 'Laser Power Cells', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68' },
+  { id: 'meds', name: 'Nano-Bandages', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e' },
+  { id: 'spice', name: 'Dark Matter Sauce', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 8, pendingTargetStock: 8, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8' },
+  { id: 'caviar', name: 'Mutant Caviar', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 6, pendingTargetStock: 6, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e' }
+];
+
+const STAFF = [
+  { role: 'stocker', name: 'Stock Clerk', count: 0, wage: 20 },
+  { role: 'cashier', name: 'Cashier Clerk', count: 0, wage: 25 }
+];
+
+let npcs = [];
+let speechBubbles = [];
+let rivalMail = [
+  { from: 'Dr. Malevolent (Rival)', text: 'Heard you opened a grocery store! Don\'t drop the melons, amateur.' }
+];
+
+const LEADERBOARD = [
+  { name: 'Lord Apocalypse', infamy: 1200, nemesis: 'Captain Dynamo', trend: 'up' },
+  { name: 'Madame Shadow', infamy: 850, nemesis: 'Star Warden', trend: 'down' },
+  { name: 'Dr. Malevolent (Rival)', infamy: 320, nemesis: 'Star Warden', trend: 'up' },
+  { name: 'You (Manager)', infamy: 10, nemesis: 'None', trend: 'up' }
+];
+
+const HEROES = [
+  { name: 'Captain Dynamo', popularity: 95, topVillain: 'Lord Apocalypse' },
+  { name: 'Star Warden', popularity: 78, topVillain: 'Madame Shadow' }
+];
+
+let storeMap = [
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,4,0,0,0,1,0,2,2,0,0,2,2,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,3,0,1,0,2,2,0,0,2,2,0,0,0,0,0,0,0,0,0,0,1],
+  [1,1,1,9,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,2,2,0,0,2,2,0,0,2,2,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,2,2,0,0,2,2,0,0,2,2,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1,1,8,8,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+const lairMap = [
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,3,0,0,0,0,0,0,0,0,0,1,0,0,6,6,0,0,0,7,7,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,6,0,0,0,7,7,0,0,1],
+  [1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+const REGISTER_STAND_POS = { col: 2, row: 8 };
+const CASHIER_WORK_SLOT = { col: 1, row: 9 };
+const OFFICE_DOOR_POS = { col: 3, row: 4 };
+
+let BROWSING_POINTS = [
+  { col: 6, row: 5 }, { col: 9, row: 5 },
+  { col: 11, row: 5 }, { col: 14, row: 5 },
+  { col: 16, row: 5 }, { col: 19, row: 5 }
+];
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const keys = {};
+window.addEventListener('keydown', (e) => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === 'Tab') { e.preventDefault(); toggleMenu(); }
+  if (e.key === 'e' || e.key === ' ' || e.key === 'E') { handleInteraction(); }
+});
+window.addEventListener('keyup', (e) => {
+  keys[e.key.toLowerCase()] = false;
+});
+
+function applyLayoutTier(tier) {
+  STATE.storeTier = tier;
+  if (tier === 1) {
+    storeMap[2][8] = 2; storeMap[2][9] = 2; storeMap[2][12] = 2; storeMap[2][13] = 2; storeMap[2][16] = 0; storeMap[2][17] = 0;
+    storeMap[5][8] = 2; storeMap[5][9] = 2; storeMap[5][12] = 2; storeMap[5][13] = 2; storeMap[5][16] = 2; storeMap[5][17] = 2;
+    storeMap[9][2] = 5; storeMap[10][2] = 5; storeMap[11][2] = 0;
+    BROWSING_POINTS = [{ col: 6, row: 5 }, { col: 9, row: 5 }, { col: 11, row: 5 }, { col: 14, row: 5 }, { col: 16, row: 5 }, { col: 19, row: 5 }];
+  } else if (tier === 2) {
+    storeMap[2][8] = 2; storeMap[2][9] = 2; storeMap[2][12] = 2; storeMap[2][13] = 2; storeMap[2][16] = 2; storeMap[2][17] = 2;
+    storeMap[5][8] = 2; storeMap[5][9] = 2; storeMap[5][12] = 2; storeMap[5][13] = 2; storeMap[5][16] = 2; storeMap[5][17] = 2;
+    storeMap[9][2] = 5; storeMap[10][2] = 5; storeMap[11][2] = 0;
+    BROWSING_POINTS = [
+      { col: 6, row: 5 }, { col: 9, row: 5 }, { col: 11, row: 5 }, { col: 14, row: 5 }, { col: 16, row: 5 }, { col: 19, row: 5 },
+      { col: 6, row: 2 }, { col: 9, row: 2 }, { col: 11, row: 2 }, { col: 14, row: 2 }, { col: 16, row: 2 }, { col: 19, row: 2 }
+    ];
+  } else if (tier === 3) {
+    storeMap[2][8] = 2; storeMap[2][9] = 2; storeMap[2][12] = 2; storeMap[2][13] = 2; storeMap[2][16] = 2; storeMap[2][17] = 2;
+    storeMap[5][8] = 2; storeMap[5][9] = 2; storeMap[5][12] = 2; storeMap[5][13] = 2; storeMap[5][16] = 2; storeMap[5][17] = 2;
+    storeMap[9][2] = 5; storeMap[10][2] = 5; storeMap[11][2] = 5;
+    BROWSING_POINTS = [
+      { col: 6, row: 5 }, { col: 9, row: 5 }, { col: 11, row: 5 }, { col: 14, row: 5 }, { col: 16, row: 5 }, { col: 19, row: 5 },
+      { col: 6, row: 2 }, { col: 9, row: 2 }, { col: 11, row: 2 }, { col: 14, row: 2 }, { col: 16, row: 2 }, { col: 19, row: 2 },
+      { col: 7, row: 8 }, { col: 13, row: 8 }
+    ];
+  }
+}
+
+function calculateDailyCustomers() {
+  if (STATE.dayNumber === 1) return 5;
+  const mult = STATE.marketingMultiplier;
+  const sign = Math.random() < 0.5 ? -1 : 1;
+  const varianceNum = Math.floor(1 + Math.random() * 3);
+  return Math.max(4, Math.round(10 * mult + (sign * mult * 0.5 * varianceNum)));
+}
+
+function init() {
+  applyLayoutTier(1);
+  STATE.dayTotalCustomers = calculateDailyCustomers();
+  renderUI();
+  updateTutorialBanner();
+  requestAnimationFrame(gameLoop);
+  setInterval(secTimer, 1000);
+}
+
+function showNotification(msg) {
+  const banner = document.getElementById('notification-banner');
+  banner.style.display = 'block';
+  banner.innerText = msg;
+}
+
+function updateTutorialBanner() {
+  const banner = document.getElementById('notification-banner');
+  if (STATE.dayNumber > 1) {
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'block';
+  if (STATE.tutorialStep === 1) banner.innerText = "TUTORIAL [1/5]: Walk up to any grocery shelf and press [E] or [SPACE] to restock!";
+  else if (STATE.tutorialStep === 2) banner.innerText = "TUTORIAL [2/5]: Wait for a shopper to enter the line, walk to the register counter, and press [E] to check them out!";
+  else if (STATE.tutorialStep === 3) banner.innerText = "TUTORIAL [3/5]: Head left into your Private Office. Step near the door to open it and interact with the Desk [E]!";
+  else if (STATE.tutorialStep === 4) banner.innerText = "TUTORIAL [4/5]: Walk to the blue Bookshelf inside your office and press [E] to enter your secret Lair!";
+  else if (STATE.tutorialStep === 5) banner.innerText = "TUTORIAL [5/5]: Explore your Lair. When ready, return upstairs, go to your office desk, and click 'Close Shop & End Day Shift'.";
+}
+
+function findPath(startCol, startRow, targetCol, targetRow) {
+  const map = storeMap;
+  const rows = map.length;
+  const cols = map[0].length;
+  const isWalkable = (c, r) => {
+    if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
+    const tile = map[r][c];
+    return tile === 0 || tile === 8 || tile === 9;
+  };
+  if (!isWalkable(targetCol, targetRow)) return [];
+
+  const openList = [];
+  const closedSet = new Set();
+  const nodeMap = new Map();
+  const getNode = (c, r) => {
+    const key = `${c},${r}`;
+    if (!nodeMap.has(key)) nodeMap.set(key, { c, r, g: Infinity, h: 0, f: Infinity, parent: null });
+    return nodeMap.get(key);
+  };
+
+  const startNode = getNode(startCol, startRow);
+  startNode.g = 0;
+  startNode.h = Math.abs(targetCol - startCol) + Math.abs(targetRow - startRow);
+  startNode.f = startNode.h;
+  openList.push(startNode);
+
+  while (openList.length > 0) {
+    openList.sort((a, b) => a.f - b.f);
+    const current = openList.shift();
+    if (current.c === targetCol && current.r === targetRow) {
+      const path = [];
+      let temp = current;
+      while (temp.parent) { path.unshift({ col: temp.c, row: temp.r }); temp = temp.parent; }
+      return path;
+    }
+    closedSet.add(`${current.c},${current.r}`);
+    const neighbors = [{c:current.c, r:current.r-1}, {c:current.c, r:current.r+1}, {c:current.c-1, r:current.r}, {c:current.c+1, r:current.r}];
+    for (let nb of neighbors) {
+      if (!isWalkable(nb.c, nb.r) || closedSet.has(`${nb.c},${nb.r}`)) continue;
+      const nbNode = getNode(nb.c, nb.r);
+      const tentativeG = current.g + 1;
+      if (tentativeG < nbNode.g) {
+        nbNode.parent = current;
+        nbNode.g = tentativeG;
+        nbNode.h = Math.abs(targetCol - nb.c) + Math.abs(targetRow - nb.r);
+        nbNode.f = nbNode.g + nbNode.h;
+        if (!openList.some(n => n.c === nb.c && n.r === nb.r)) openList.push(nbNode);
+      }
+    }
+  }
+  return [];
+}
+
+function getActiveQueue() {
+  return npcs
+    .filter(n => !n.isEmployee && (n.state === 'in_line' || n.state === 'at_register'))
+    .sort((a, b) => a.joinedQueueTime - b.joinedQueueTime);
+}
+
+function getCustomerQueueIndex(cust) {
+  return getActiveQueue().indexOf(cust);
+}
+
+function getQueueSlotTile(index) {
+  return { col: REGISTER_STAND_POS.col + index, row: REGISTER_STAND_POS.row };
+}
+
+function recalculateLinePositions() {
+  const currentLine = getActiveQueue();
+  currentLine.forEach((n, index) => {
+    if (index === 0) n.state = 'at_register';
+    const desiredSlot = getQueueSlotTile(index);
+    const c = Math.floor((n.x + 8) / TILE_SIZE);
+    const r = Math.floor((n.y + 8) / TILE_SIZE);
+    if (c !== desiredSlot.col || r !== desiredSlot.row) {
+      n.path = findPath(c, r, desiredSlot.col, desiredSlot.row);
+    }
+  });
+}
+
+class Employee {
+  constructor(role) {
+    this.x = 11.5 * TILE_SIZE;
+    this.y = 13.0 * TILE_SIZE;
+    this.role = role;
+    this.isEmployee = true;
+    this.speed = 0.8;
+    this.dir = 'up';
+    this.walkFrame = 0;
+    this.isMoving = false;
+    this.path = [];
+    this.timer = 0;
+
+    this.skinColor = '#fcd0a1';
+    this.shirtColor = '#a3be8c';
+    this.pantsColor = '#4c566a';
+    this.hairColor = '#d08770';
+
+    this.initStation();
+  }
+
+  initStation() {
+    if (STATE.phase === 'day') {
+      const c = Math.floor((this.x + 8) / TILE_SIZE);
+      const r = Math.floor((this.y + 8) / TILE_SIZE);
+      if (this.role === 'cashier') {
+        this.path = findPath(c, r, CASHIER_WORK_SLOT.col, CASHIER_WORK_SLOT.row);
+      } else if (this.role === 'stocker') {
+        const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
+        this.path = findPath(c, r, targetShelf.col, targetShelf.row);
+      }
+    }
+  }
+
+  sendHome() {
+    const c = Math.floor((this.x + 8) / TILE_SIZE);
+    const r = Math.floor((this.y + 8) / TILE_SIZE);
+    this.path = findPath(c, r, 11, 13);
+  }
+
+  update() {
+    this.walkFrame += 0.08;
+    checkVisionCone(this);
+
+    if (this.path.length > 0) {
+      this.isMoving = true;
+      const target = this.path[0];
+      const tPx = target.col * TILE_SIZE + 8;
+      const tPy = target.row * TILE_SIZE + 8;
+      const dx = tPx - this.x;
+      const dy = tPy - this.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > 1.5) {
+        this.x += (dx / dist) * this.speed;
+        this.y += (dy / dist) * this.speed;
+        this.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      } else {
+        this.x = tPx; this.y = tPy;
+        this.path.shift();
+      }
+    } else {
+      this.isMoving = false;
+      this.handleRoleAI();
+    }
+  }
+
+  handleRoleAI() {
+    if (STATE.phase === 'night') return;
+
+    if (this.role === 'cashier') {
+      this.dir = 'right';
+      const line = getActiveQueue();
+      if (line.length > 0 && line[0].state === 'at_register' && !STATE.activeCheckoutCust) {
+        startCheckout(line[0]);
+      }
+    } else if (this.role === 'stocker') {
+      if (this.timer <= 0) {
+        const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
+        const c = Math.floor((this.x + 8) / TILE_SIZE);
+        const r = Math.floor((this.y + 8) / TILE_SIZE);
+        this.path = findPath(c, r, targetShelf.col, targetShelf.row);
+        this.timer = 120 + Math.random() * 100;
+      } else {
+        this.timer--;
+      }
+    }
+  }
+}
+
+class Customer {
+  constructor() {
+    this.x = 11.5 * TILE_SIZE;
+    this.y = 13.0 * TILE_SIZE;
+    this.speed = 0.35;
+    this.state = 'shopping';
+
+    this.itemGoal = Math.floor(1 + Math.random() * 10);
+    this.basket = [];
+    this.dislikedCount = 0;
+    this.shoppingTimer = Math.floor(10 + Math.random() * 21);
+    this.aisleVisitTimer = 0;
+    this.joinedQueueTime = Infinity;
+
+    this.path = [];
+    this.isEmployee = false;
+    this.dir = 'up';
+    this.walkFrame = 0;
+    this.isMoving = false;
+    this.skinColor = ['#fcd0a1', '#d49b6a', '#8d5524', '#ffdbac'][Math.floor(Math.random()*4)];
+    this.shirtColor = ['#e0af68', '#f7768e', '#7aa2f7', '#bb9af7', '#7dcfff'][Math.floor(Math.random()*5)];
+    this.pantsColor = ['#343b58', '#24283b', '#414868'][Math.floor(Math.random()*3)];
+    this.hairColor = ['#1a1b26', '#45281e', '#8c4320', '#d08770'][Math.floor(Math.random()*4)];
+
+    this.setPathToAisle();
+  }
+
+  setPathToAisle() {
+    const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
+    const curCol = Math.floor((this.x + 8) / TILE_SIZE);
+    const curRow = Math.floor((this.y + 8) / TILE_SIZE);
+    this.path = findPath(curCol, curRow, pt.col, pt.row);
+    this.aisleVisitTimer = 3 + Math.floor(Math.random() * 4);
+  }
+
+  update() {
+    this.walkFrame += 0.08;
+    checkVisionCone(this);
+
+    if (this.path.length > 0) {
+      this.isMoving = true;
+      const target = this.path[0];
+      const targetPx = target.col * TILE_SIZE + 8;
+      const targetPy = target.row * TILE_SIZE + 8;
+      const dx = targetPx - this.x;
+      const dy = targetPy - this.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > 1.2) {
+        this.x += (dx / dist) * this.speed;
+        this.y += (dy / dist) * this.speed;
+        this.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      } else {
+        this.x = targetPx; this.y = targetPy;
+        this.path.shift();
+      }
+    } else {
+      this.isMoving = false;
+      this.handleStateLogic();
+    }
+  }
+
+  handleStateLogic() {
+    if (this.state === 'shopping') {
+      if (this.shoppingTimer > 0 && this.basket.length < this.itemGoal) {
+        if (this.aisleVisitTimer <= 0) {
+          this.setPathToAisle();
+          const unlockedProds = PRODUCTS.filter(p => p.unlocked && p.stock > 0);
+          if (unlockedProds.length > 0) {
+            const picked = unlockedProds[Math.floor(Math.random() * unlockedProds.length)];
+            
+            if (picked.price > picked.marketPrice) {
+              const markupRatio = (picked.price - picked.marketPrice) / picked.marketPrice;
+              const rejectChance = Math.min(0.95, markupRatio * 1.5);
+              if (Math.random() < rejectChance) {
+                this.dislikedCount++;
+                STATE.dayCustomerDislikes++;
+                triggerSpeechBubble(this.x, this.y, `$${picked.price} for ${picked.name}?! Ripoff!`, 1500);
+
+                if (this.dislikedCount >= 3 || (this.basket.length === 0 && this.dislikedCount >= this.itemGoal)) {
+                  this.rageQuit();
+                  return;
+                }
+                return;
+              }
+            }
+
+            picked.stock--;
+            this.basket.push(picked);
+          }
+        }
+      } else {
+        if (this.basket.length === 0) {
+          this.rageQuit();
+          return;
+        }
+        this.state = 'approaching_register';
+        const lineSnapshotSize = getActiveQueue().length;
+        const landingSlot = getQueueSlotTile(lineSnapshotSize);
+        const curCol = Math.floor((this.x + 8) / TILE_SIZE);
+        const curRow = Math.floor((this.y + 8) / TILE_SIZE);
+        this.path = findPath(curCol, curRow, landingSlot.col, landingSlot.row);
+      }
+    } else if (this.state === 'approaching_register') {
+      this.state = 'in_line';
+      this.joinedQueueTime = performance.now();
+      recalculateLinePositions();
+    } else if (this.state === 'in_line') {
+      recalculateLinePositions();
+    } else if (this.state === 'leaving') {
+      const idx = npcs.indexOf(this);
+      if (idx !== -1) npcs.splice(idx, 1);
+    }
+  }
+
+  rageQuit() {
+    this.state = 'leaving';
+    this.joinedQueueTime = Infinity;
+    STATE.dayWalkouts++;
+    STATE.suspicion = Math.min(100, STATE.suspicion + 5);
+    triggerSpeechBubble(this.x, this.y, "What terrible prices! I'm leaving!", 2000);
+    const curCol = Math.floor((this.x + 8) / TILE_SIZE);
+    const curRow = Math.floor((this.y + 8) / TILE_SIZE);
+    this.path = findPath(curCol, curRow, 11, 13);
+    updateHUD();
+  }
+}
+
+function checkVisionCone(entity) {
+  if (STATE.currentMap !== 'store') return;
+  const pCol = Math.floor(player.x / TILE_SIZE);
+  const pRow = Math.floor(player.y / TILE_SIZE);
+  const eCol = Math.floor(entity.x / TILE_SIZE);
+  const eRow = Math.floor(entity.y / TILE_SIZE);
+
+  const diffC = pCol - eCol;
+  const diffR = pRow - eRow;
+  const tileDist = Math.abs(diffC) + Math.abs(diffR);
+
+  if (tileDist <= 4) {
+    let inCone = false;
+    if (entity.dir === 'up' && diffR < 0 && Math.abs(diffC) <= Math.abs(diffR)) inCone = true;
+    if (entity.dir === 'down' && diffR > 0 && Math.abs(diffC) <= Math.abs(diffR)) inCone = true;
+    if (entity.dir === 'left' && diffC < 0 && Math.abs(diffR) <= Math.abs(diffC)) inCone = true;
+    if (entity.dir === 'right' && diffC > 0 && Math.abs(diffR) <= Math.abs(diffC)) inCone = true;
+
+    if (inCone && isNearTile(3)) {
+      STATE.suspicion = Math.min(100, STATE.suspicion + 1);
+      if (Math.random() < 0.02) triggerSpeechBubble(entity.x, entity.y, "Hey! What's behind that bookcase?!");
+    }
+  }
+}
+
+function spawnCustomer() {
+  if (STATE.customersSpawnedToday >= STATE.dayTotalCustomers) return;
+  STATE.customersSpawnedToday++;
+  npcs.push(new Customer());
+  STATE.spawnCooldown = Math.floor(5 + Math.random() * 16);
+  updateHUD();
+}
+
+function startCheckout(cust) {
+  if (STATE.activeCheckoutCust) return;
+  STATE.activeCheckoutCust = cust;
+  STATE.checkoutDuration = 2.0 + (1.0 * cust.basket.length);
+  STATE.checkoutProgress = 0;
+}
+
+function finishCheckout(cust) {
+  const earnings = cust.basket.reduce((sum, item) => sum + item.price, 0);
+  STATE.money += earnings;
+  STATE.daySales += earnings;
+  STATE.dayItemsSold += cust.basket.length;
+  STATE.customersServedToday++;
+  triggerSpeechBubble(cust.x, cust.y, `Paid $${earnings} (${cust.basket.length} items)`);
+
+  cust.state = 'leaving';
+  cust.joinedQueueTime = Infinity;
+  const curCol = Math.floor((cust.x + 8) / TILE_SIZE);
+  const curRow = Math.floor((cust.y + 8) / TILE_SIZE);
+  cust.path = findPath(curCol, curRow, 11, 13);
+
+  STATE.activeCheckoutCust = null;
+  STATE.checkoutProgress = 0;
+
+  if (STATE.dayNumber === 1 && STATE.tutorialStep === 2) {
+    STATE.tutorialStep = 3;
+    updateTutorialBanner();
+  }
+
+  setTimeout(() => { recalculateLinePositions(); }, 80);
+  updateHUD();
+}
+
+function secTimer() {
+  if (STATE.menuOpen) return;
+
+  const pCol = Math.floor(player.x / TILE_SIZE);
+  const pRow = Math.floor(player.y / TILE_SIZE);
+  STATE.officeDoorOpen = Math.abs(pCol - OFFICE_DOOR_POS.col) <= 1 && Math.abs(pRow - OFFICE_DOOR_POS.row) <= 1;
+
+  if (STATE.phase === 'day') {
+    npcs.forEach(n => {
+      if (!n.isEmployee && n.state === 'shopping') { n.shoppingTimer--; n.aisleVisitTimer--; }
+    });
+    if (STATE.customersSpawnedToday < STATE.dayTotalCustomers) {
+      STATE.spawnCooldown--;
+      if (STATE.spawnCooldown <= 0) spawnCustomer();
+    }
+
+    if (STATE.autoProgress) {
+      const remainingShoppers = npcs.filter(n => !n.isEmployee).length;
+      if (STATE.customersSpawnedToday >= STATE.dayTotalCustomers && remainingShoppers === 0) {
+        closeShopForNight();
+      }
+    }
+  } else if (STATE.phase === 'night') {
+    if (STATE.autoProgress) {
+      STATE.nightTimer++;
+      if (STATE.nightTimer >= 8) {
+        STATE.nightTimer = 0;
+        startNextDayShift();
+      }
+    }
+  }
+  updateHUD();
+}
+
+function gameLoop() {
+  update();
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+function update() {
+  if (STATE.menuOpen) return;
+
+  if (STATE.activeCheckoutCust) {
+    STATE.checkoutProgress += 1 / 60;
+    if (STATE.checkoutProgress >= STATE.checkoutDuration) {
+      finishCheckout(STATE.activeCheckoutCust);
+    }
+  }
+
+  player.vx = 0; player.vy = 0;
+  if (keys['w'] || keys['arrowup']) { player.vy = -player.speed; player.dir = 'up'; }
+  if (keys['s'] || keys['arrowdown']) { player.vy = player.speed; player.dir = 'down'; }
+  if (keys['a'] || keys['arrowleft']) { player.vx = -player.speed; player.dir = 'left'; }
+  if (keys['d'] || keys['arrowright']) { player.vx = player.speed; player.dir = 'right'; }
+
+  player.isMoving = player.vx !== 0 || player.vy !== 0;
+  if (player.isMoving) player.walkFrame += 0.12;
+
+  let nextX = player.x + player.vx;
+  let nextY = player.y + player.vy;
+  if (!checkCollision(nextX, player.y)) player.x = nextX;
+  if (!checkCollision(player.x, nextY)) player.y = nextY;
+
+  if (STATE.currentMap === 'store') {
+    npcs.forEach(n => n.update());
+  }
+
+  const now = Date.now();
+  speechBubbles = speechBubbles.filter(b => now - b.created < b.duration);
+  checkProximityPrompts();
+}
+
+function checkCollision(x, y) {
+  const currentTileMap = STATE.currentMap === 'store' ? storeMap : lairMap;
+  const col = Math.floor((x + 8) / TILE_SIZE);
+  const row = Math.floor((y + 8) / TILE_SIZE);
+  if (row < 0 || row >= currentTileMap.length || col < 0 || col >= MAP_COLS) return true;
+  const tile = currentTileMap[row][col];
+  return tile === 1 || tile === 2 || tile === 6;
+}
+
+function drawVisionCone(x, y, dir) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 158, 100, 0.08)';
+  ctx.beginPath();
+  ctx.moveTo(x + 8, y + 8);
+
+  if (dir === 'up') {
+    ctx.lineTo(x - 48, y - 110);
+    ctx.lineTo(x + 64, y - 110);
+  } else if (dir === 'down') {
+    ctx.lineTo(x - 48, y + 120);
+    ctx.lineTo(x + 64, y + 120);
+  } else if (dir === 'left') {
+    ctx.lineTo(x - 110, y - 48);
+    ctx.lineTo(x - 110, y + 64);
+  } else if (dir === 'right') {
+    ctx.lineTo(x + 120, y - 48);
+    ctx.lineTo(x + 120, y + 64);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPerson(x, y, dir, isMoving, walkFrame, skinColor, shirtColor, pantsColor, hairColor) {
+  ctx.save();
+  ctx.translate(x, y);
+  const bob = isMoving ? Math.sin(walkFrame) * 1.5 : 0;
+  const legSwing = isMoving ? Math.sin(walkFrame) * 2.5 : 0;
+
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  ctx.beginPath(); ctx.ellipse(8, 20, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = pantsColor;
+  ctx.fillRect(4, 13 + bob, 3, 6 + (dir === 'left' || dir === 'right' ? legSwing : 0));
+  ctx.fillRect(9, 13 + bob, 3, 6 - (dir === 'left' || dir === 'right' ? legSwing : 0));
+
+  ctx.fillStyle = shirtColor;
+  ctx.fillRect(3, 6 + bob, 10, 8);
+  ctx.fillStyle = skinColor; ctx.fillRect(4, 0 + bob, 8, 7);
+  ctx.fillStyle = hairColor; ctx.fillRect(4, -1 + bob, 8, 3);
+
+  ctx.fillStyle = '#000';
+  if (dir === 'down') { ctx.fillRect(5, 3 + bob, 1.5, 1.5); ctx.fillRect(9, 3 + bob, 1.5, 1.5); }
+  else if (dir === 'left') { ctx.fillRect(4, 3 + bob, 1.5, 1.5); }
+  else if (dir === 'right') { ctx.fillRect(10, 3 + bob, 1.5, 1.5); }
+
+  ctx.restore();
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const curMap = STATE.currentMap === 'store' ? storeMap : lairMap;
+
+  for (let r = 0; r < curMap.length; r++) {
+    for (let c = 0; c < MAP_COLS; c++) {
+      let t = curMap[r][c];
+      let tx = c * TILE_SIZE; let ty = r * TILE_SIZE;
+
+      if (STATE.currentMap === 'store') {
+        ctx.fillStyle = (r + c) % 2 === 0 ? '#e5e9f0' : '#d8dee9';
+        ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+      } else {
+        ctx.fillStyle = '#16161e'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        ctx.strokeStyle = '#24283b'; ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+      }
+
+      if (t === 1) {
+        ctx.fillStyle = STATE.currentMap === 'store' ? '#4c566a' : '#1f2335';
+        ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+      } else if (t === 2) {
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+        ctx.fillStyle = '#8b5a2b';
+        ctx.fillRect(tx + 3, ty + 4, TILE_SIZE - 6, 8);
+        ctx.fillRect(tx + 3, ty + 16, TILE_SIZE - 6, 8);
+        ctx.fillStyle = '#f7768e'; ctx.fillRect(tx + 4, ty + 5, 4, 6);
+        ctx.fillStyle = '#7aa2f7'; ctx.fillRect(tx + 10, ty + 5, 4, 6);
+        ctx.fillStyle = '#9ece6a'; ctx.fillRect(tx + 16, ty + 5, 4, 6);
+        ctx.fillStyle = '#e0af68'; ctx.fillRect(tx + 22, ty + 5, 4, 6);
+        ctx.fillStyle = '#bb9af7'; ctx.fillRect(tx + 6, ty + 17, 5, 6);
+        ctx.fillStyle = '#2ac3de'; ctx.fillRect(tx + 14, ty + 17, 5, 6);
+      } else if (t === 3) {
+        ctx.fillStyle = '#5c3a21'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        ctx.fillStyle = '#7aa2f7'; ctx.fillRect(tx + 8, ty + 8, TILE_SIZE - 16, 4);
+      } else if (t === 4) {
+        ctx.fillStyle = '#4a2e18';
+        ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, TILE_SIZE - 8);
+        ctx.fillStyle = '#2d5a27';
+        ctx.fillRect(tx + 6, ty + 8, TILE_SIZE - 12, TILE_SIZE - 16);
+        ctx.fillStyle = '#c0caf5';
+        ctx.fillRect(tx + 10, ty + 6, 12, 10);
+        ctx.fillStyle = '#9ece6a';
+        ctx.fillRect(tx + 12, ty + 8, 8, 6);
+        ctx.fillStyle = '#e0af68';
+        ctx.fillRect(tx + 4, ty + 6, 3, 5);
+      } else if (t === 5) {
+        ctx.fillStyle = '#2e3440';
+        ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        ctx.fillStyle = '#1a1b26';
+        ctx.fillRect(tx + 4, ty + 4, TILE_SIZE - 8, 10);
+        ctx.fillStyle = '#7aa2f7';
+        ctx.fillRect(tx + 6, ty + 16, 10, 10);
+        ctx.fillStyle = '#9ece6a';
+        ctx.fillRect(tx + 8, ty + 18, 6, 4);
+        ctx.fillStyle = '#f7768e';
+        ctx.fillRect(tx + 18, ty + 18, 6, 6);
+      } else if (t === 9) {
+        ctx.fillStyle = STATE.officeDoorOpen ? '#deb887' : '#8c4320';
+        ctx.fillRect(tx + (STATE.officeDoorOpen ? 24 : 0), ty, STATE.officeDoorOpen ? 8 : TILE_SIZE, TILE_SIZE);
+      } else if (t === 8) {
+        ctx.fillStyle = 'rgba(122, 162, 247, 0.4)'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+      }
+    }
+  }
+
+  if (STATE.activeCheckoutCust) {
+    const rx = 2 * TILE_SIZE;
+    const ry = 7 * TILE_SIZE;
+    ctx.fillStyle = '#1a1b26';
+    ctx.fillRect(rx - 8, ry, 48, 8);
+    ctx.fillStyle = '#9ece6a';
+    const pct = Math.min(1, STATE.checkoutProgress / STATE.checkoutDuration);
+    ctx.fillRect(rx - 7, ry + 1, 46 * pct, 6);
+  }
+
+  if (STATE.currentMap === 'store') {
+    npcs.forEach(n => {
+      drawVisionCone(n.x, n.y, n.dir);
+      drawPerson(n.x, n.y, n.dir, n.isMoving, n.walkFrame, n.skinColor, n.shirtColor, n.pantsColor, n.hairColor);
+      if (!n.isEmployee && (n.state === 'in_line' || n.state === 'at_register')) {
+        const qIdx = getCustomerQueueIndex(n);
+        if (qIdx !== -1) {
+          ctx.fillStyle = '#7aa2f7'; ctx.font = 'bold 10px monospace';
+          ctx.fillText(`#${qIdx + 1} (${n.basket.length})`, n.x - 4, n.y - 4);
+        }
+      }
+    });
+  }
+
+  drawPerson(player.x, player.y, player.dir, player.isMoving, player.walkFrame, player.skinColor, player.shirtColor, player.pantsColor, player.hairColor);
+
+  speechBubbles.forEach(b => {
+    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#1a1b26'; ctx.font = 'bold 11px monospace';
+    let w = ctx.measureText(b.text).width;
+    ctx.fillRect(b.x - w/2, b.y - 28, w + 12, 18); ctx.strokeRect(b.x - w/2, b.y - 28, w + 12, 18);
+    ctx.fillStyle = '#1a1b26'; ctx.fillText(b.text, b.x - w/2 + 6, b.y - 15);
+  });
+}
+
+function handleInteraction() {
+  if (isNearTile(3)) {
+    toggleLairSecretEntrance();
+    if (STATE.dayNumber === 1 && STATE.tutorialStep === 4) { STATE.tutorialStep = 5; updateTutorialBanner(); }
+    return;
+  }
+  if (isNearTile(4)) {
+    toggleMenu('store-finance');
+    if (STATE.dayNumber === 1 && STATE.tutorialStep === 3) { STATE.tutorialStep = 4; updateTutorialBanner(); }
+    return;
+  }
+  if (isNearTile(5)) {
+    const queue = getActiveQueue();
+    if (queue[0] && queue[0].state === 'at_register' && !STATE.activeCheckoutCust) {
+      startCheckout(queue[0]);
+    }
+    return;
+  }
+  if (isNearTile(2)) {
+    const unlockedList = PRODUCTS.filter(p => p.unlocked);
+    const prod = unlockedList[0];
+    const maxStock = Math.min(prod.targetStock, prod.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
+    
+    if (prod.stock < maxStock && STATE.money >= prod.cost) {
+      STATE.money -= prod.cost; 
+      STATE.dayRestockCosts += prod.cost;
+      prod.stock += 2;
+      triggerSpeechBubble(player.x, player.y, `Restocked ${prod.name}!`);
+      if (STATE.dayNumber === 1 && STATE.tutorialStep === 1) { STATE.tutorialStep = 2; updateTutorialBanner(); }
+      updateHUD();
+    }
+    return;
+  }
+}
+
+function isNearTile(tileID) {
+  const col = Math.floor((player.x + 8) / TILE_SIZE);
+  const row = Math.floor((player.y + 8) / TILE_SIZE);
+  const curMap = STATE.currentMap === 'store' ? storeMap : lairMap;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (curMap[row + dy] && curMap[row + dy][col + dx] === tileID) return true;
+    }
+  }
+  return false;
+}
+
+function toggleLairSecretEntrance() {
+  if (STATE.currentMap === 'store') {
+    STATE.currentMap = 'lair'; player.x = 2 * TILE_SIZE; player.y = 3 * TILE_SIZE;
+  } else {
+    STATE.currentMap = 'store'; player.x = 4 * TILE_SIZE; player.y = 3 * TILE_SIZE;
+  }
+}
+
+function triggerSpeechBubble(x, y, text, duration = 4000) { 
+  speechBubbles.push({ x, y, text, created: Date.now(), duration }); 
+}
+
+function checkProximityPrompts() {
+  document.getElementById('action-prompt').style.display = (isNearTile(3) || isNearTile(4) || isNearTile(5) || isNearTile(2)) ? 'block' : 'none';
+}
+
+function closeShopForNight() {
+  STATE.phase = 'night';
+  let wages = STAFF.reduce((acc, s) => acc + (s.count * s.wage), 0);
+  STATE.money -= wages; 
+  STATE.dayCosts = wages;
+
+  npcs.forEach(n => {
+    if (n.isEmployee) n.sendHome();
+  });
+  npcs = npcs.filter(n => n.isEmployee);
+
+  displayDailyReport();
+  updateTutorialBanner(); 
+  updateHUD();
+}
+
+function displayDailyReport() {
+  const net = STATE.daySales - (STATE.dayCosts + STATE.dayRestockCosts);
+  const totalInteractions = STATE.customersServedToday + STATE.dayWalkouts;
+  const satisfactionRate = totalInteractions > 0 ? Math.round((STATE.customersServedToday / totalInteractions) * 100) : 100;
+
+  document.getElementById('report-title').innerText = `Day ${STATE.dayNumber} Financial Audit & Performance`;
+  document.getElementById('rep-rev').innerText = `+$${STATE.daySales}`;
+  document.getElementById('rep-costs').innerText = `-$${STATE.dayCosts}`;
+  document.getElementById('rep-stock-costs').innerText = `-$${STATE.dayRestockCosts}`;
+  
+  const netEl = document.getElementById('rep-net-profit');
+  netEl.innerText = `${net >= 0 ? '+' : ''}$${net}`;
+  netEl.className = net >= 0 ? 'profit-positive' : 'profit-negative';
+
+  document.getElementById('rep-served').innerText = STATE.customersServedToday;
+  document.getElementById('rep-walkouts').innerText = STATE.dayWalkouts;
+  document.getElementById('rep-items-sold').innerText = STATE.dayItemsSold;
+  document.getElementById('rep-satisfaction').innerText = `${satisfactionRate}%`;
+
+  let suspicionLevel = 'Safe';
+  if (STATE.suspicion > 60) suspicionLevel = 'CRITICAL ALERT';
+  else if (STATE.suspicion > 30) suspicionLevel = 'Elevated';
+  document.getElementById('rep-suspicion').innerText = `${STATE.suspicion}% (${suspicionLevel})`;
+  document.getElementById('rep-vault').innerText = `$${STATE.money}`;
+
+  document.getElementById('modal-daily-report').style.display = 'flex';
+}
+
+function closeDailyReport() {
+  document.getElementById('modal-daily-report').style.display = 'none';
+  toggleMenu('store-inv');
+}
+
+function proceedDirectlyToNextDay() {
+  document.getElementById('modal-daily-report').style.display = 'none';
+  startNextDayShift();
+}
+
+function startNextDayShift() {
+  STATE.phase = 'day'; 
+  STATE.dayNumber++; 
+  STATE.daySales = 0; 
+  STATE.dayCosts = 0;
+  STATE.dayRestockCosts = 0;
+  STATE.dayItemsSold = 0;
+  STATE.dayWalkouts = 0;
+  STATE.dayCustomerDislikes = 0;
+  STATE.customersSpawnedToday = 0; 
+  STATE.customersServedToday = 0; 
+  STATE.dayTotalCustomers = calculateDailyCustomers(); 
+  STATE.spawnCooldown = 2;
+
+  PRODUCTS.forEach(p => {
+    p.price = p.pendingPrice;
+    p.targetStock = p.pendingTargetStock;
+  });
+
+  npcs = [];
+  STAFF.forEach(s => {
+    for (let i = 0; i < s.count; i++) {
+      npcs.push(new Employee(s.role));
+    }
+  });
+
+  showNotification(`Day ${STATE.dayNumber} Open! New prices & shelf targets are in effect.`);
+  updateTutorialBanner(); 
+  updateHUD();
+}
+
+function upgradeMarketing() {
+  if (STATE.marketingMultiplier >= 8.0) return alert("Marketing already at maximum (8.0x)!");
+  if (STATE.money < 150) return alert("Need $150 to boost marketing!");
+  STATE.money -= 150; 
+  STATE.marketingMultiplier = Math.min(8.0, parseFloat((STATE.marketingMultiplier + 0.5).toFixed(1))); 
+  renderUI();
+}
+
+function unlockProduct(prodId) {
+  const p = PRODUCTS.find(x => x.id === prodId);
+  if (!p || STATE.money < p.unlockCost) return alert("Insufficient funds to unlock!");
+  STATE.money -= p.unlockCost;
+  p.unlocked = true;
+  p.stock = Math.min(p.targetStock, 10);
+  showNotification(`Unlocked new product: ${p.name}!`);
+  renderUI();
+}
+
+function buyStock(prodId) {
+  const p = PRODUCTS.find(x => x.id === prodId);
+  const cost = p.cost * 3;
+  if (STATE.money < cost) return alert("Not enough money!");
+
+  const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
+  const maxShelf = Math.min(p.targetStock, p.baseMax + tierBonus);
+  const shelfSpace = Math.max(0, maxShelf - p.stock);
+
+  if (shelfSpace <= 0) {
+    return alert("Shelf is already at maximum target stock!");
+  }
+
+  STATE.money -= cost;
+  STATE.dayRestockCosts += cost;
+  p.stock += Math.min(6, shelfSpace);
+
+  renderUI();
+}
+
+function buyLayoutTier(targetTier) {
+  const target = STORE_TIERS.find(t => t.tier === targetTier);
+  if (!target || STATE.money < target.cost) return;
+  STATE.money -= target.cost;
+  applyLayoutTier(targetTier);
+  showNotification(`Store upgraded to ${target.name}!`);
+  renderUI();
+}
+
+function updatePendingPrice(prodId, val) {
+  const p = PRODUCTS.find(x => x.id === prodId);
+  if (p) {
+    p.pendingPrice = Math.max(1, parseInt(val) || 1);
+    if (STATE.phase === 'night') {
+      p.price = p.pendingPrice;
+    }
+  }
+}
+
+function updatePendingTargetStock(prodId, val) {
+  const p = PRODUCTS.find(x => x.id === prodId);
+  if (p) {
+    const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
+    p.pendingTargetStock = Math.max(1, Math.min(p.baseMax + tierBonus, parseInt(val) || 1));
+    if (STATE.phase === 'night') {
+      p.targetStock = p.pendingTargetStock;
+    }
+  }
+}
+
+function toggleAutoProgress(val) {
+  STATE.autoProgress = val;
+}
+
+function siphonMoney(amount) {
+  if (STATE.money < amount) return;
+  STATE.money -= amount; STATE.infamy += Math.floor(amount / 5); STATE.suspicion = Math.min(100, STATE.suspicion + Math.floor(amount / 10));
+  updateHUD();
+}
+
+function breedExperiment() {
+  if (STATE.money < 120) return;
+  STATE.money -= 120; STATE.infamy += 30; updateHUD();
+}
+
+function toggleMenu(defaultTab) {
+  STATE.menuOpen = !STATE.menuOpen;
+  document.getElementById('modal-menu').style.display = STATE.menuOpen ? 'flex' : 'none';
+  if (STATE.menuOpen) { renderUI(); if (defaultTab) switchTab(defaultTab); }
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.modal-content').forEach(c => c.style.display = 'none');
+  const targetBtn = document.getElementById('tab-btn-' + tabId);
+  const targetContent = document.getElementById('tab-' + tabId);
+  if (targetBtn) targetBtn.classList.add('active');
+  if (targetContent) targetContent.style.display = 'block';
+}
+
+function updateHUD() {
+  document.getElementById('val-money').innerText = STATE.money;
+  document.getElementById('val-infamy').innerText = STATE.infamy;
+  document.getElementById('val-suspicion').innerText = STATE.suspicion;
+  document.getElementById('val-phase').innerText = `Day ${STATE.dayNumber} (${STATE.phase === 'day' ? 'Store Open' : 'Night'})`;
+  document.getElementById('val-cust-count').innerText = `${STATE.customersServedToday}/${STATE.dayTotalCustomers}`;
+}
+
+function renderUI() {
+  updateHUD();
+  const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
+
+  document.getElementById('inventory-table').innerHTML = PRODUCTS.map(p => {
+    const maxCap = p.baseMax + tierBonus;
+    if (p.unlocked) {
+      return `<tr>
+        <td><strong>${p.name}</strong></td>
+        <td>$${p.marketPrice}</td>
+        <td><span style="color:${p.price > p.marketPrice ? 'var(--accent-evil)' : 'var(--accent-green)'}; font-weight:bold;">$${p.price}</span></td>
+        <td>
+          <input type="number" min="1" max="999" value="${p.pendingPrice}" onchange="updatePendingPrice('${p.id}', this.value)">
+        </td>
+        <td>
+          ${p.stock} / <input type="number" min="1" max="${maxCap}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
+        </td>
+        <td><button class="btn-action" onclick="buyStock('${p.id}')">Bulk +6 ($${p.cost * 3})</button></td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td style="color:#7a819b;">Locked: ${p.name}</td>
+        <td style="color:#7a819b;">$${p.marketPrice}</td>
+        <td style="color:#7a819b;">--</td>
+        <td style="color:#7a819b;">--</td>
+        <td style="color:#7a819b;">--</td>
+        <td><button class="btn-action" ${STATE.money < p.unlockCost ? 'disabled' : ''} onclick="unlockProduct('${p.id}')">Unlock ($${p.unlockCost})</button></td>
+      </tr>`;
+    }
+  }).join('');
+
+  const upgradeDiv = document.getElementById('layout-upgrade-section');
+  upgradeDiv.innerHTML = STORE_TIERS.map(t => {
+    const isCurrent = STATE.storeTier === t.tier;
+    const isUnlocked = STATE.storeTier >= t.tier;
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#16161e; padding:8px; margin-bottom:6px; border:1px solid var(--border);">
+        <div>
+          <strong>${t.name} (Tier ${t.tier})</strong><br>
+          <span style="font-size:11px; color:#a9b1d6;">${t.shelves} Aisles | ${t.registers} Cashiers | +${t.maxStockBoost} Capacity</span>
+        </div>
+        <div>
+          ${isCurrent ? '<span style="color:var(--accent-green); font-weight:bold;">Active</span>' : 
+            `<button class="btn-action" ${STATE.money < t.cost || isUnlocked ? 'disabled' : ''} onclick="buyLayoutTier(${t.tier})">
+              Upgrade ($${t.cost})
+            </button>`}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('staff-table').innerHTML = STAFF.map(s => `<tr><td>${s.name}</td><td>${s.count}</td><td>$${s.wage}/day</td><td><button class="btn-action" onclick="hireStaff('${s.role}')">Hire ($50)</button></td></tr>`).join('');
+  document.getElementById('val-marketing-mult').innerText = `${STATE.marketingMultiplier}x`;
+
+  const mBtn = document.getElementById('btn-upgrade-marketing');
+  if (mBtn) mBtn.disabled = STATE.marketingMultiplier >= 8.0;
+
+  const shiftDiv = document.getElementById('shift-controls');
+  shiftDiv.innerHTML = STATE.phase === 'day' ? `<button class="btn-action btn-danger" onclick="closeShopForNight()">Close Shop & End Day Shift</button>` : `<button class="btn-action" onclick="startNextDayShift()">Start Next Day Shift</button>`;
+}
+
+function hireStaff(role) {
+  if (STATE.money < 50) return alert("Need $50 hiring bonus!");
+  STATE.money -= 50;
+  const s = STAFF.find(x => x.role === role);
+  s.count++;
+  if (STATE.phase === 'day') {
+    npcs.push(new Employee(role));
+  }
+  renderUI();
+}
+
+init();
+</script>
+</body>
+</html>
