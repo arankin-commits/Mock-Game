@@ -1,0 +1,4504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Definitely Not a Supervillain</title>
+<style>
+  :root {
+    --bg-color: #0b0d14;
+    --panel-bg: rgba(18, 22, 34, 0.97);
+    --border: #3b4261;
+    --accent-store: #7aa2f7;
+    --accent-evil: #bb9af7;
+    --accent-evil-deep: #7a52aa;
+    --accent-gold: #e0af68;
+    --accent-green: #9ece6a;
+    --accent-cyan: #7dcfff;
+    --text: #c0caf5;
+  }
+  * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-color);
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #game-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    border: 4px solid var(--border);
+    box-shadow: 0 0 40px rgba(0,0,0,0.95);
+    background: #000;
+  }
+  canvas {
+    image-rendering: pixelated;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 46px;
+    background: rgba(15, 17, 26, 0.94);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: bold;
+    z-index: 10;
+  }
+  .hud-stat { display: flex; align-items: center; gap: 6px; }
+  .hud-money { color: var(--accent-green); }
+  .hud-evil { color: var(--accent-evil); }
+  .hud-suspicion { color: #ff9e64; }
+  #burger-btn {
+    background: #24283b;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  #burger-btn:hover { background: var(--border); color: #fff; }
+
+  #notification-banner {
+    position: absolute;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(122, 162, 247, 0.95);
+    color: #1a1b26;
+    padding: 8px 32px 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 15;
+    text-align: center;
+    max-width: 700px;
+  }
+  #banner-close-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #1a1b26;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  #banner-close-btn:hover { color: #f7768e; }
+
+  .modal {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 750px;
+    max-height: 540px;
+    background: var(--panel-bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 0 35px rgba(0,0,0,0.95);
+  }
+  .modal h2 {
+    color: var(--accent-store);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 6px;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .tab-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab-btn {
+    background: #1a1b26;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .tab-btn.active {
+    background: var(--border);
+    color: #fff;
+    font-weight: bold;
+  }
+  .tab-btn.villain-tab {
+    border-color: var(--accent-evil-deep);
+    color: var(--accent-evil);
+  }
+  .tab-btn.villain-tab.active {
+    background: var(--accent-evil-deep);
+    color: #fff;
+  }
+  .tab-btn.admin-tab {
+    border-color: #ff9e64;
+    color: #ff9e64;
+  }
+  .tab-btn.admin-tab.active {
+    background: #ff9e64;
+    color: #120d1c;
+    font-weight: bold;
+  }
+
+  .modal-content {
+    overflow-y: auto;
+    max-height: 380px;
+    font-size: 12px;
+  }
+  .close-btn {
+    background: none; border: none; color: #f7768e;
+    font-size: 18px; font-weight: bold; cursor: pointer;
+  }
+  table { width: 100%; border-collapse: collapse; text-align: left; }
+  th, td { padding: 6px 4px; border-bottom: 1px solid #24283b; vertical-align: middle; }
+  .btn-action {
+    background: var(--accent-store); color: #1a1b26; border: none;
+    padding: 4px 8px; cursor: pointer; font-weight: bold;
+    border-radius: 3px; font-size: 11px;
+  }
+  .btn-action:hover { opacity: 0.9; }
+  .btn-action:disabled { background: #3b4261; color: #7a819b; cursor: not-allowed; }
+
+  .btn-evil { 
+    background: var(--accent-evil); 
+    color: #120d1c; 
+    font-weight: bold;
+  }
+  .btn-evil:hover { background: #d4bbff; }
+  .btn-evil:disabled { background: #473a5a; color: #87789d; cursor: not-allowed; }
+
+  .btn-danger { background: #f7768e; color: #fff; }
+  #action-prompt {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 12, 18, 0.9);
+    border: 1px solid #fff;
+    padding: 6px 16px;
+    font-size: 12px;
+    display: none;
+    z-index: 20;
+    border-radius: 20px;
+  }
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #16161e;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  input[type="number"], input[type="password"], input[type="text"] {
+    background: #16161e;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 3px;
+    width: 50px;
+    font-family: inherit;
+    font-size: 11px;
+    text-align: center;
+  }
+  input[type="password"], input[type="text"].wide-input {
+    width: 140px;
+    text-align: left;
+    padding: 6px 8px;
+  }
+
+  .tag-pop {
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+  }
+  .tag-popular { background: rgba(158, 206, 106, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+  .tag-normal { background: rgba(122, 162, 247, 0.2); color: var(--accent-store); border: 1px solid var(--accent-store); }
+  .tag-unpopular { background: rgba(247, 118, 142, 0.2); color: #f7768e; border: 1px solid #f7768e; }
+
+  #modal-hero-dossier {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 480px;
+    background: #101424;
+    border: 2px solid var(--accent-evil);
+    border-radius: 8px;
+    padding: 18px;
+    z-index: 75;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 0 35px rgba(0,0,0,0.95);
+  }
+
+  /* Orbital Laser Targeting Modal */
+  #modal-laser-strike {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 660px;
+    background: #090c16;
+    border: 3px solid #f7768e;
+    border-radius: 8px;
+    padding: 18px;
+    z-index: 85;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 0 45px rgba(247, 118, 142, 0.5);
+  }
+  .district-card {
+    background: #151a2a;
+    border: 1px solid #3b4261;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .district-card:hover {
+    border-color: #f7768e;
+    background: #201728;
+  }
+  .district-card.selected {
+    border-color: #f7768e;
+    background: rgba(247, 118, 142, 0.2);
+  }
+
+  #modal-daily-report {
+    width: 600px;
+    background: #131722;
+    border: 2px solid var(--accent-store);
+  }
+  .report-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .report-card {
+    background: #1a1f2e;
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 4px;
+  }
+  .report-card h4 {
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--accent-store);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+  }
+  .report-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .profit-positive { color: var(--accent-green); font-weight: bold; }
+  .profit-negative { color: #f7768e; font-weight: bold; }
+
+  #modal-lair-tv {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 760px;
+    height: 560px;
+    background: radial-gradient(circle at center, #1a0f2e 0%, #080611 100%);
+    border: 6px solid #321d52;
+    border-radius: 12px;
+    box-shadow: 0 0 50px rgba(187, 154, 247, 0.45), inset 0 0 30px rgba(0,0,0,0.9);
+    z-index: 60;
+    display: none;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+  }
+  #modal-lair-tv::after {
+    content: " ";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    border-radius: 8px;
+  }
+  .tv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--accent-evil);
+    padding-bottom: 8px;
+    color: var(--accent-evil);
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 8px var(--accent-evil);
+  }
+  .tv-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 14px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .tv-panel {
+    background: rgba(22, 16, 36, 0.85);
+    border: 1px solid #4a2d73;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tv-panel h3 {
+    font-size: 13px;
+    color: var(--accent-evil);
+    border-bottom: 1px dashed #4a2d73;
+    padding-bottom: 4px;
+  }
+  .mission-card {
+    background: #110c1c;
+    border: 1px solid #3c2360;
+    border-radius: 4px;
+    padding: 8px;
+    position: relative;
+    cursor: help;
+    transition: all 0.2s ease;
+  }
+  .mission-card:hover {
+    border-color: var(--accent-evil);
+    box-shadow: 0 0 10px rgba(187, 154, 247, 0.3);
+    background: #191228;
+  }
+  .mission-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 105%;
+    left: 10px;
+    background: #0d0914;
+    border: 1px solid var(--accent-evil);
+    padding: 8px;
+    border-radius: 4px;
+    width: 250px;
+    font-size: 11px;
+    color: var(--text);
+    z-index: 70;
+    box-shadow: 0 0 12px rgba(0,0,0,0.9);
+  }
+  .mission-card:hover .mission-tooltip { display: block; }
+
+  #modal-minigame {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 680px;
+    height: 520px;
+    background: #090c15;
+    border: 4px solid var(--accent-cyan);
+    border-radius: 8px;
+    box-shadow: 0 0 40px rgba(125, 207, 255, 0.6);
+    z-index: 80;
+    display: none;
+    flex-direction: column;
+    padding: 16px;
+    gap: 10px;
+  }
+  .minigame-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--accent-cyan);
+    padding-bottom: 6px;
+    color: var(--accent-cyan);
+    font-weight: bold;
+    font-size: 14px;
+  }
+  #minigame-canvas {
+    background: #04060a;
+    border: 2px solid #233758;
+    image-rendering: pixelated;
+    display: block;
+    margin: 0 auto;
+  }
+
+  #modal-minigame-tutorial {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 480px;
+    background: #161a29;
+    border: 2px solid var(--accent-cyan);
+    border-radius: 8px;
+    box-shadow: 0 0 35px rgba(0,0,0,0.95);
+    z-index: 90;
+    display: none;
+    flex-direction: column;
+    padding: 18px;
+    gap: 12px;
+  }
+
+  /* VR Ending Modal */
+  #modal-vr-ending {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 720px;
+    background: #111522;
+    border: 3px solid var(--accent-cyan);
+    border-radius: 10px;
+    padding: 24px;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 0 60px rgba(125, 207, 255, 0.4);
+  }
+
+  .guide-box {
+    background: #121624;
+    border-left: 4px solid var(--accent-store);
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border-radius: 0 4px 4px 0;
+  }
+  .guide-box.villain {
+    border-left-color: var(--accent-evil);
+  }
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <div id="hud">
+    <div class="hud-stat hud-money">$<span id="val-money">250</span></div>
+    <div class="hud-stat hud-evil">Infamy: <span id="val-infamy">10</span></div>
+    <div class="hud-stat hud-suspicion">Suspicion: <span id="val-suspicion">5</span>%</div>
+    <div class="hud-stat">Shoppers: <span id="val-cust-count">0/5</span></div>
+    <div class="hud-stat"><span id="val-phase">Day 1</span></div>
+    <div class="hud-stat" id="hud-admin-indicator" style="display:none; color:#ff9e64;">[ADMIN]</div>
+    <button id="burger-btn" onclick="toggleMenu('store-inv', false)">[TAB] Menu</button>
+  </div>
+
+  <div id="notification-banner">
+    <span id="banner-text">TUTORIAL: Walk up to any grocery shelf and press [E] or [SPACE] to restock!</span>
+    <button id="banner-close-btn" onclick="dismissTutorialBanner()">✕</button>
+  </div>
+
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <div id="action-prompt">[E / SPACE] Interact</div>
+
+  <!-- Hero Dossier Modal -->
+  <div id="modal-hero-dossier">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--accent-evil); padding-bottom:6px;">
+      <h3 id="dossier-hero-name" style="color:#fff; font-size:14px;">HERO INTEL</h3>
+      <button class="close-btn" onclick="closeHeroDossier()">✕</button>
+    </div>
+    <div id="dossier-content" style="font-size:12px; line-height:1.6; color:#c0caf5;"></div>
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn-action btn-evil" onclick="viewNemesisOnSyndicate()">View on Syndicate Leaderboard</button>
+      <button class="btn-action" onclick="closeHeroDossier()">Close</button>
+    </div>
+  </div>
+
+  <!-- Orbital Laser Targeting Modal -->
+  <div id="modal-laser-strike">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f7768e; padding-bottom:6px;">
+      <h3 style="color:#f7768e; font-size:15px; letter-spacing:1px;">🛰️ NEXUS-9 ORBITAL DEATH-RAY TARGETING GRID</h3>
+      <button class="close-btn" onclick="closeLaserModal()">✕</button>
+    </div>
+    <p style="font-size:11px; color:#a9b1d6;">
+      Select a target metropolitan district for kinetic ion discharge. Hidden hero presences and attributes in the sector will determine structural outcomes and casualties.
+    </p>
+    <div id="laser-districts-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:260px; overflow-y:auto;"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #3b4261; padding-top:10px;">
+      <span id="laser-selected-lbl" style="font-size:12px; color:var(--accent-gold); font-weight:bold;">Selected Target: None</span>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-action btn-danger" style="padding:6px 16px;" onclick="executeLaserStrike()">FIRE ORBITAL LASER</button>
+        <button class="btn-action" onclick="closeLaserModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VR Real World Ending Modal -->
+  <div id="modal-vr-ending">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--accent-cyan); padding-bottom:8px;">
+      <h3 style="color:var(--accent-cyan); font-size:16px;">🥽 NEURO-LINK SIMULATION TERMINATED (DAY 50 REACHED)</h3>
+    </div>
+    <p id="vr-awakening-text" style="font-size:12px; line-height:1.6; color:#c0caf5;"></p>
+    <div style="background:#161b2c; border:1px solid #3b4261; padding:12px; border-radius:6px;">
+      <h4 style="color:var(--accent-gold); font-size:13px; margin-bottom:8px;">Your Friends Gather Around You, Asking: "What was the simulation like?"</h4>
+      <div id="vr-dialogue-options" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #3b4261; padding-top:10px;">
+      <span id="vr-ending-title" style="font-size:12px; color:var(--accent-green); font-weight:bold;">Ending: Standard Simulation Completion</span>
+      <button class="btn-action btn-evil" onclick="reputOnHeadset()">Put Headset Back On (Free Play)</button>
+    </div>
+  </div>
+
+  <div id="modal-minigame-tutorial">
+    <h3 id="minigame-tut-title" style="color:var(--accent-cyan); border-bottom:1px solid var(--border); padding-bottom:6px;">MINIGAME INTEL</h3>
+    <div id="minigame-tut-body" style="font-size:12px; color:#c0caf5; line-height:1.5;"></div>
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="btn-action" style="padding:6px 14px;" onclick="closeMinigameTutorial()">START OPERATION</button>
+    </div>
+  </div>
+
+  <div id="modal-minigame">
+    <div class="minigame-header">
+      <span id="minigame-title">INFILTRATION HACK IN PROGRESS</span>
+      <button class="close-btn" onclick="closeMinigame(false)">✕ ABORT</button>
+    </div>
+    <p id="minigame-instructions" style="font-size:11px; color:#a9b1d6;"></p>
+    <canvas id="minigame-canvas" width="640" height="400"></canvas>
+  </div>
+
+  <div id="modal-lair-tv">
+    <div class="tv-header">
+      <span>NEXUS-9 GLOBAL SURVEILLANCE & OP-COMMAND</span>
+      <button class="close-btn" onclick="toggleLairTV(false)">✕ CLOSE FEED</button>
+    </div>
+    <div class="tv-grid">
+      <div class="tv-panel">
+        <h3>COVERT GRID OPERATIONS</h3>
+        <div id="tv-missions-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+
+      <div class="tv-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #4a2d73; padding-bottom:4px;">
+          <h3 style="border:none; padding:0;">GLOBAL SUPERHERO RADAR (50 ACTIVE)</h3>
+          <span style="font-size:10px; color:#7dcfff;">Click Hero for Attributes</span>
+        </div>
+        <div id="tv-heroes-list" style="font-size:11px; display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto;"></div>
+
+        <h3 style="margin-top:8px;">TOP INFAMY SYNDICATE</h3>
+        <div style="max-height:150px; overflow-y:auto;">
+          <table style="font-size:11px;">
+            <thead><tr><th>Rank</th><th>Villain</th><th>Infamy</th><th>Status</th></tr></thead>
+            <tbody id="tv-leaderboard-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-daily-report" class="modal">
+    <h2 id="report-title">Day 1 - Financial Audit & Performance Report</h2>
+    <div class="report-grid">
+      <div class="report-card">
+        <h4>Store Financial Summary</h4>
+        <div class="report-line"><span>Register Revenue:</span><span class="profit-positive" id="rep-rev">+$0</span></div>
+        <div class="report-line"><span>Staff Payroll:</span><span class="profit-negative" id="rep-costs">-$0</span></div>
+        <div class="report-line"><span>Restock / Wholesale:</span><span class="profit-negative" id="rep-stock-costs">-$0</span></div>
+        <hr style="border:0; border-top:1px solid var(--border); margin:6px 0;">
+        <div class="report-line"><span>Net Daily Profit:</span><span id="rep-net-profit">$0</span></div>
+      </div>
+      <div class="report-card">
+        <h4>Customer Traffic Analysis</h4>
+        <div class="report-line"><span>Shoppers Served:</span><span id="rep-served">0</span></div>
+        <div class="report-line"><span>Walkouts (Dissatisfied):</span><span class="profit-negative" id="rep-walkouts">0</span></div>
+        <div class="report-line"><span>Total Finished:</span><span id="rep-finished">0</span></div>
+        <div class="report-line"><span>Items Sold:</span><span id="rep-items-sold">0</span></div>
+        <div class="report-line"><span>Price Satisfaction:</span><span id="rep-satisfaction">100%</span></div>
+      </div>
+    </div>
+
+    <div class="report-card" style="margin-bottom:10px;">
+      <h4>Villain Underground Intel</h4>
+      <div class="report-line"><span>Casualty Record:</span><span style="color:#f7768e; font-weight:bold;" id="rep-casualties">0 (Civilian Front)</span></div>
+      <div class="report-line"><span>Supervillain Status:</span><span style="color:var(--accent-evil); font-weight:bold;" id="rep-supervillain-status">Inactive</span></div>
+      <div class="report-line"><span>Suspicion Shift:</span><span id="rep-suspicion">5% (Safe)</span></div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn-action" style="padding:8px 16px;" onclick="closeDailyReport()">Review Tomorrow's Stock & Pricing</button>
+      <button class="btn-action btn-evil" style="padding:8px 16px;" onclick="proceedDirectlyToNextDay()">Start Next Day Shift</button>
+    </div>
+  </div>
+
+  <div id="modal-menu" class="modal">
+    <h2 id="modal-menu-title">Management Dashboard <button class="close-btn" onclick="toggleMenu()">✕</button></h2>
+    <div class="tab-bar" id="main-tab-bar">
+      <button class="tab-btn active" id="tab-btn-store-inv" onclick="switchTab('store-inv')">Stock & Pricing</button>
+      <button class="tab-btn" id="tab-btn-store-upgrades" onclick="switchTab('store-upgrades')">Layout & Staff</button>
+      <button class="tab-btn" id="tab-btn-store-finance" onclick="switchTab('store-finance')">Office & Automation</button>
+      <button class="tab-btn" id="tab-btn-game-guide" onclick="switchTab('game-guide')">Tutorial & Guide</button>
+
+      <button class="tab-btn villain-tab villain-feature" id="tab-btn-lair-intel" onclick="switchTab('lair-intel')">Villain Leaderboard</button>
+      <button class="tab-btn villain-tab villain-feature" id="tab-btn-lair-ops" onclick="switchTab('lair-ops')">Lair Labs & Clones</button>
+      <button class="tab-btn villain-tab villain-feature" id="tab-btn-rival-mail" onclick="switchTab('rival-mail')">Inbox (<span id="unread-count">0</span>)</button>
+      <button class="tab-btn admin-tab" id="tab-btn-admin-debug" onclick="switchTab('admin-debug')">Admin Mode</button>
+    </div>
+
+    <div id="tab-store-inv" class="modal-content">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Today's Demand</th>
+            <th>Tomorrow's Demand</th>
+            <th>Market</th>
+            <th>Active Price</th>
+            <th>Pending Price</th>
+            <th>Shelf Stock / Target</th>
+            <th>Order Stock</th>
+          </tr>
+        </thead>
+        <tbody id="inventory-table"></tbody>
+      </table>
+    </div>
+
+    <div id="tab-store-upgrades" class="modal-content" style="display:none;">
+      <h4>Store Layout Upgrades</h4>
+      <p style="font-size:11px; margin-bottom:8px; color:#a9b1d6;">Upgrades physically alter aisle shelving and registers. Purchases made during the day apply at next daybreak.</p>
+      <div id="layout-upgrade-section" style="margin-bottom:12px;"></div>
+
+      <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+      <h4>Staff Recruitment</h4>
+      <table>
+        <thead><tr><th>Role</th><th>Hired</th><th>Daily Wage</th><th>Action</th></tr></thead>
+        <tbody id="staff-table"></tbody>
+      </table>
+
+      <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+      <h4>Marketing Campaigns (Max 8.0x)</h4>
+      <p style="font-size:11px; margin-bottom:6px;">Current Traffic Multiplier: <strong id="val-marketing-mult">1.0x</strong> / 8.0x</p>
+      <button class="btn-action" id="btn-upgrade-marketing" onclick="upgradeMarketing()">Boost Marketing Campaign ($150)</button>
+    </div>
+
+    <div id="tab-store-finance" class="modal-content" style="display:none;">
+      <div class="toggle-container">
+        <input type="checkbox" id="chk-auto-progress" onchange="toggleAutoProgress(this.checked)" style="cursor:pointer; transform: scale(1.3);">
+        <label for="chk-auto-progress" style="cursor:pointer; font-weight:bold;">
+          Auto-Progress Shifts (Automatically advances days and brings up reports)
+        </label>
+      </div>
+
+      <p>Today's Register Revenue: <strong>$<span id="day-sales">0</span></strong></p>
+      <p>Daily Staff Payroll: <strong>$<span id="day-costs">0</span></strong></p>
+      <p>Shoppers In Store: <strong><span id="cust-in-store-count">0</span></strong> | Remaining Arrivals: <strong><span id="cust-remaining-count">0</span></strong></p>
+
+      <div style="background:#16161e; border:1px solid var(--border); padding:10px; margin:12px 0; border-radius:4px;">
+        <h4>Manual Shift Control</h4>
+        <div id="shift-controls" style="margin-top:8px; display:flex; gap:8px;"></div>
+      </div>
+
+      <div class="villain-feature" style="border-top:1px solid var(--accent-evil-deep); padding-top:10px; margin-top:10px;">
+        <h4 style="color:var(--accent-evil);">Siphon Store Funds</h4>
+        <p style="font-size:11px; margin-bottom:8px; color:var(--accent-evil);">Siphon profits into criminal slush capital. Raises staff suspicion!</p>
+        <button class="btn-action btn-evil" onclick="siphonMoney(50)">Siphon $50 (+5% Suspicion)</button>
+        <button class="btn-action btn-evil" onclick="siphonMoney(200)">Siphon $200 (+20% Suspicion)</button>
+      </div>
+    </div>
+
+    <div id="tab-game-guide" class="modal-content" style="display:none;">
+      <h3 style="color:var(--accent-store); margin-bottom:10px;">Supermarket & Supervillain Operator Manual</h3>
+
+      <div class="guide-box">
+        <strong style="color:var(--accent-store);">1. Store Operations & Shelf Restocking</strong>
+        <p style="margin-top:4px;">Walk up to any aisle shelf, cooler, or produce rack and press <strong>[E]</strong> or <strong>[SPACE]</strong> to restock from inventory. Check out shoppers at active registers when they reach the front of the line.</p>
+      </div>
+
+      <div class="guide-box">
+        <strong style="color:var(--accent-store);">2. Daily Demand & Strategic Pricing</strong>
+        <p style="margin-top:4px;">Each morning items receive demand ratings: <strong>Popular</strong>, <strong>Normal</strong>, or <strong>Unpopular</strong>. Adjust prices carefully according to demand before daybreak.</p>
+      </div>
+
+      <div class="guide-box villain">
+        <strong style="color:var(--accent-evil);">3. The Secret Underground Lair & Butler Jarvis</strong>
+        <p style="margin-top:4px;">Enter your private office and walk into the blue bookcase with <strong>[E]</strong> to access your subterranean lair. Speak with Butler Jarvis downstairs using <strong>[E]</strong> for strategic intel.</p>
+      </div>
+
+      <div class="guide-box villain">
+        <strong style="color:var(--accent-evil);">4. Level 4 Supercomputer Operations & Orbital Laser</strong>
+        <p style="margin-top:4px;">
+          • <strong>Drone Missions & Orbital Death-Ray:</strong> Unlocked at Computer Level 4. Target districts with the satellite laser!<br>
+          • <strong>Hero Attributes & Damage:</strong> Heroes possess attributes like Flight, Invulnerability, Speed, Telekinesis, etc. Omega heroes block all casualties.<br>
+          • <strong>Escalation Thresholds:</strong> Casualties $\ge 1$ triggers vigilante hunters. Casualties $\ge 25$ unlocks <strong>Supervillain Status</strong> with extreme hero retaliation and syndicate threats!
+        </p>
+      </div>
+    </div>
+
+    <div id="tab-lair-intel" class="modal-content villain-feature" style="display:none;">
+      <h4 style="color:var(--accent-evil);">Global Supervillain Syndicate Top 25</h4>
+      <table style="font-size:11px;">
+        <thead><tr><th>Rank</th><th>Villain</th><th>Infamy</th><th>Classification</th></tr></thead>
+        <tbody id="leaderboard-table"></tbody>
+      </table>
+      <br>
+      <h4 style="color:var(--accent-evil);">Active City Superheroes (50 Tracked)</h4>
+      <div id="heroes-list" style="display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto;"></div>
+    </div>
+
+    <div id="tab-lair-ops" class="modal-content villain-feature" style="display:none;">
+      <h4 style="color:var(--accent-evil);">Nexus Supercomputer Rig Upgrades</h4>
+      <p style="font-size:11px; margin-bottom:8px; color:#a9b1d6;">
+        Upgrade processing cores to gain tactical mini-game advantages, replays, heavy weapons, drone sweeps, and orbital lasers.
+      </p>
+      <div id="computer-upgrade-section" style="margin-bottom:12px;"></div>
+
+      <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+      <h4 style="color:var(--accent-evil);">Android Doppelgänger (Office Decoy)</h4>
+      <p style="font-size:11px; margin-bottom:8px; color:#a9b1d6;">
+        Construct an artificial robot replica of yourself to sit in your office chair during day shifts. This fools your employees and allows you to freely execute villain operations in the lair while the store runs!
+      </p>
+      <div id="robot-upgrade-section" style="margin-bottom:12px;"></div>
+
+      <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+      <h4 style="color:var(--accent-evil);">Monster Bio-Vats</h4>
+      <p style="font-size:11px; margin-bottom:8px; color:#a9b1d6;">Cook experimental beasts for massive Infamy gains.</p>
+      <button class="btn-action btn-evil" onclick="breedExperiment()">Synthesize Mutant ($120)</button>
+      <div id="vat-status" style="margin-top:8px; font-weight:bold; color:var(--accent-evil)"></div>
+    </div>
+
+    <div id="tab-rival-mail" class="modal-content villain-feature" style="display:none;">
+      <h4 style="color:var(--accent-evil); margin-bottom:8px;">Encrypted Comm-Link & Syndicate Dispatch</h4>
+      <div id="mail-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <div id="tab-admin-debug" class="modal-content" style="display:none;">
+      <h4 style="color:#ff9e64;">Developer & Quality Assurance Testing Console</h4>
+      <p style="font-size:11px; margin-bottom:12px; color:#a9b1d6;">
+        Enter passcode to toggle Admin Mode. When activated, all upgrades, stock orders, staff hires, and layout tiers cost $0. All missions are unlocked immediately at any time.
+      </p>
+
+      <div id="admin-auth-panel" style="background:#16161e; border:1px solid var(--border); padding:12px; border-radius:4px; max-width:400px;">
+        <label for="admin-passcode-input" style="font-size:12px; font-weight:bold; display:block; margin-bottom:6px;">Enter Passcode:</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="password" id="admin-passcode-input" class="wide-input" placeholder="Passcode" onkeydown="if(event.key==='Enter') verifyAdminPasscode()">
+          <button class="btn-action" style="background:#ff9e64; color:#120d1c;" onclick="verifyAdminPasscode()">OK</button>
+        </div>
+      </div>
+
+      <div id="admin-status-panel" style="display:none; margin-top:12px; background:#16161e; border:1px solid #ff9e64; padding:12px; border-radius:4px;">
+        <div style="color:#9ece6a; font-weight:bold; margin-bottom:8px;">ADMIN MODE ACTIVE: Testing Override Enabled</div>
+        <p style="font-size:11px; margin-bottom:8px; color:#c0caf5;">All purchases are $0. Missions have no prerequisite or cost restrictions.</p>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+          <button class="btn-action" style="background:#9ece6a; color:#120d1c;" onclick="adminSkipToDay50()">⚡ Skip to Day 50</button>
+          <label style="font-size:11px;">Set Casualties:</label>
+          <input type="number" id="admin-casualty-input" value="0" min="0" max="999" onchange="adminSetCasualties(this.value)" style="width:60px;">
+        </div>
+        <button class="btn-action btn-danger" onclick="toggleAdminMode(false)">Disable Admin Mode</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TILE_SIZE = 32;
+const MAP_COLS = 25;
+const MAP_ROWS = 18;
+
+const STATE = {
+  currentMap: 'store',
+  phase: 'day',
+  dayNumber: 1,
+  money: 250,
+  infamy: 10,
+  suspicion: 5,
+  daySales: 0,
+  dayCosts: 0,
+  dayRestockCosts: 0,
+  dayItemsSold: 0,
+  dayWalkouts: 0,
+  dayCustomerDislikes: 0,
+  menuOpen: false,
+  tvOpen: false,
+  minigameActive: false,
+  minigameTutorialActive: false,
+  seenMinigameTutorials: { 0: false, 1: false, 2: false },
+  activeMissionId: null,
+  isAtDeskMenu: false,
+  adminMode: false,
+  marketingMultiplier: 1.0,
+  dayTotalCustomers: 5,
+  customersSpawnedToday: 0,
+  customersServedToday: 0,
+  spawnCooldown: 2, 
+  tutorialStep: 1,
+  tutorialBannerDismissed: false,
+  autoProgress: false,
+  storeTier: 1,
+  pendingStoreTier: 1,
+  robotTier: 0,
+  computerTier: 1,
+  officeDoorOpen: false,
+  nightTimer: 0,
+  selectedHeroId: null,
+
+  // Supervillain & Casualty Tracking
+  totalCasualties: 0,
+  civilianCasualties: 0,
+  vigilanteCasualties: 0,
+  heroCasualties: 0,
+  isSupervillain: false,
+  supervillainSyndicateMailSent: false,
+  selectedLaserDistrict: null,
+  apexSyndicateMember: false,
+  didAnyVillainy: false,
+
+  // Rival
+  rivalPersonality: 'mean',
+  rivalPassed: false,
+  rivalMilestonesSent: { top15: false, top10: false, top5: false, top3: false, top1: false, supervillain: false, vigilanteWarning: false }
+};
+
+let storeMap = [
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 1,11,11,11,11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0,10,10, 0, 0, 1],
+  [1, 0, 0, 0, 3, 0, 1, 0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0,10,10, 0, 0, 1],
+  [1, 1, 1, 9, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+];
+
+const lairMap = [
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 6, 6, 0, 0, 7, 7, 7, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 7, 7, 7, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+];
+
+let BROWSING_POINTS = [
+  { col: 7, row: 5 }, { col: 10, row: 5 }, { col: 11, row: 5 }, { col: 14, row: 5 },
+  { col: 15, row: 5 }, { col: 18, row: 5 }, { col: 19, row: 3 }, { col: 22, row: 3 }
+];
+
+let REGISTERS = [
+  {
+    id: 0,
+    tile: { col: 2, row: 9 },
+    cashierSlot: { col: 1, row: 9 },
+    queueSlot: { col: 3, row: 9 },
+    assignedCashier: null,
+    activeCustomer: null,
+    checkoutProgress: 0,
+    checkoutDuration: 0
+  }
+];
+
+const OFFICE_DOOR_POS = { col: 3, row: 4 };
+
+const butler = {
+  x: 5 * TILE_SIZE,
+  y: 3 * TILE_SIZE,
+  dir: 'down',
+  walkFrame: 0,
+  isMoving: false,
+  skinColor: '#fcd0a1',
+  shirtColor: '#16161e',
+  pantsColor: '#1f2335',
+  hairColor: '#e0e2ea'
+};
+
+const STORE_TIERS = [
+  { tier: 1, name: "Corner Mart", cost: 0, shelves: 4, registers: 1, maxStockBoost: 0 },
+  { tier: 2, name: "Supermarket Express", cost: 400, shelves: 7, registers: 2, maxStockBoost: 15 },
+  { tier: 3, name: "Mega Mart", cost: 950, shelves: 10, registers: 3, maxStockBoost: 30 }
+];
+
+const ROBOT_UPGRADES = [
+  { tier: 1, name: "Decoy Bot Mark I", cost: 300, suspicion: 15, desc: "Crude animatronic. +15% Suspicion/day when used." },
+  { tier: 2, name: "Decoy Bot Mark II", cost: 650, suspicion: 8, desc: "Advanced synth-skin decoy. +8% Suspicion/day when used." },
+  { tier: 3, name: "Decoy Bot Mark III", cost: 1200, suspicion: 2, desc: "Indistinguishable cyber-clone. Only +2% Suspicion/day when used." }
+];
+
+const COMPUTER_UPGRADES = [
+  { tier: 1, name: "Base Rig v1.0", cost: 0, desc: "Standard matrix decryption terminal." },
+  { tier: 2, name: "Dual-Core Overclock v2.0", cost: 250, desc: "Memory: 2 Replays | Shooter: 2 Auto-Tracking Missiles every 5s." },
+  { tier: 3, name: "Quantum Arsenal v3.0", cost: 600, desc: "Memory: 5 Replays | Shooter: Unlock RPG, Shotgun, & Sniper ([Q] Switch)." },
+  { tier: 4, name: "Nexus AI Subjugator v4.0", cost: 1200, desc: "Memory: 10 Replays | Shooter Abilities | Unlocks Drone Recon & Orbital Death-Ray Operations." }
+];
+
+const player = {
+  x: 12 * TILE_SIZE,
+  y: 9 * TILE_SIZE,
+  speed: 1.5,
+  vx: 0,
+  vy: 0,
+  dir: 'down',
+  walkFrame: 0,
+  isMoving: false,
+  skinColor: '#fcd0a1',
+  shirtColor: '#3b4261',
+  pantsColor: '#1f2335',
+  hairColor: '#45281e'
+};
+
+function rollDemand() {
+  const r = Math.random();
+  if (r < 0.05) return 'popular';
+  if (Math.random() < 0.20) return 'unpopular';
+  return 'normal';
+}
+
+let PRODUCTS = [
+  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 15, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68' },
+  { id: 'soda', name: 'Toxic-Cola', popularity: 'popular', nextPopularity: 'popular', cost: 3, marketPrice: 8, price: 8, pendingPrice: 8, stock: 18, targetStock: 18, pendingTargetStock: 18, baseMax: 30, unlocked: true, unlockCost: 0, color: '#7aa2f7' },
+  { id: 'meat', name: 'Mystery Meat', popularity: 'normal', nextPopularity: 'normal', cost: 10, marketPrice: 24, price: 24, pendingPrice: 24, stock: 8, targetStock: 8, pendingTargetStock: 8, baseMax: 15, unlocked: true, unlockCost: 0, color: '#f7768e' },
+  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a' },
+  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5' },
+  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887' },
+  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 20, pendingTargetStock: 20, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64' },
+  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca' },
+  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de' },
+  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 12, pendingTargetStock: 12, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7' },
+  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89' },
+  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68' },
+  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e' },
+  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 8, pendingTargetStock: 8, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8' },
+  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 6, pendingTargetStock: 6, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e' }
+];
+
+const MISSIONS = [
+  { id: 1, name: 'Local Substation Tap', difficulty: 'easy', cost: 50, infamy: 15, details: 'Standard security penetration. Basic protocols.', minTier: 1 },
+  { id: 2, name: 'Metro Grid Bypass', difficulty: 'medium', cost: 120, infamy: 30, details: 'Elevated encryption. Increased target density and multithreading.', minTier: 1 },
+  { id: 3, name: 'Federal Datavault Infiltration', difficulty: 'hard', cost: 250, infamy: 45, details: 'Heavy countermeasures, reinforced malware swarms, dense patterns.', minTier: 1 },
+  { id: 4, name: 'Global Defense Satellite Breach', difficulty: 'extreme', cost: 500, infamy: 90, details: 'Maximum alert security! Hyper-accelerated defense algorithms & elite bosses.', minTier: 1 },
+  { id: 5, name: 'Autonomous Drone Grid Sweep', difficulty: 'hard', cost: 350, infamy: 110, details: 'Deploy stealth drones to hijack municipal defense beacons.', minTier: 4 },
+  { id: 6, name: 'Orbital Kinetic Death-Ray Strike', difficulty: 'extreme', cost: 750, infamy: 200, details: 'Lock orbital particle cannons onto a city district. Devastating kinetic fallout.', minTier: 4, isLaser: true }
+];
+
+const STAFF = [
+  { role: 'stocker', name: 'Stock Clerk', count: 0, wage: 20 },
+  { role: 'cashier', name: 'Cashier Clerk', count: 0, wage: 25 }
+];
+
+let npcs = [];
+let speechBubbles = [];
+let rivalMail = [];
+
+const HERO_FIRST_NAMES = ["Captain", "Star", "Mega", "Iron", "Quantum", "Shadow", "Solar", "Thunder", "Aero", "Hyper", "Vanguard", "Cyber", "Titan", "Nova", "Cosmo", "Vector", "Pulse", "Photon", "Chrono", "Aegis", "Radiant", "Blaze", "Apex", "Frost", "Specter"];
+const HERO_LAST_NAMES = ["Dynamo", "Warden", "Justice", "Sentinel", "Falcon", "Knight", "Vindicator", "Striker", "Guardian", "Paladin", "Ranger", "Storm", "Mirage", "Shield", "Avenger", "Beacon", "Specter", "Tempest", "Force", "Valor"];
+
+// Expanded to 18 Unique Patrol Sectors
+const HERO_DISTRICTS = [
+  "Downtown Commercial Plaza (High Civilian Density)",
+  "Industrial Cargo Harbor (Heavy Armor Supply)",
+  "Stark Tech Corporate Atrium (Advanced Forcefields)",
+  "Suburban North Hills (Rapid Evacuation Routes)",
+  "Central Substation Grid (Critical Power Infrastructure)",
+  "Federal Gold & Datavault (Maximum Security Grid)",
+  "Metropolitan Transit Hub (High Commuter Foot Traffic)",
+  "Orbital Space Relay Station (Exposed Perimeter)",
+  "Neon Entertainment District (High-Speed Nightlife)",
+  "Bio-Tech Research Center (Hazardous Containment)",
+  "Old Town Historic Quarter (Narrow Alleyways)",
+  "Municipal Water Treatment Facility (Flow Junctions)",
+  "Silicon Valley Quantum Hub (Encrypted Servers)",
+  "National Reserve Bank (Vault Perimeter)",
+  "Skyline Telecommunications Tower (Signal Array)",
+  "Subway Express Tunnel Network (Underground Junction)",
+  "Chemical Refining Sector (Volatile Piping)",
+  "Diplomatic Embassy Row (High Security Guards)"
+];
+
+const ALL_HERO_ATTRIBUTES = [
+  "Flight", "Super Speed", "Invulnerability", "Super Strength", 
+  "Telekinesis", "Light Manipulation", "Forcefield Generation", "Phase Shifting"
+];
+
+let GLOBAL_HEROES = [];
+
+const VILLAIN_NAMES_POOL = [
+  "Lord Apocalypse", "Madame Shadow", "Dr. Malevolent (Rival)", "General Null", "Baron Von Blitz",
+  "Cyber Gorgon", "Professor Chaos", "Nebula Queen", "Dreadfang", "Overlord Zero",
+  "Doctor Hazard", "Phantom Viper", "Countess Eclipse", "Toxicon", "Archon Malice",
+  "Iron Tyrant", "Vortex Master", "Blackout", "Skull Revenant", "Dark Matter King",
+  "Apex Predator", "Malware Sovereign", "Giga Nemesis", "Quantum Terror", "Abyss Weaver",
+  "Sovereign Doom", "Void Specter", "Atomic Wraith", "Oblivion Prime"
+];
+
+let rivalVillains = [];
+
+function initRivalPersonality() {
+  const pRoll = Math.random();
+  if (pRoll < 0.333) STATE.rivalPersonality = 'nice';
+  else if (pRoll < 0.666) STATE.rivalPersonality = 'mean';
+  else STATE.rivalPersonality = 'indifferent';
+}
+
+function sendRivalMessage(triggerKey) {
+  if (STATE.rivalPersonality === 'indifferent' && Math.random() < 0.5) return;
+
+  const templates = {
+    start: {
+      nice: "Welcome to the scene! A supermarket front is brilliant cover. Let me know if you need any pointers!",
+      mean: "Heard you opened a tiny grocery store. Try not to drop the melons, amateur. You won't last a week.",
+      indifferent: "Noticed your new enterprise on local radar. Don't interfere with my network nodes."
+    },
+    top15: {
+      nice: "Look at you climbing into the Top 15! Your operations are proving remarkably efficient.",
+      mean: "Top 15? Fluke luck. You're still small potatoes compared to real masterminds.",
+      indifferent: "You reached the Top 15 syndicate. Noted."
+    },
+    top10: {
+      nice: "Top 10! Truly impressive work running both the store and the underground grid!",
+      mean: "Breaking into the Top 10 won't save your secret grocery gig when the radar spikes.",
+      indifferent: "Top 10 standing recorded. The Syndicate is paying closer attention."
+    },
+    top5: {
+      nice: "Top 5! You are genuinely formidable. Proud to share the syndicate ranks with you!",
+      mean: "Top 5?! Don't get arrogant. The higher you climb, the harder you crash.",
+      indifferent: "Top 5 status attained. Keep your distance from my sector."
+    },
+    top3: {
+      nice: "Top 3 global infamy! What an extraordinary achievement, partner!",
+      mean: "Top 3?! This is an outrage. I'm redoubling my grid operations immediately!",
+      indifferent: "You entered the top three. Unprecedented for a store manager."
+    },
+    top1: {
+      nice: "Rank #1 Syndicate Overlord! You've completely taken over the world stage! Congratulations!",
+      mean: "Number ONE?! Impossible! Enjoy the throne while you can, it won't stay yours for long!",
+      indifferent: "Rank 1 confirmed. The city belongs to you now."
+    },
+    surpassed: {
+      nice: "You've officially overtaken my Infamy rating! Outstanding execution!",
+      mean: "You passed my score?! You insolent cashier, I'll take my rightful spot back shortly!",
+      indifferent: "You've overtaken my score on the syndicate board."
+    },
+    reclaimed: {
+      nice: "I managed to pull ahead of you again! A little friendly competition keeps us sharp.",
+      mean: "Hah! I've reclaimed my lead over you! Know your place at the register!",
+      indifferent: "I have reclaimed the lead. Business as usual."
+    },
+    vigilanteWarning: {
+      nice: "Heads up! Word on the wire is vigilantes are hunting you after that strike. Watch your back!",
+      mean: "Causing body counts already? The vigilantes are out for your blood, amateur!",
+      indifferent: "Vigilante bounty hunters have flagged your profile. Act accordingly."
+    },
+    supervillain: {
+      nice: "You've crossed 25 casualties... You officially qualify for the Apex Purge Syndicate. They hunt other villains.",
+      mean: "Over 25 casualties?! You absolute maniac, the Apex Purge Syndicate is watching your body count!",
+      indifferent: "Supervillain threshold exceeded. Apex Purge Syndicate recruitment consideration unlocked."
+    }
+  };
+
+  const pool = templates[triggerKey];
+  if (!pool) return;
+  const messageText = pool[STATE.rivalPersonality];
+
+  rivalMail.unshift({
+    from: "Dr. Malevolent (Rival)",
+    text: messageText,
+    day: STATE.dayNumber,
+    read: false
+  });
+
+  updateUnreadCount();
+  renderMailList();
+}
+
+function sendApexSyndicateInvite() {
+  if (STATE.supervillainSyndicateMailSent) return;
+  STATE.supervillainSyndicateMailSent = true;
+
+  rivalMail.unshift({
+    from: "☣ APEX PURGE SYNDICATE (INVITATION)",
+    text: "We are the Apex Purge. We do not play hero games; we cull weak villains and hunt targets ruthlessly. You have crossed 25 casualties. If you wish to join our ranks, accept this pact. Warning: Regular villains will distrust and fear you.",
+    day: STATE.dayNumber,
+    read: false,
+    isInvite: true
+  });
+  updateUnreadCount();
+  renderMailList();
+}
+
+function acceptApexInvite() {
+  STATE.apexSyndicateMember = true;
+  STATE.didAnyVillainy = true;
+  showNotification("☣ YOU HAVE JOINED THE APEX PURGE SYNDICATE! Regular syndicates distrust you, but your destructive power is unmatched.");
+  triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master... joining the Apex Purge means other villains will despise us. I disapprove of cold-blooded villain slaughter, but I remain at your side."`, 6000, 'lair');
+  renderMailList();
+}
+
+function updateUnreadCount() {
+  const count = rivalMail.filter(m => !m.read).length;
+  const unreadEl = document.getElementById('unread-count');
+  if (unreadEl) unreadEl.innerText = count;
+}
+
+function renderMailList() {
+  const container = document.getElementById('mail-container');
+  if (!container) return;
+
+  if (rivalMail.length === 0) {
+    container.innerHTML = `<p style="color:#7a819b; font-size:11px;">No messages in encrypted inbox.</p>`;
+    return;
+  }
+
+  container.innerHTML = rivalMail.map(m => {
+    const isApex = m.from.includes("APEX PURGE");
+    const acceptBtn = (m.isInvite && !STATE.apexSyndicateMember) ? 
+      `<button class="btn-action btn-danger" style="margin-top:6px;" onclick="acceptApexInvite()">ACCEPT APEX PACT</button>` : 
+      (STATE.apexSyndicateMember && m.isInvite ? `<span style="color:#9ece6a; font-size:10px; font-weight:bold;">[MEMBERSHIP ACTIVE]</span>` : '');
+
+    return `
+      <div style="background:#16192b; border-left:3px solid ${isApex ? '#f7768e' : 'var(--accent-evil)'}; padding:8px 12px; border-radius:4px; margin-bottom:6px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <strong style="color:${isApex ? '#f7768e' : 'var(--accent-gold)'}; font-size:12px;">${m.from}</strong>
+          <span style="color:#7a819b; font-size:10px;">Day ${m.day}</span>
+        </div>
+        <p style="color:#c0caf5; font-size:11px; line-height:1.4;">${m.text}</p>
+        ${acceptBtn}
+      </div>
+    `;
+  }).join('');
+}
+
+function generateVillainLeaderboardData() {
+  const configs = [
+    { base: 25000, variance: 5000 },
+    { base: 20000, variance: 5000 },
+    { base: 20000, variance: 5000 },
+    { base: 15000, variance: 2500 },
+    { base: 12000, variance: 2500 },
+    { base: 11000, variance: 1500 },
+    { base: 11000, variance: 1500 },
+    { base: 10000, variance: 1500 },
+    { base: 9000,  variance: 1500 },
+    { base: 8800,  variance: 1500 },
+    { base: 7000,  variance: 500  },
+    { base: 5000,  variance: 500  },
+    { base: 5000,  variance: 500  },
+    { base: 5000,  variance: 500  },
+    { base: 4000,  variance: 500  },
+    { base: 3000,  variance: 500  },
+    { base: 3000,  variance: 500  },
+    { base: 3000,  variance: 500  },
+    { base: 2000,  variance: 500  },
+    { base: 2000,  variance: 500  },
+    { base: 1000,  variance: 300  },
+    { base: 1000,  variance: 300  },
+    { base: 500,   variance: 150  },
+    { base: 500,   variance: 150  },
+    { base: 500,   variance: 150  }
+  ];
+
+  const poolWithoutRival = VILLAIN_NAMES_POOL.filter(n => !n.includes("Dr. Malevolent"));
+  const shuffledNames = [...poolWithoutRival].sort(() => 0.5 - Math.random());
+  shuffledNames.splice(2, 0, "Dr. Malevolent (Rival)");
+
+  rivalVillains = configs.map((cfg, idx) => {
+    const delta = Math.floor((Math.random() * 2 - 1) * cfg.variance);
+    const score = Math.max(10, cfg.base + delta);
+    return {
+      id: idx + 1,
+      name: shuffledNames[idx] || `Villain #${idx + 1}`,
+      infamy: score,
+      isSupervillain: Math.random() < 0.40
+    };
+  });
+}
+
+function generate50GlobalHeroes() {
+  GLOBAL_HEROES = [];
+  const threatLevels = ["Low", "Moderate", "High", "Extreme", "Omega Level"];
+
+  for (let i = 1; i <= 50; i++) {
+    const fn = HERO_FIRST_NAMES[Math.floor(Math.random() * HERO_FIRST_NAMES.length)];
+    const ln = HERO_LAST_NAMES[Math.floor(Math.random() * HERO_LAST_NAMES.length)];
+    const heroName = `${fn} ${ln}`;
+    const threat = threatLevels[Math.floor(Math.random() * threatLevels.length)];
+    const patrol = HERO_DISTRICTS[Math.floor(Math.random() * HERO_DISTRICTS.length)];
+
+    let attrCount = 1;
+    if (threat === "Moderate") attrCount = 2;
+    else if (threat === "High") attrCount = 3;
+    else if (threat === "Extreme") attrCount = 4;
+    else if (threat === "Omega Level") attrCount = 5;
+
+    const shuffledAttrs = [...ALL_HERO_ATTRIBUTES].sort(() => 0.5 - Math.random());
+    const attributes = shuffledAttrs.slice(0, attrCount);
+    if (threat === "Omega Level" && !attributes.includes("Invulnerability")) {
+      attributes[0] = "Invulnerability";
+    }
+
+    GLOBAL_HEROES.push({
+      id: i,
+      name: heroName,
+      threat,
+      patrol,
+      attributes,
+      isAlive: true,
+      nemesisVillainName: "Unassigned"
+    });
+  }
+  reassignAllHeroNemeses();
+}
+
+function reassignAllHeroNemeses() {
+  const allEligibleVillains = [];
+
+  if (STATE.infamy >= 1000) {
+    allEligibleVillains.push({ name: "You (Store Manager)", infamy: STATE.infamy, isPlayer: true });
+  }
+  rivalVillains.forEach(v => {
+    if (v.infamy >= 1000) {
+      allEligibleVillains.push({ name: v.name, infamy: v.infamy, isPlayer: false });
+    }
+  });
+
+  if (allEligibleVillains.length === 0) {
+    GLOBAL_HEROES.forEach(h => { h.nemesisVillainName = "None (No Infamous Villains >1k)"; });
+    return;
+  }
+
+  const totalInfamyWeight = allEligibleVillains.reduce((sum, v) => sum + Math.max(1, v.infamy), 0);
+
+  GLOBAL_HEROES.forEach(hero => {
+    if (!hero.isAlive) return;
+    let rand = Math.random() * totalInfamyWeight;
+    let chosenVillain = allEligibleVillains[0];
+
+    for (let v of allEligibleVillains) {
+      rand -= Math.max(1, v.infamy);
+      if (rand <= 0) {
+        chosenVillain = v;
+        break;
+      }
+    }
+    hero.nemesisVillainName = chosenVillain.name;
+  });
+}
+
+function processDailyVillainAttrition() {
+  for (let i = rivalVillains.length - 1; i >= 0; i--) {
+    const v = rivalVillains[i];
+    if (v.name.includes("Dr. Malevolent")) continue;
+
+    if (Math.random() < 0.25) v.isSupervillain = true;
+
+    if (v.isSupervillain && v.infamy <= 25000) {
+      let deathChance = 0;
+      if (v.infamy > 20000) deathChance = 0.01;
+      else if (v.infamy > 15000) deathChance = 0.03;
+      else if (v.infamy > 10000) deathChance = 0.05;
+      else if (v.infamy > 5000) deathChance = 0.10;
+      else if (v.infamy > 1000) deathChance = 0.25;
+      else deathChance = 0.50;
+
+      if (STATE.apexSyndicateMember) deathChance += 0.20;
+
+      if (Math.random() < deathChance) {
+        rivalVillains.splice(i, 1);
+
+        if (Math.random() < 0.50) {
+          const unusedNames = VILLAIN_NAMES_POOL.filter(n => !rivalVillains.some(rv => rv.name === n));
+          const newName = unusedNames[Math.floor(Math.random() * unusedNames.length)] || `Apex Rogue #${Date.now() % 1000}`;
+          rivalVillains.push({
+            id: Date.now() + Math.random(),
+            name: newName,
+            infamy: Math.floor(200 + Math.random() * 1200),
+            isSupervillain: Math.random() < 0.30
+          });
+        }
+      }
+    }
+  }
+}
+
+function checkCasualtyStatusEscalation() {
+  if (STATE.totalCasualties >= 1 && !STATE.rivalMilestonesSent.vigilanteWarning) {
+    STATE.rivalMilestonesSent.vigilanteWarning = true;
+    sendRivalMessage('vigilanteWarning');
+  }
+
+  if (STATE.totalCasualties >= 25 && !STATE.isSupervillain) {
+    STATE.isSupervillain = true;
+    showNotification("⚠️ WARNING: CASUALTIES EXCEEDED 25! You have attained SUPERVILLAIN status.");
+    triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master, casualties have exceeded 25. You are now designated a SUPERVILLAIN. The Apex Purge Syndicate is watching."`, 5000, 'lair');
+    sendRivalMessage('supervillain');
+    sendApexSyndicateInvite();
+  }
+}
+
+function checkRivalRankTriggers() {
+  const syndicate = getSortedSyndicateLeaderboard();
+  const playerRank = syndicate.findIndex(s => s.isPlayer) + 1;
+  const rivalObj = rivalVillains.find(v => v.name.includes("Dr. Malevolent"));
+
+  if (rivalObj) {
+    if (STATE.infamy > rivalObj.infamy && !STATE.rivalPassed) {
+      STATE.rivalPassed = true;
+      sendRivalMessage('surpassed');
+    } else if (STATE.infamy < rivalObj.infamy && STATE.rivalPassed) {
+      STATE.rivalPassed = false;
+      sendRivalMessage('reclaimed');
+    }
+  }
+
+  if (playerRank <= 15 && !STATE.rivalMilestonesSent.top15) {
+    STATE.rivalMilestonesSent.top15 = true;
+    sendRivalMessage('top15');
+  }
+  if (playerRank <= 10 && !STATE.rivalMilestonesSent.top10) {
+    STATE.rivalMilestonesSent.top10 = true;
+    sendRivalMessage('top10');
+  }
+  if (playerRank <= 5 && !STATE.rivalMilestonesSent.top5) {
+    STATE.rivalMilestonesSent.top5 = true;
+    sendRivalMessage('top5');
+  }
+  if (playerRank <= 3 && !STATE.rivalMilestonesSent.top3) {
+    STATE.rivalMilestonesSent.top3 = true;
+    sendRivalMessage('top3');
+  }
+  if (playerRank === 1 && !STATE.rivalMilestonesSent.top1) {
+    STATE.rivalMilestonesSent.top1 = true;
+    sendRivalMessage('top1');
+  }
+}
+
+function updateDailyRivalLeaderboard() {
+  rivalVillains.forEach(v => {
+    if (v.infamy > 20000) {
+      v.infamy += Math.floor((Math.random() * 2 - 1) * 10);
+    } else if (v.infamy > 15000) {
+      v.infamy += Math.floor(Math.random() * 100);
+    } else if (v.infamy > 10000) {
+      v.infamy += Math.floor(Math.random() * 250);
+    } else if (v.infamy > 5000) {
+      v.infamy += Math.floor(Math.random() * 200);
+    } else if (v.infamy > 1000) {
+      v.infamy += Math.floor(Math.random() * 150);
+    } else if (v.infamy > 0) {
+      v.infamy += Math.floor(Math.random() * 80);
+    }
+    v.infamy = Math.max(10, v.infamy);
+  });
+  processDailyVillainAttrition();
+  reassignAllHeroNemeses();
+  checkRivalRankTriggers();
+}
+
+function getSortedSyndicateLeaderboard() {
+  const fullList = rivalVillains.map(v => ({ ...v, isPlayer: false }));
+  fullList.push({
+    name: "You (Store Manager)",
+    infamy: STATE.infamy,
+    isSupervillain: STATE.isSupervillain,
+    isPlayer: true
+  });
+
+  fullList.sort((a, b) => b.infamy - a.infamy);
+  return fullList.slice(0, 25);
+}
+
+function speakButler() {
+  const syndicate = getSortedSyndicateLeaderboard();
+  const playerRank = syndicate.findIndex(s => s.isPlayer) + 1;
+  const topVillain = syndicate[0] ? syndicate[0].name : "Lord Apocalypse";
+
+  let alertContext = "";
+  if (STATE.apexSyndicateMember) {
+    alertContext = `Jarvis: "Master, regular syndicates distrust us due to our alliance with the Apex Purge. Vigilantes hunt us relentlessly."`;
+  } else if (STATE.isSupervillain) {
+    alertContext = `CRITICAL ALERT: Supervillain designation active (${STATE.totalCasualties} casualties).`;
+  }
+
+  const quotes = [
+    alertContext ? alertContext : `Current syndicate standing: Rank #${playerRank} of 25. ${topVillain} sits at the top.`,
+    `Supercomputer radar tracks 50 global heroes. Check their defense attributes before discharging the Death-Ray.`,
+    `Omega Level heroes will completely block all casualties in a targeted district!`,
+    `Store assessment: $${STATE.money} in vault, suspicion at ${STATE.suspicion}%. Operations proceeding smoothly.`,
+    `Day ${STATE.dayNumber} of 50. Keep your operations steady.`
+  ];
+
+  const chosen = quotes[Math.floor(Math.random() * quotes.length)];
+  triggerSpeechBubble(butler.x, butler.y, `Jarvis: "${chosen}"`, 5000, 'lair');
+}
+
+function openHeroDossier(heroId) {
+  const hero = GLOBAL_HEROES.find(h => h.id === heroId);
+  if (!hero) return;
+
+  STATE.selectedHeroId = heroId;
+  document.getElementById('dossier-hero-name').innerText = `RADAR DOSSIER: ${hero.name.toUpperCase()}`;
+
+  const isPlayerNemesis = hero.nemesisVillainName.includes("You");
+  const attributesBadges = hero.attributes.map(a => `
+    <span style="background:rgba(122, 162, 247, 0.2); color:var(--accent-store); border:1px solid var(--accent-store); padding:2px 6px; border-radius:3px; font-size:10px;">${a}</span>
+  `).join(' ');
+
+  document.getElementById('dossier-content').innerHTML = `
+    <div><strong>Assigned Threat Level:</strong> <span style="color:${hero.threat === 'Omega Level' ? '#ffd700' : '#f7768e'}; font-weight:bold;">${hero.threat}</span></div>
+    <div><strong>Current Patrol Sector:</strong> ${hero.patrol}</div>
+    <div style="margin-top:6px;"><strong>Attributes:</strong><div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">${attributesBadges}</div></div>
+    <div style="margin-top:8px; padding:8px; background:#16192b; border-left:3px solid var(--accent-evil); border-radius:2px;">
+      <div style="font-size:11px; color:#a9b1d6;">ARCH-NEMESIS RECORD:</div>
+      <strong style="color:${isPlayerNemesis ? 'var(--accent-gold)' : 'var(--accent-evil)'}; font-size:13px;">${hero.nemesisVillainName}</strong>
+    </div>
+  `;
+  document.getElementById('modal-hero-dossier').style.display = 'flex';
+}
+
+function closeHeroDossier() {
+  document.getElementById('modal-hero-dossier').style.display = 'none';
+}
+
+function viewNemesisOnSyndicate() {
+  closeHeroDossier();
+  toggleLairTV(false);
+  toggleMenu('lair-intel', false);
+}
+
+// Laser Strike Targeting Engine
+function openLaserModal() {
+  STATE.selectedLaserDistrict = null;
+  document.getElementById('laser-selected-lbl').innerText = "Selected Target: None";
+
+  const grid = document.getElementById('laser-districts-grid');
+  grid.innerHTML = HERO_DISTRICTS.map((d, idx) => `
+    <div class="district-card" id="dist-card-${idx}" onclick="selectLaserDistrict('${d}', ${idx})">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong style="color:var(--accent-cyan); font-size:12px;">${d}</strong>
+        <span style="font-size:10px; color:#7a819b;">Grid #${idx + 1}</span>
+      </div>
+      <div style="font-size:10px; color:#8892b0; margin-top:4px;">Metropolitan Sub-Grid Sector</div>
+    </div>
+  `).join('');
+
+  document.getElementById('modal-laser-strike').style.display = 'flex';
+}
+
+function selectLaserDistrict(districtName, idx) {
+  STATE.selectedLaserDistrict = districtName;
+  document.querySelectorAll('.district-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById(`dist-card-${idx}`);
+  if (card) card.classList.add('selected');
+  document.getElementById('laser-selected-lbl').innerText = `Selected Target: ${districtName}`;
+}
+
+function closeLaserModal() {
+  document.getElementById('modal-laser-strike').style.display = 'none';
+}
+
+function executeLaserStrike() {
+  if (!STATE.selectedLaserDistrict) return alert("Select a target district on the grid first!");
+
+  const district = STATE.selectedLaserDistrict;
+  closeLaserModal();
+  toggleLairTV(false);
+  STATE.didAnyVillainy = true;
+
+  const heroesInDistrict = GLOBAL_HEROES.filter(h => h.patrol === district && h.isAlive);
+  const hasOmega = heroesInDistrict.some(h => h.threat === "Omega Level");
+
+  let civilianDeaths = 0;
+  let vigilanteDeaths = 0;
+  let heroDeaths = 0;
+  let outcomeText = "";
+
+  if (hasOmega) {
+    outcomeText = `ORBITAL LASER DEFLECTED: An Omega-Level hero deployed an absolute forcefield in ${district}! 0 casualties reported.`;
+  } else {
+    const hasForcefield = heroesInDistrict.some(h => h.attributes.includes("Forcefield Generation") || h.attributes.includes("Telekinesis"));
+    const hasSpeedOrFlight = heroesInDistrict.some(h => h.attributes.includes("Super Speed") || h.attributes.includes("Flight"));
+
+    if (hasForcefield) {
+      civilianDeaths = 0;
+      vigilanteDeaths = Math.floor(Math.random() * 3);
+      outcomeText = `PARTIAL INTERCEPTION: Forcefield shielded civilians! ${vigilanteDeaths} vigilante casualties.`;
+    } else if (hasSpeedOrFlight) {
+      civilianDeaths = Math.floor(3 + Math.random() * 8);
+      vigilanteDeaths = Math.floor(1 + Math.random() * 4);
+      outcomeText = `SPEED EVACUATION: Heroes evacuated quickly! ${civilianDeaths} civilians, ${vigilanteDeaths} vigilantes fallen.`;
+    } else {
+      civilianDeaths = Math.floor(10 + Math.random() * 20);
+      vigilanteDeaths = Math.floor(2 + Math.random() * 6);
+      heroDeaths = Math.min(heroesInDistrict.length, Math.floor(1 + Math.random() * 2));
+      outcomeText = `CATASTROPHIC STRIKE: Full impact on ${district}! ${civilianDeaths} civilians, ${vigilanteDeaths} vigilantes, ${heroDeaths} superheroes fallen.`;
+
+      for (let k = 0; k < heroDeaths; k++) {
+        if (heroesInDistrict[k] && heroesInDistrict[k].threat !== "Omega Level") {
+          heroesInDistrict[k].isAlive = false;
+        }
+      }
+    }
+  }
+
+  const batchCasualties = civilianDeaths + vigilanteDeaths + heroDeaths;
+  STATE.totalCasualties += batchCasualties;
+  STATE.civilianCasualties += civilianDeaths;
+  STATE.vigilanteCasualties += vigilanteDeaths;
+  STATE.heroCasualties += heroDeaths;
+  STATE.infamy += 200 + (batchCasualties * 5);
+
+  showNotification(`LASER DISCHARGE COMPLETE: ${outcomeText}`);
+  checkCasualtyStatusEscalation();
+  reassignAllHeroNemeses();
+  updateHUD();
+}
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const miniCanvas = document.getElementById('minigame-canvas');
+const miniCtx = miniCanvas.getContext('2d');
+
+canvas.addEventListener('mousedown', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  for (let i = speechBubbles.length - 1; i >= 0; i--) {
+    const b = speechBubbles[i];
+    if (b.map === STATE.currentMap && b.closeBtnBounds) {
+      const cb = b.closeBtnBounds;
+      if (mx >= cb.x && mx <= cb.x + cb.w && my >= cb.y && my <= cb.y + cb.h) {
+        speechBubbles.splice(i, 1);
+        break;
+      }
+    }
+  }
+});
+
+const keys = {};
+window.addEventListener('keydown', (e) => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === 'Tab') { e.preventDefault(); toggleMenu('store-inv', false); }
+  if (e.key === 'Escape') { 
+    if (document.getElementById('modal-laser-strike').style.display === 'flex') closeLaserModal();
+    else if (document.getElementById('modal-hero-dossier').style.display === 'flex') closeHeroDossier();
+    else if (STATE.minigameActive) closeMinigame(false);
+    else toggleLairTV(false); 
+  }
+  if (e.key === 'e' || e.key === ' ' || e.key === 'E') { handleInteraction(); }
+
+  if (e.key === 'q' || e.key === 'Q') {
+    if (STATE.minigameActive && minigameState.type === 2 && STATE.computerTier >= 3) {
+      const weapons = ['pistol', 'rpg', 'shotgun', 'sniper'];
+      let idx = weapons.indexOf(minigameState.selectedWeapon);
+      minigameState.selectedWeapon = weapons[(idx + 1) % weapons.length];
+    }
+  }
+
+  if (STATE.minigameActive && minigameState.type === 2 && STATE.computerTier >= 4) {
+    if (e.key === 'r' || e.key === 'R') {
+      if (!minigameState.shieldActive && minigameState.shieldCooldown <= 0) {
+        minigameState.shieldActive = true;
+      }
+    }
+    if (e.key === 'f' || e.key === 'F') {
+      if (minigameState.timeStopCooldown <= 0 && minigameState.timeStopTimer <= 0) {
+        minigameState.timeStopTimer = 5.0;
+        minigameState.timeStopCooldown = 45.0;
+      }
+    }
+    if (e.key === 'c' || e.key === 'C') {
+      if (minigameState.timeSlowCooldown <= 0 && minigameState.timeSlowTimer <= 0) {
+        minigameState.timeSlowTimer = 8.0;
+        minigameState.timeSlowCooldown = 38.0;
+      }
+    }
+    if (e.key === 't' || e.key === 'T') {
+      if (minigameState.nukeCooldown <= 0) {
+        triggerNukeStrike();
+      }
+    }
+  }
+});
+window.addEventListener('keyup', (e) => {
+  keys[e.key.toLowerCase()] = false;
+});
+
+function triggerNukeStrike() {
+  minigameState.nukeCooldown = 60.0;
+  minigameState.nukeFlashTimer = 0.5;
+  showNotification("TACTICAL NUKE DETONATED: 8 Damage Dealt to All Targets!");
+
+  const camX = minigameState.px - 320;
+  const camY = minigameState.py - 200;
+  minigameState.enemies.forEach(em => {
+    if (em.x >= camX && em.x <= camX + 640 && em.y >= camY && em.y <= camY + 400) {
+      if (em.hasArmor) {
+        em.hasArmor = false;
+        em.armorRechargeTimer = 10.0;
+      }
+      em.hp -= 8;
+    }
+  });
+  minigameState.enemies = minigameState.enemies.filter(em => em.hp > 0);
+}
+
+let minigameState = {
+  type: 0,
+  difficulty: 'easy',
+  startDelay: 1.0,
+  turn: 1,
+  totalTurns: 9,
+  flashesPerTurn: 1,
+  gridColors: [],
+  sequence: [],
+  playerSeq: [],
+  flashIdx: 0,
+  flashTimer: 0,
+  showingSeq: false,
+  isPaused: false,
+  activeLitTile: -1,
+  clickedTile: -1,
+  clickedFlashTimer: 0,
+  replaysRemaining: 0,
+
+  nodes: [],
+  playerNode: 0,
+  targetNode: 0,
+  bots: [],
+  gates: [],
+  hackProgress: 0,
+  pathwayMoveDelay: 3.0,
+
+  worldW: 3200,
+  worldH: 2000,
+  px: 1600,
+  py: 1000,
+  playerRadius: 8,
+  targetCircles: [],
+  hackTimer: 0,
+  hackRequired: 30,
+  graceTimer: 10,
+  masterTimer: 180,
+  hasStartedHacking: false,
+  enemySpawnTimer: 0,
+  bossSpawnTimer: 30.0,
+  enemies: [],
+  playerBullets: [],
+  enemyBullets: [],
+  explosions: [],
+
+  selectedWeapon: 'pistol',
+  missileTimer: 0,
+  shieldActive: false,
+  shieldCooldown: 0,
+  timeStopTimer: 0,
+  timeStopCooldown: 0,
+  timeSlowTimer: 0,
+  timeSlowCooldown: 0,
+  nukeCooldown: 0,
+  nukeFlashTimer: 0
+};
+
+miniCanvas.addEventListener('mousedown', (e) => {
+  if (!STATE.minigameActive || STATE.minigameTutorialActive) return;
+  const rect = miniCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  if (minigameState.type === 0 && minigameState.startDelay <= 0) {
+    if (mx >= 490 && mx <= 620 && my >= 15 && my <= 45 && minigameState.replaysRemaining > 0 && !minigameState.showingSeq) {
+      minigameState.replaysRemaining--;
+      minigameState.showingSeq = true;
+      minigameState.flashIdx = 0;
+      minigameState.flashTimer = 0;
+      minigameState.isPaused = false;
+      minigameState.playerSeq = [];
+      return;
+    }
+
+    if (!minigameState.showingSeq) {
+      const size = 90;
+      const startX = (640 - 3 * size) / 2;
+      const startY = (400 - 3 * size) / 2;
+      const col = Math.floor((mx - startX) / size);
+      const row = Math.floor((my - startY) / size);
+      if (col >= 0 && col < 3 && row >= 0 && row < 3) {
+        const idx = row * 3 + col;
+        handleMemoryClick(idx);
+      }
+    }
+  } else if (minigameState.type === 1) {
+    minigameState.gates.forEach(g => {
+      if (Math.hypot(mx - g.x, my - g.y) < 18) {
+        g.open = !g.open;
+      }
+    });
+  } else if (minigameState.type === 2 && minigameState.startDelay <= 0) {
+    const camX = minigameState.px - 320;
+    const camY = minigameState.py - 200;
+    const worldMx = mx + camX;
+    const worldMy = my + camY;
+    const angle = Math.atan2(worldMy - minigameState.py, worldMx - minigameState.px);
+
+    if (minigameState.selectedWeapon === 'pistol') {
+      minigameState.playerBullets.push({
+        x: minigameState.px, y: minigameState.py,
+        vx: Math.cos(angle) * 7.5, vy: Math.sin(angle) * 7.5,
+        range: 450, type: 'bullet', damage: 1, pierces: 1, hitList: []
+      });
+    } else if (minigameState.selectedWeapon === 'rpg') {
+      minigameState.playerBullets.push({
+        x: minigameState.px, y: minigameState.py,
+        vx: Math.cos(angle) * 5.0, vy: Math.sin(angle) * 5.0,
+        range: 550, type: 'rpg', damage: 3, pierces: 1, hitList: []
+      });
+    } else if (minigameState.selectedWeapon === 'shotgun') {
+      for (let s = -2; s <= 2; s++) {
+        if (s === 0) continue;
+        const spreadAngle = angle + (s * 0.09);
+        minigameState.playerBullets.push({
+          x: minigameState.px, y: minigameState.py,
+          vx: Math.cos(spreadAngle) * 7.2, vy: Math.sin(spreadAngle) * 7.2,
+          range: 320, type: 'shotgun', damage: 1, pierces: 1, hitList: []
+        });
+      }
+    } else if (minigameState.selectedWeapon === 'sniper') {
+      minigameState.playerBullets.push({
+        x: minigameState.px, y: minigameState.py,
+        vx: Math.cos(angle) * 14.0, vy: Math.sin(angle) * 14.0,
+        range: 850, type: 'sniper', damage: 2, pierces: 99, hitList: []
+      });
+    }
+  }
+});
+
+function launchGridHackMiniGame(missionId) {
+  const m = MISSIONS.find(x => x.id === missionId) || MISSIONS[0];
+
+  if (m.isLaser) {
+    openLaserModal();
+    return;
+  }
+
+  STATE.activeMissionId = missionId;
+  STATE.minigameActive = true;
+  toggleLairTV(false);
+  document.getElementById('modal-minigame').style.display = 'flex';
+  STATE.didAnyVillainy = true;
+
+  const variant = Math.floor(Math.random() * 3);
+  minigameState.type = variant;
+  minigameState.difficulty = m.difficulty;
+  minigameState.startDelay = 1.0;
+
+  const diffLabel = m.difficulty.toUpperCase();
+
+  if (variant === 0) {
+    document.getElementById('minigame-title').innerText = `GRID OVERRIDE: 3x3 MATRIX MEMORY [${diffLabel}]`;
+    document.getElementById('minigame-instructions').innerText = "Memorize the sequence (1.0s flash, 1.0s delay). Click tiles in matching order after the demo completes!";
+    initMemoryGame();
+  } else if (variant === 1) {
+    document.getElementById('minigame-title').innerText = `GRID OVERRIDE: NETWORK PATHWAY ROUTER [${diffLabel}]`;
+    document.getElementById('minigame-instructions').innerText = "Click security gates to open/close paths! 3s prep buffer before movements begin. Reach and hold the Core!";
+    initPathwayGame();
+  } else {
+    document.getElementById('minigame-title').innerText = `GRID OVERRIDE: 25X MAINFRAME PURGE [${diffLabel}]`;
+    document.getElementById('minigame-instructions').innerText = "Find the Green Terminal. Once inside, transmit packets for 30s total while holding off defenders!";
+    initFreeAreaGame();
+  }
+
+  if (!STATE.seenMinigameTutorials[variant]) {
+    showMinigameTutorial(variant);
+  }
+}
+
+function showMinigameTutorial(variant) {
+  STATE.minigameTutorialActive = true;
+  const tutModal = document.getElementById('modal-minigame-tutorial');
+  const tutTitle = document.getElementById('minigame-tut-title');
+  const tutBody = document.getElementById('minigame-tut-body');
+
+  if (variant === 0) {
+    tutTitle.innerText = "TUTORIAL: 3x3 Matrix Memory";
+    tutBody.innerHTML = `
+      • <strong>Difficulty Modes:</strong> 1-4 flashes per round.<br>
+      • <strong>Timing & Replays:</strong> Pattern displays with 1.0s interval. Computer Upgrades give pattern replays!<br>
+      • <strong>Goal:</strong> Repeat the pattern in sequence once demonstration completes.
+    `;
+  } else if (variant === 1) {
+    tutTitle.innerText = "TUTORIAL: Pathway Router";
+    tutBody.innerHTML = `
+      • <strong>Procedural Network:</strong> Network routes and patrol nodes randomize every run!<br>
+      • <strong>Routing & Delay:</strong> Click circular gate nodes to route your packet to the green CORE chamber.
+    `;
+  } else {
+    tutTitle.innerText = "TUTORIAL: 25x Mainframe Infiltration";
+    tutBody.innerHTML = `
+      • <strong>Arsenal & Abilities:</strong> Level 3 unlocks 4 weapons ([Q] cycle), Level 4 unlocks Shield [R], Freeze [F], Slow [C], and Tactical Nuke [T]!<br>
+      • <strong>Goal:</strong> Transmit 30s of data inside the Green Area before the master timer expires!
+    `;
+  }
+  tutModal.style.display = 'flex';
+}
+
+function closeMinigameTutorial() {
+  STATE.seenMinigameTutorials[minigameState.type] = true;
+  STATE.minigameTutorialActive = false;
+  document.getElementById('modal-minigame-tutorial').style.display = 'none';
+}
+
+function initMemoryGame() {
+  const palette = ['#7aa2f7', '#bb9af7', '#9ece6a', '#e0af68', '#f7768e', '#7dcfff', '#deb887', '#2ac3de', '#ff9e64'];
+  minigameState.gridColors = palette;
+  minigameState.turn = 1;
+  minigameState.sequence = [];
+  minigameState.clickedTile = -1;
+  minigameState.clickedFlashTimer = 0;
+
+  if (STATE.computerTier === 2) minigameState.replaysRemaining = 2;
+  else if (STATE.computerTier === 3) minigameState.replaysRemaining = 5;
+  else if (STATE.computerTier >= 4) minigameState.replaysRemaining = 10;
+  else minigameState.replaysRemaining = 0;
+
+  if (minigameState.difficulty === 'easy') {
+    minigameState.totalTurns = 9;
+    minigameState.flashesPerTurn = 1;
+  } else if (minigameState.difficulty === 'medium') {
+    minigameState.totalTurns = 6;
+    minigameState.flashesPerTurn = 2;
+  } else if (minigameState.difficulty === 'hard') {
+    minigameState.totalTurns = 5;
+    minigameState.flashesPerTurn = 3;
+  } else if (minigameState.difficulty === 'extreme') {
+    minigameState.totalTurns = 5;
+    minigameState.flashesPerTurn = 4;
+  }
+
+  startMemoryTurn();
+}
+
+function startMemoryTurn() {
+  for (let k = 0; k < minigameState.flashesPerTurn; k++) {
+    minigameState.sequence.push(Math.floor(Math.random() * 9));
+  }
+  minigameState.playerSeq = [];
+  minigameState.flashIdx = 0;
+  minigameState.flashTimer = 0;
+  minigameState.isPaused = false;
+  minigameState.showingSeq = true;
+  minigameState.activeLitTile = -1;
+  minigameState.clickedTile = -1;
+  minigameState.clickedFlashTimer = 0;
+}
+
+function handleMemoryClick(idx) {
+  minigameState.clickedTile = idx;
+  minigameState.clickedFlashTimer = 0.2;
+
+  minigameState.playerSeq.push(idx);
+  const currentStep = minigameState.playerSeq.length - 1;
+  if (minigameState.playerSeq[currentStep] !== minigameState.sequence[currentStep]) {
+    closeMinigame(false);
+    showNotification("HACK FAILED: Sequence pattern desynchronized!");
+    return;
+  }
+  if (minigameState.playerSeq.length === minigameState.sequence.length) {
+    if (minigameState.turn >= minigameState.totalTurns) {
+      closeMinigame(true);
+    } else {
+      minigameState.turn++;
+      showNotification(`ROUND ${minigameState.turn - 1} CLEARED! Get ready for Round ${minigameState.turn}/${minigameState.totalTurns}...`);
+      setTimeout(startMemoryTurn, 1000);
+    }
+  }
+}
+
+function initPathwayGame() {
+  const nodes = [];
+  const gates = [];
+
+  nodes.push({ id: 0, x: 70, y: 200, label: "INLET" });
+
+  const l1y1 = 80 + Math.random() * 60;
+  const l1y2 = 260 + Math.random() * 60;
+  nodes.push({ id: 1, x: 210 + Math.random() * 30, y: l1y1, label: "NODE A" });
+  nodes.push({ id: 2, x: 210 + Math.random() * 30, y: l1y2, label: "NODE B" });
+
+  const l2y1 = 80 + Math.random() * 60;
+  const l2y2 = 260 + Math.random() * 60;
+  nodes.push({ id: 3, x: 390 + Math.random() * 30, y: l2y1, label: "NODE C" });
+  nodes.push({ id: 4, x: 390 + Math.random() * 30, y: l2y2, label: "NODE D" });
+
+  nodes.push({ id: 5, x: 305 + Math.random() * 20, y: 200 + (Math.random() * 40 - 20), label: "HUB" });
+  nodes.push({ id: 6, x: 560, y: 200, label: "CORE" });
+
+  function addGate(u, v) {
+    const n1 = nodes[u];
+    const n2 = nodes[v];
+    gates.push({
+      u, v,
+      x: (n1.x + n2.x) / 2,
+      y: (n1.y + n2.y) / 2,
+      open: Math.random() < 0.5
+    });
+  }
+
+  addGate(0, 1);
+  addGate(0, 2);
+  addGate(1, 3);
+  addGate(2, 4);
+  addGate(1, 5);
+  addGate(2, 5);
+  addGate(5, 3);
+  addGate(5, 4);
+  addGate(3, 6);
+  addGate(4, 6);
+
+  gates[0].open = true;
+  gates[2].open = true;
+  gates[8].open = true;
+
+  minigameState.nodes = nodes;
+  minigameState.gates = gates;
+  minigameState.playerNode = 0;
+  minigameState.targetNode = 6;
+  minigameState.hackProgress = 0;
+  minigameState.pathwayMoveDelay = 3.0;
+
+  const botNodeA = Math.random() < 0.5 ? 3 : 1;
+  const botNodeB = Math.random() < 0.5 ? 4 : 2;
+  minigameState.bots = [
+    { x: nodes[botNodeA].x, y: nodes[botNodeA].y, targetNode: botNodeA, speed: 0.4 },
+    { x: nodes[botNodeB].x, y: nodes[botNodeB].y, targetNode: botNodeB, speed: 0.4 }
+  ];
+}
+
+function initFreeAreaGame() {
+  minigameState.worldW = 3200;
+  minigameState.worldH = 2000;
+  minigameState.px = 1600;
+  minigameState.py = 1000;
+  minigameState.playerRadius = 8;
+
+  const pad = 300;
+  minigameState.targetCircles = [];
+
+  minigameState.targetCircles.push({
+    x: pad + Math.random() * (minigameState.worldW - pad * 2),
+    y: pad + Math.random() * (minigameState.worldH - pad * 2),
+    r: 40
+  });
+
+  if (minigameState.difficulty === 'easy') {
+    minigameState.masterTimer = 180;
+  } else if (minigameState.difficulty === 'medium') {
+    minigameState.masterTimer = 210;
+    minigameState.targetCircles.push({
+      x: pad + Math.random() * (minigameState.worldW - pad * 2),
+      y: pad + Math.random() * (minigameState.worldH - pad * 2),
+      r: 40
+    });
+  } else if (minigameState.difficulty === 'hard') {
+    minigameState.masterTimer = 240;
+    minigameState.targetCircles.push({
+      x: pad + Math.random() * (minigameState.worldW - pad * 2),
+      y: pad + Math.random() * (minigameState.worldH - pad * 2),
+      r: 40
+    });
+  } else if (minigameState.difficulty === 'extreme') {
+    minigameState.masterTimer = 270;
+    minigameState.targetCircles.push({
+      x: pad + Math.random() * (minigameState.worldW - pad * 2),
+      y: pad + Math.random() * (minigameState.worldH - pad * 2),
+      r: 40
+    });
+  }
+
+  minigameState.hackTimer = 0;
+  minigameState.hackRequired = 30;
+  minigameState.graceTimer = 10;
+  minigameState.hasStartedHacking = false;
+  minigameState.enemySpawnTimer = 0;
+  minigameState.bossSpawnTimer = 30.0;
+  minigameState.enemies = [];
+  minigameState.playerBullets = [];
+  minigameState.enemyBullets = [];
+  minigameState.explosions = [];
+
+  minigameState.selectedWeapon = 'pistol';
+  minigameState.missileTimer = 5.0;
+  minigameState.shieldActive = STATE.computerTier >= 4;
+  minigameState.shieldCooldown = 0;
+  minigameState.timeStopTimer = 0;
+  minigameState.timeStopCooldown = 0;
+  minigameState.timeSlowTimer = 0;
+  minigameState.timeSlowCooldown = 0;
+  minigameState.nukeCooldown = 0;
+  minigameState.nukeFlashTimer = 0;
+}
+
+function spawnMainframeEnemy() {
+  const p = { x: minigameState.px, y: minigameState.py };
+  const angle = Math.random() * Math.PI * 2;
+  const dist = 350 + Math.random() * 250;
+  const x = Math.max(50, Math.min(minigameState.worldW - 50, p.x + Math.cos(angle) * dist));
+  const y = Math.max(50, Math.min(minigameState.worldH - 50, p.y + Math.sin(angle) * dist));
+
+  const isExtreme = minigameState.difficulty === 'extreme';
+  const roll = Math.random();
+  let enemyType = 'normal';
+  let speed = 1.6;
+  let hp = 1;
+  let color = '#ff9e64';
+  let size = 12;
+
+  if (roll < 0.25) {
+    enemyType = 'fast';
+    speed = isExtreme ? 3.6 : 2.4;
+    hp = 1;
+    color = '#e0af68';
+    size = 10;
+  } else if (roll < 0.50) {
+    enemyType = 'tank';
+    speed = 0.9;
+    hp = 4;
+    color = '#f7768e';
+    size = 20;
+  } else if (roll < 0.75) {
+    enemyType = 'shooter';
+    speed = isExtreme ? 2.4 : 1.2;
+    hp = 2;
+    color = '#bb9af7';
+    size = 14;
+  }
+
+  minigameState.enemies.push({
+    x, y,
+    type: enemyType,
+    speed,
+    hp,
+    maxHp: hp,
+    color,
+    size,
+    shootCooldown: isExtreme ? 35 : (60 + Math.random() * 60),
+    hasArmor: false,
+    armorRechargeTimer: 0
+  });
+}
+
+function spawnBossEnemy() {
+  const p = { x: minigameState.px, y: minigameState.py };
+  const angle = Math.random() * Math.PI * 2;
+  const dist = 400 + Math.random() * 200;
+  const x = Math.max(80, Math.min(minigameState.worldW - 80, p.x + Math.cos(angle) * dist));
+  const y = Math.max(80, Math.min(minigameState.worldH - 80, p.y + Math.sin(angle) * dist));
+
+  const bossTypes = ['boss_shooter', 'boss_charger', 'boss_buffer'];
+  const pickedType = bossTypes[Math.floor(Math.random() * bossTypes.length)];
+
+  let speed = 1.1;
+  let hp = 16;
+  let size = 32;
+  let color = '#ff5555';
+
+  if (pickedType === 'boss_shooter') {
+    speed = 0.9;
+    hp = 14;
+    color = '#bb9af7';
+  } else if (pickedType === 'boss_charger') {
+    speed = 1.3;
+    hp = 16;
+    color = '#e0af68';
+  } else if (pickedType === 'boss_buffer') {
+    speed = 0.7;
+    hp = 33;
+    color = '#7dcfff';
+  }
+
+  minigameState.enemies.push({
+    x, y,
+    type: pickedType,
+    isBoss: true,
+    speed,
+    hp,
+    maxHp: hp,
+    color,
+    size,
+    shootCooldown: 90,
+    chargeState: 'chase',
+    chargeTimer: 0,
+    chargeVx: 0,
+    chargeVy: 0,
+    hasArmor: false,
+    armorRechargeTimer: 0
+  });
+}
+
+function updateAndRenderMinigame() {
+  miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
+
+  if (minigameState.startDelay > 0 && !STATE.minigameTutorialActive) {
+    minigameState.startDelay -= 1 / 60;
+  }
+
+  if (minigameState.type === 0) { // 3x3 Memory
+    const size = 90;
+    const startX = (640 - 3 * size) / 2;
+    const startY = (400 - 3 * size) / 2;
+
+    if (minigameState.clickedFlashTimer > 0) {
+      minigameState.clickedFlashTimer -= 1 / 60;
+      if (minigameState.clickedFlashTimer <= 0) {
+        minigameState.clickedTile = -1;
+      }
+    }
+
+    if (minigameState.showingSeq && !STATE.minigameTutorialActive && minigameState.startDelay <= 0) {
+      minigameState.flashTimer += 1 / 60;
+
+      if (!minigameState.isPaused) {
+        minigameState.activeLitTile = minigameState.sequence[minigameState.flashIdx];
+        if (minigameState.flashTimer >= 1.0) {
+          minigameState.flashTimer = 0;
+          minigameState.isPaused = true;
+          minigameState.activeLitTile = -1;
+        }
+      } else {
+        minigameState.activeLitTile = -1;
+        if (minigameState.flashTimer >= 1.0) {
+          minigameState.flashTimer = 0;
+          minigameState.isPaused = false;
+          minigameState.flashIdx++;
+          if (minigameState.flashIdx >= minigameState.sequence.length) {
+            minigameState.showingSeq = false;
+            minigameState.activeLitTile = -1;
+          }
+        }
+      }
+    }
+
+    miniCtx.fillStyle = '#7dcfff';
+    miniCtx.font = 'bold 13px monospace';
+    miniCtx.fillText(`ROUND: ${minigameState.turn}/${minigameState.totalTurns} [${minigameState.difficulty.toUpperCase()}] | TARGET: ${minigameState.sequence.length} TILES`, 24, 30);
+
+    if (STATE.computerTier >= 2) {
+      miniCtx.fillStyle = minigameState.replaysRemaining > 0 && !minigameState.showingSeq ? '#bb9af7' : '#3b4261';
+      miniCtx.fillRect(490, 15, 130, 26);
+      miniCtx.strokeStyle = '#fff';
+      miniCtx.strokeRect(490, 15, 130, 26);
+      miniCtx.fillStyle = '#120d1c';
+      miniCtx.font = 'bold 11px monospace';
+      miniCtx.fillText(`REPLAY (${minigameState.replaysRemaining})`, 502, 32);
+    }
+
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        const idx = r * 3 + c;
+        const x = startX + c * size;
+        const y = startY + r * size;
+
+        const isFlashing = minigameState.showingSeq && minigameState.activeLitTile === idx;
+        const isUserClickedFlash = minigameState.clickedTile === idx;
+
+        miniCtx.fillStyle = (isFlashing || isUserClickedFlash) ? '#ffffff' : minigameState.gridColors[idx];
+        miniCtx.fillRect(x + 4, y + 4, size - 8, size - 8);
+        miniCtx.strokeStyle = (isFlashing || isUserClickedFlash) ? '#7dcfff' : '#1e293b';
+        miniCtx.lineWidth = (isFlashing || isUserClickedFlash) ? 4 : 2;
+        miniCtx.strokeRect(x + 4, y + 4, size - 8, size - 8);
+      }
+    }
+  } else if (minigameState.type === 1) { // Procedural Pathway Game
+    minigameState.gates.forEach(g => {
+      const n1 = minigameState.nodes[g.u];
+      const n2 = minigameState.nodes[g.v];
+      miniCtx.strokeStyle = g.open ? '#7dcfff' : '#475569';
+      miniCtx.lineWidth = g.open ? 4 : 2;
+      miniCtx.beginPath();
+      miniCtx.moveTo(n1.x, n1.y);
+      miniCtx.lineTo(n2.x, n2.y);
+      miniCtx.stroke();
+
+      miniCtx.fillStyle = g.open ? '#9ece6a' : '#f7768e';
+      miniCtx.beginPath();
+      miniCtx.arc(g.x, g.y, 8, 0, Math.PI * 2);
+      miniCtx.fill();
+    });
+
+    minigameState.nodes.forEach(n => {
+      miniCtx.fillStyle = n.id === minigameState.targetNode ? '#9ece6a' : '#1e293b';
+      miniCtx.strokeStyle = '#7dcfff';
+      miniCtx.lineWidth = 2;
+      miniCtx.beginPath();
+      miniCtx.arc(n.x, n.y, 18, 0, Math.PI * 2);
+      miniCtx.fill();
+      miniCtx.stroke();
+
+      miniCtx.fillStyle = '#fff';
+      miniCtx.font = 'bold 9px monospace';
+      miniCtx.fillText(n.label, n.x - 14, n.y + 3);
+    });
+
+    const pNode = minigameState.nodes[minigameState.playerNode];
+    miniCtx.fillStyle = '#7dcfff';
+    miniCtx.beginPath();
+    miniCtx.arc(pNode.x, pNode.y, 10, 0, Math.PI * 2);
+    miniCtx.fill();
+
+    if (!STATE.minigameTutorialActive && minigameState.startDelay <= 0) {
+      if (minigameState.pathwayMoveDelay > 0) {
+        minigameState.pathwayMoveDelay -= 1 / 60;
+        miniCtx.fillStyle = '#e0af68';
+        miniCtx.font = 'bold 12px monospace';
+        miniCtx.fillText(`ENGAGING PROTOCOLS IN: ${Math.max(0, minigameState.pathwayMoveDelay).toFixed(1)}s (Gates Active)`, 150, 360);
+      } else {
+        minigameState.gates.forEach(g => {
+          if (g.open && g.u === minigameState.playerNode && Math.random() < 0.02) {
+            minigameState.playerNode = g.v;
+          }
+        });
+
+        if (minigameState.playerNode === minigameState.targetNode) {
+          minigameState.hackProgress += 1 / 60;
+          miniCtx.fillStyle = '#9ece6a';
+          miniCtx.fillRect(200, 360, (minigameState.hackProgress / 3.0) * 240, 10);
+          if (minigameState.hackProgress >= 3.0) {
+            closeMinigame(true);
+          }
+        }
+
+        minigameState.bots.forEach(b => {
+          const dx = pNode.x - b.x;
+          const dy = pNode.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 18) {
+            closeMinigame(false);
+            showNotification("HACK INTERCEPTED: Virus detection bot captured your packet!");
+          }
+          b.x += (dx / dist) * b.speed;
+          b.y += (dy / dist) * b.speed;
+
+          miniCtx.fillStyle = '#f7768e';
+          miniCtx.beginPath();
+          miniCtx.arc(b.x, b.y, 10, 0, Math.PI * 2);
+          miniCtx.fill();
+        });
+      }
+    }
+  } else if (minigameState.type === 2) { // 25x Mainframe Shooter
+    const hasBoss = minigameState.enemies.some(e => e.isBoss);
+
+    if (!STATE.minigameTutorialActive && minigameState.startDelay <= 0) {
+      minigameState.masterTimer -= 1 / 60;
+      if (minigameState.masterTimer <= 0) {
+        closeMinigame(false);
+        triggerDeathEnding();
+        return;
+      }
+
+      if (minigameState.nukeFlashTimer > 0) {
+        minigameState.nukeFlashTimer -= 1 / 60;
+      }
+
+      if (STATE.computerTier >= 4) {
+        if (minigameState.timeStopTimer > 0) minigameState.timeStopTimer -= 1 / 60;
+        if (minigameState.timeStopCooldown > 0) minigameState.timeStopCooldown -= 1 / 60;
+
+        if (minigameState.timeSlowTimer > 0) minigameState.timeSlowTimer -= 1 / 60;
+        if (minigameState.timeSlowCooldown > 0) minigameState.timeSlowCooldown -= 1 / 60;
+
+        if (minigameState.nukeCooldown > 0) minigameState.nukeCooldown -= 1 / 60;
+
+        if (!minigameState.shieldActive && minigameState.shieldCooldown > 0) {
+          minigameState.shieldCooldown -= 1 / 60;
+          if (minigameState.shieldCooldown <= 0) minigameState.shieldActive = true;
+        }
+      }
+
+      if (STATE.computerTier >= 2) {
+        minigameState.missileTimer -= 1 / 60;
+        if (minigameState.missileTimer <= 0) {
+          minigameState.missileTimer = 5.0;
+          for (let m = -1; m <= 1; m += 2) {
+            minigameState.playerBullets.push({
+              x: minigameState.px + (m * 12),
+              y: minigameState.py,
+              vx: 0,
+              vy: -4.0,
+              range: 800,
+              type: 'missile',
+              damage: 1,
+              pierces: 1,
+              hitList: []
+            });
+          }
+        }
+      }
+
+      const moveSpeed = 3.5;
+      if (keys['w'] || keys['arrowup']) minigameState.py = Math.max(minigameState.playerRadius, minigameState.py - moveSpeed);
+      if (keys['s'] || keys['arrowdown']) minigameState.py = Math.min(minigameState.worldH - minigameState.playerRadius, minigameState.py + moveSpeed);
+      if (keys['a'] || keys['arrowleft']) minigameState.px = Math.max(minigameState.playerRadius, minigameState.px - moveSpeed);
+      if (keys['d'] || keys['arrowright']) minigameState.px = Math.min(minigameState.worldW - minigameState.playerRadius, minigameState.px + moveSpeed);
+
+      let isInsideAny = false;
+      minigameState.targetCircles.forEach(tc => {
+        if (Math.hypot(minigameState.px - tc.x, minigameState.py - tc.y) <= tc.r) isInsideAny = true;
+      });
+
+      if (isInsideAny) {
+        minigameState.hasStartedHacking = true;
+        minigameState.hackTimer = Math.min(minigameState.hackRequired, minigameState.hackTimer + 1 / 60);
+        minigameState.graceTimer = 10;
+        if (minigameState.hackTimer >= minigameState.hackRequired) {
+          closeMinigame(true);
+          return;
+        }
+      } else {
+        if (minigameState.hasStartedHacking) {
+          if (minigameState.graceTimer > 0) {
+            minigameState.graceTimer -= 1 / 60;
+          } else {
+            minigameState.hackTimer = Math.max(0, minigameState.hackTimer - 1 / 60);
+          }
+        }
+      }
+
+      if (minigameState.hasStartedHacking && minigameState.timeStopTimer <= 0) {
+        minigameState.enemySpawnTimer += 1 / 60;
+        const isHardOrExtreme = minigameState.difficulty === 'hard' || minigameState.difficulty === 'extreme';
+        const spawnInterval = isHardOrExtreme ? (isInsideAny ? 1.8 : 3.2) : (isInsideAny ? 3.6 : 6.4);
+        const maxEnemies = isHardOrExtreme ? 12 : 6;
+
+        if (minigameState.enemySpawnTimer >= spawnInterval && minigameState.enemies.filter(e => !e.isBoss).length < maxEnemies) {
+          minigameState.enemySpawnTimer = 0;
+          spawnMainframeEnemy();
+        }
+
+        if (!hasBoss) {
+          minigameState.bossSpawnTimer -= 1 / 60;
+          if (minigameState.bossSpawnTimer <= 0) {
+            minigameState.bossSpawnTimer = 30.0;
+            spawnBossEnemy();
+          }
+        }
+      }
+
+      for (let i = minigameState.explosions.length - 1; i >= 0; i--) {
+        const exp = minigameState.explosions[i];
+        exp.radius += 3.5;
+        exp.life -= 1 / 60;
+        if (exp.life <= 0) minigameState.explosions.splice(i, 1);
+      }
+
+      for (let i = minigameState.playerBullets.length - 1; i >= 0; i--) {
+        const b = minigameState.playerBullets[i];
+
+        if (b.type === 'missile') {
+          let closestTarget = null;
+          let minDist = 600;
+          minigameState.enemies.forEach(em => {
+            const d = Math.hypot(em.x - b.x, em.y - b.y);
+            if (d < minDist) { minDist = d; closestTarget = em; }
+          });
+          if (closestTarget) {
+            const ang = Math.atan2(closestTarget.y - b.y, closestTarget.x - b.x);
+            b.vx += Math.cos(ang) * 0.4;
+            b.vy += Math.sin(ang) * 0.4;
+            const spd = Math.hypot(b.vx, b.vy);
+            if (spd > 6.0) { b.vx = (b.vx / spd) * 6.0; b.vy = (b.vy / spd) * 6.0; }
+          }
+        }
+
+        b.x += b.vx; b.y += b.vy;
+        b.range -= Math.hypot(b.vx, b.vy);
+
+        for (let j = minigameState.enemies.length - 1; j >= 0; j--) {
+          const em = minigameState.enemies[j];
+          if (!b.hitList.includes(em) && Math.hypot(b.x - em.x, b.y - em.y) < em.size) {
+            b.hitList.push(em);
+            b.pierces--;
+
+            if (b.type === 'rpg') {
+              minigameState.explosions.push({ x: b.x, y: b.y, radius: 10, maxRadius: 70, life: 0.35 });
+              minigameState.enemies.forEach(target => {
+                if (Math.hypot(target.x - b.x, target.y - b.y) <= 70) {
+                  target.hp -= 3;
+                }
+              });
+              b.pierces = 0;
+            } else {
+              if (em.hasArmor) {
+                em.hasArmor = false;
+                em.armorRechargeTimer = 10.0;
+              } else {
+                em.hp -= b.damage;
+              }
+            }
+
+            if (b.pierces <= 0) {
+              minigameState.playerBullets.splice(i, 1);
+              break;
+            }
+          }
+        }
+
+        minigameState.enemies = minigameState.enemies.filter(em => em.hp > 0);
+
+        if (b.range <= 0 || b.x < 0 || b.x > minigameState.worldW || b.y < 0 || b.y > minigameState.worldH) {
+          if (minigameState.playerBullets.includes(b)) {
+            const bIdx = minigameState.playerBullets.indexOf(b);
+            if (bIdx !== -1) minigameState.playerBullets.splice(bIdx, 1);
+          }
+        }
+      }
+
+      const isStopped = minigameState.timeStopTimer > 0;
+      const slowFactor = isStopped ? 0 : (minigameState.timeSlowTimer > 0 ? 0.5 : 1.0);
+
+      for (let i = minigameState.enemyBullets.length - 1; i >= 0; i--) {
+        const eb = minigameState.enemyBullets[i];
+        eb.x += eb.vx * slowFactor; eb.y += eb.vy * slowFactor;
+
+        if (Math.hypot(eb.x - minigameState.px, eb.y - minigameState.py) < minigameState.playerRadius + 4) {
+          if (minigameState.shieldActive && STATE.computerTier >= 4) {
+            minigameState.shieldActive = false;
+            minigameState.shieldCooldown = 30.0;
+            minigameState.enemyBullets.splice(i, 1);
+            showNotification("SHIELD DEFLECTED ATTACK! Regenerating in 30s...");
+            continue;
+          }
+          closeMinigame(false);
+          triggerDeathEnding();
+          return;
+        }
+        if (eb.x < 0 || eb.x > minigameState.worldW || eb.y < 0 || eb.y > minigameState.worldH) {
+          minigameState.enemyBullets.splice(i, 1);
+        }
+      }
+
+      const bufferBoss = minigameState.enemies.find(e => e.type === 'boss_buffer');
+      if (bufferBoss && !isStopped) {
+        minigameState.enemies.forEach(em => {
+          if (!em.isBoss && !em.hasArmor) {
+            if (em.armorRechargeTimer > 0) {
+              em.armorRechargeTimer -= (1 / 60) * slowFactor;
+            } else if (Math.hypot(em.x - bufferBoss.x, em.y - bufferBoss.y) < 220) {
+              em.hasArmor = true;
+            }
+          }
+        });
+      }
+
+      if (!isStopped) {
+        minigameState.enemies.forEach(em => {
+          const edx = minigameState.px - em.x;
+          const edy = minigameState.py - em.y;
+          const edist = Math.hypot(edx, edy);
+
+          if (em.type === 'boss_charger') {
+            if (em.chargeState === 'chase') {
+              if (edist > 0) {
+                em.x += (edx / edist) * em.speed * slowFactor;
+                em.y += (edy / edist) * em.speed * slowFactor;
+              }
+              em.shootCooldown -= 1 * slowFactor;
+              if (em.shootCooldown <= 0) {
+                em.chargeState = 'windup';
+                em.chargeTimer = 1.2;
+              }
+            } else if (em.chargeState === 'windup') {
+              em.chargeTimer -= (1 / 60) * slowFactor;
+              if (em.chargeTimer <= 0) {
+                em.chargeState = 'charging';
+                em.chargeTimer = 0.8;
+                const ang = Math.atan2(edy, edx);
+                em.chargeVx = Math.cos(ang) * 7.5;
+                em.chargeVy = Math.sin(ang) * 7.5;
+              }
+            } else if (em.chargeState === 'charging') {
+              em.x += em.chargeVx * slowFactor;
+              em.y += em.chargeVy * slowFactor;
+              em.chargeTimer -= (1 / 60) * slowFactor;
+              if (em.chargeTimer <= 0) {
+                em.chargeState = 'chase';
+                em.shootCooldown = 150;
+              }
+            }
+          } else if (em.type === 'boss_shooter') {
+            if (edist > 160) {
+              em.x += (edx / edist) * em.speed * slowFactor;
+              em.y += (edy / edist) * em.speed * slowFactor;
+            }
+            em.shootCooldown -= 1 * slowFactor;
+            if (em.shootCooldown <= 0) {
+              em.shootCooldown = 110;
+              for (let k = 0; k < 8; k++) {
+                const ang = (k * Math.PI) / 4;
+                minigameState.enemyBullets.push({
+                  x: em.x, y: em.y,
+                  vx: Math.cos(ang) * 2.0, vy: Math.sin(ang) * 2.0
+                });
+              }
+            }
+          } else if (em.type === 'shooter') {
+            if (edist > 180) {
+              em.x += (edx / edist) * em.speed * slowFactor;
+              em.y += (edy / edist) * em.speed * slowFactor;
+            }
+            em.shootCooldown -= 1 * slowFactor;
+            if (em.shootCooldown <= 0 && edist < 300) {
+              em.shootCooldown = (minigameState.difficulty === 'extreme') ? 45 : (90 + Math.random() * 40);
+              const shootAng = Math.atan2(edy, edx);
+              minigameState.enemyBullets.push({
+                x: em.x, y: em.y,
+                vx: Math.cos(shootAng) * 2.0, vy: Math.sin(shootAng) * 2.0
+              });
+            }
+          } else {
+            if (edist > 0) {
+              em.x += (edx / edist) * em.speed * slowFactor;
+              em.y += (edy / edist) * em.speed * slowFactor;
+            }
+          }
+
+          if (edist < minigameState.playerRadius + (em.size / 2)) {
+            if (minigameState.shieldActive && STATE.computerTier >= 4) {
+              minigameState.shieldActive = false;
+              minigameState.shieldCooldown = 30.0;
+              em.hp = 0;
+              showNotification("SHIELD CRUSHED ENEMY ON CONTACT! Shield rebooting (30s)...");
+              return;
+            }
+            closeMinigame(false);
+            triggerDeathEnding();
+          }
+        });
+        minigameState.enemies = minigameState.enemies.filter(em => em.hp > 0);
+      }
+    }
+
+    const camX = minigameState.px - 320;
+    const camY = minigameState.py - 200;
+
+    miniCtx.save();
+    miniCtx.translate(-camX, -camY);
+
+    miniCtx.strokeStyle = '#121b2d';
+    miniCtx.lineWidth = 1;
+    for (let gx = 0; gx < minigameState.worldW; gx += 80) {
+      miniCtx.beginPath(); miniCtx.moveTo(gx, 0); miniCtx.lineTo(gx, minigameState.worldH); miniCtx.stroke();
+    }
+    for (let gy = 0; gy < minigameState.worldH; gy += 80) {
+      miniCtx.beginPath(); miniCtx.moveTo(0, gy); miniCtx.lineTo(minigameState.worldW, gy); miniCtx.stroke();
+    }
+
+    miniCtx.strokeStyle = '#233758';
+    miniCtx.lineWidth = 6;
+    miniCtx.strokeRect(0, 0, minigameState.worldW, minigameState.worldH);
+
+    const pulse = (Math.sin(Date.now() / 250) + 1) / 2;
+    minigameState.targetCircles.forEach(term => {
+      miniCtx.fillStyle = `rgba(158, 206, 106, ${0.25 + pulse * 0.2})`;
+      miniCtx.beginPath(); miniCtx.arc(term.x, term.y, term.r, 0, Math.PI * 2); miniCtx.fill();
+      miniCtx.strokeStyle = '#9ece6a'; miniCtx.lineWidth = 3; miniCtx.stroke();
+    });
+
+    minigameState.explosions.forEach(exp => {
+      miniCtx.fillStyle = 'rgba(255, 158, 100, 0.45)';
+      miniCtx.beginPath(); miniCtx.arc(exp.x, exp.y, exp.radius, 0, Math.PI * 2); miniCtx.fill();
+      miniCtx.strokeStyle = '#ff9e64'; miniCtx.lineWidth = 2; miniCtx.stroke();
+    });
+
+    miniCtx.fillStyle = '#7dcfff';
+    miniCtx.beginPath(); miniCtx.arc(minigameState.px, minigameState.py, minigameState.playerRadius, 0, Math.PI * 2);
+    miniCtx.fill();
+    miniCtx.strokeStyle = '#fff'; miniCtx.lineWidth = 1.5; miniCtx.stroke();
+
+    if (minigameState.shieldActive && STATE.computerTier >= 4) {
+      miniCtx.strokeStyle = 'rgba(125, 207, 255, 0.7)';
+      miniCtx.lineWidth = 3;
+      miniCtx.beginPath();
+      miniCtx.arc(minigameState.px, minigameState.py, minigameState.playerRadius + 6, 0, Math.PI * 2);
+      miniCtx.stroke();
+    }
+
+    minigameState.playerBullets.forEach(b => {
+      if (b.type === 'missile') {
+        miniCtx.fillStyle = '#ff9e64';
+        miniCtx.beginPath(); miniCtx.arc(b.x, b.y, 4, 0, Math.PI * 2); miniCtx.fill();
+      } else if (b.type === 'rpg') {
+        miniCtx.fillStyle = '#f7768e';
+        miniCtx.fillRect(b.x - 4, b.y - 4, 8, 8);
+      } else if (b.type === 'sniper') {
+        miniCtx.fillStyle = '#7dcfff';
+        miniCtx.fillRect(b.x - 6, b.y - 2, 12, 4);
+      } else {
+        miniCtx.fillStyle = '#7dcfff';
+        miniCtx.fillRect(b.x - 3, b.y - 3, 6, 6);
+      }
+    });
+
+    miniCtx.fillStyle = '#bb9af7';
+    minigameState.enemyBullets.forEach(eb => {
+      miniCtx.beginPath(); miniCtx.arc(eb.x, eb.y, 4, 0, Math.PI * 2); miniCtx.fill();
+    });
+
+    minigameState.enemies.forEach(em => {
+      if (em.type === 'boss_buffer') {
+        miniCtx.strokeStyle = 'rgba(125, 207, 255, 0.2)';
+        miniCtx.lineWidth = 2;
+        miniCtx.beginPath(); miniCtx.arc(em.x, em.y, 220, 0, Math.PI * 2); miniCtx.stroke();
+      }
+
+      let drawColor = em.color;
+      if (em.chargeState === 'windup') {
+        const blink = Math.floor(Date.now() / 80) % 2 === 0;
+        drawColor = blink ? '#ff0055' : '#ffffff';
+      }
+
+      miniCtx.fillStyle = drawColor;
+      miniCtx.fillRect(em.x - em.size / 2, em.y - em.size / 2, em.size, em.size);
+
+      if (em.hasArmor) {
+        miniCtx.strokeStyle = '#7dcfff';
+        miniCtx.lineWidth = 3;
+        miniCtx.beginPath(); miniCtx.arc(em.x, em.y, em.size / 2 + 5, 0, Math.PI * 2);
+        miniCtx.stroke();
+      }
+
+      if (em.maxHp > 1) {
+        const barW = em.isBoss ? 36 : 20;
+        miniCtx.fillStyle = '#f7768e';
+        miniCtx.fillRect(em.x - barW / 2, em.y - em.size / 2 - 8, barW * (em.hp / em.maxHp), 4);
+        miniCtx.strokeStyle = '#1e293b'; miniCtx.lineWidth = 1; miniCtx.strokeRect(em.x - barW / 2, em.y - em.size / 2 - 8, barW, 4);
+      }
+    });
+
+    miniCtx.restore();
+
+    if (minigameState.nukeFlashTimer > 0) {
+      miniCtx.fillStyle = `rgba(255, 255, 255, ${minigameState.nukeFlashTimer * 2})`;
+      miniCtx.fillRect(0, 0, miniCanvas.width, miniCanvas.height);
+    }
+
+    const mins = Math.floor(minigameState.masterTimer / 60);
+    const secs = Math.floor(minigameState.masterTimer % 60);
+    const timeStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+    miniCtx.fillStyle = minigameState.masterTimer < 30 ? '#f7768e' : '#c0caf5';
+    miniCtx.font = 'bold 13px monospace';
+    miniCtx.fillText(`TIME: ${timeStr} [${minigameState.difficulty.toUpperCase()}]`, 16, 24);
+
+    const hackPct = minigameState.hackTimer / minigameState.hackRequired;
+    miniCtx.fillStyle = '#1e293b'; miniCtx.fillRect(16, 32, 220, 14);
+    miniCtx.fillStyle = '#9ece6a'; miniCtx.fillRect(18, 34, 216 * hackPct, 10);
+    miniCtx.strokeStyle = '#7dcfff'; miniCtx.lineWidth = 1; miniCtx.strokeRect(16, 32, 220, 14);
+
+    miniCtx.fillStyle = '#fff'; miniCtx.font = 'bold 10px monospace';
+    miniCtx.fillText(`HACK: ${Math.floor(minigameState.hackTimer)}s / 30s`, 22, 43);
+
+    miniCtx.fillStyle = 'rgba(10, 14, 24, 0.85)';
+    miniCtx.fillRect(524, 12, 100, 62);
+    miniCtx.strokeStyle = '#3b4261';
+    miniCtx.strokeRect(524, 12, 100, 62);
+
+    const mmScaleX = 100 / minigameState.worldW;
+    const mmScaleY = 62 / minigameState.worldH;
+
+    minigameState.targetCircles.forEach(tc => {
+      miniCtx.fillStyle = '#9ece6a';
+      miniCtx.beginPath();
+      miniCtx.arc(524 + tc.x * mmScaleX, 12 + tc.y * mmScaleY, 3, 0, Math.PI * 2);
+      miniCtx.fill();
+    });
+
+    miniCtx.fillStyle = '#7dcfff';
+    miniCtx.fillRect(524 + minigameState.px * mmScaleX - 1.5, 12 + minigameState.py * mmScaleY - 1.5, 3, 3);
+
+    let closestTarget = minigameState.targetCircles[0];
+    let minDist = Infinity;
+    minigameState.targetCircles.forEach(tc => {
+      const d = Math.hypot(minigameState.px - tc.x, minigameState.py - tc.y);
+      if (d < minDist) { minDist = d; closestTarget = tc; }
+    });
+    const angToTerm = Math.atan2(closestTarget.y - minigameState.py, closestTarget.x - minigameState.px);
+    miniCtx.save();
+    miniCtx.translate(498, 43);
+    miniCtx.rotate(angToTerm);
+    miniCtx.fillStyle = '#9ece6a';
+    miniCtx.beginPath();
+    miniCtx.moveTo(10, 0); miniCtx.lineTo(-6, -4); miniCtx.lineTo(-3, 0); miniCtx.lineTo(-6, 4);
+    miniCtx.closePath();
+    miniCtx.fill();
+    miniCtx.restore();
+
+    function drawHUDBox(bx, by, bsize, iconChar, keyChar, isReady, timerVal, activeColor) {
+      miniCtx.fillStyle = 'rgba(14, 18, 28, 0.9)';
+      miniCtx.fillRect(bx, by, bsize, bsize);
+      miniCtx.strokeStyle = isReady ? activeColor : '#3b4261';
+      miniCtx.lineWidth = 1.5;
+      miniCtx.strokeRect(bx, by, bsize, bsize);
+
+      miniCtx.fillStyle = isReady ? activeColor : '#7a819b';
+      miniCtx.font = '15px monospace';
+      miniCtx.textAlign = 'center';
+      miniCtx.fillText(iconChar, bx + bsize / 2, by + 18);
+
+      miniCtx.fillStyle = '#ffffff';
+      miniCtx.font = 'bold 8px monospace';
+      miniCtx.fillText(`[${keyChar}]`, bx + bsize / 2, by + 28);
+
+      if (!isReady && timerVal !== null) {
+        miniCtx.fillStyle = '#f7768e';
+        miniCtx.font = 'bold 9px monospace';
+        miniCtx.fillText(`${Math.ceil(timerVal)}s`, bx + bsize / 2, by + 39);
+      } else {
+        miniCtx.fillStyle = isReady ? '#9ece6a' : '#7a819b';
+        miniCtx.font = 'bold 7px monospace';
+        miniCtx.fillText(timerVal === null ? 'ACTIVE' : 'RDY', bx + bsize / 2, by + 39);
+      }
+      miniCtx.textAlign = 'start';
+    }
+
+    if (STATE.computerTier >= 3) {
+      const weaponIcons = { pistol: '🔫', rpg: '🚀', shotgun: '💥', sniper: '🎯' };
+      const curIcon = weaponIcons[minigameState.selectedWeapon] || '🔫';
+      drawHUDBox(16, 344, 44, curIcon, 'Q', true, null, '#bb9af7');
+    }
+
+    if (STATE.computerTier >= 4) {
+      const startX = STATE.computerTier >= 3 ? 68 : 16;
+      const isShieldRdy = minigameState.shieldActive;
+      drawHUDBox(startX, 344, 44, '🛡️', 'R', isShieldRdy, isShieldRdy ? 0 : minigameState.shieldCooldown, '#7dcfff');
+
+      const isStopActive = minigameState.timeStopTimer > 0;
+      const isStopRdy = minigameState.timeStopCooldown <= 0;
+      drawHUDBox(startX + 50, 344, 44, '⏱️', 'F', isStopRdy || isStopActive, isStopActive ? null : (isStopRdy ? 0 : minigameState.timeStopCooldown), '#bb9af7');
+
+      const isSlowActive = minigameState.timeSlowTimer > 0;
+      const isSlowRdy = minigameState.timeSlowCooldown <= 0;
+      drawHUDBox(startX + 100, 344, 44, '❄️', 'C', isSlowRdy || isSlowActive, isSlowActive ? null : (isSlowRdy ? 0 : minigameState.timeSlowCooldown), '#7aa2f7');
+
+      const isNukeRdy = minigameState.nukeCooldown <= 0;
+      drawHUDBox(startX + 150, 344, 44, '☢️', 'T', isNukeRdy, isNukeRdy ? 0 : minigameState.nukeCooldown, '#ff9e64');
+    }
+  }
+
+  if (minigameState.startDelay > 0 && !STATE.minigameTutorialActive) {
+    miniCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    miniCtx.fillRect(0, 0, miniCanvas.width, miniCanvas.height);
+    miniCtx.fillStyle = '#e0af68';
+    miniCtx.font = 'bold 22px monospace';
+    miniCtx.textAlign = 'center';
+    miniCtx.fillText(`INITIALIZING SYSTEM LINK: ${minigameState.startDelay.toFixed(1)}s`, miniCanvas.width / 2, miniCanvas.height / 2);
+    miniCtx.textAlign = 'start';
+  }
+}
+
+function closeMinigame(success) {
+  STATE.minigameActive = false;
+  STATE.minigameTutorialActive = false;
+  document.getElementById('modal-minigame').style.display = 'none';
+  document.getElementById('modal-minigame-tutorial').style.display = 'none';
+
+  if (success && STATE.activeMissionId) {
+    const m = MISSIONS.find(x => x.id === STATE.activeMissionId);
+    if (m) {
+      STATE.infamy += m.infamy;
+      showNotification(`OPERATION COMPLETED [${m.difficulty.toUpperCase()}]: ${m.name}! Infamy +${m.infamy}`);
+      reassignAllHeroNemeses();
+      checkRivalRankTriggers();
+    }
+  }
+  updateHUD();
+}
+
+// VR Ending Engine & Route Handlers
+function triggerDay50Ending() {
+  const casualties = STATE.totalCasualties;
+  const didVillainy = STATE.didAnyVillainy;
+
+  let endingTitle = "";
+  let awakeningText = "";
+  let options = [];
+
+  if (!didVillainy) {
+    endingTitle = "Ending: Peaceful Grocer (Zero Villainy)";
+    awakeningText = "You pull off your VR headset and blink against the warm bedroom light. Your friends are staring at you with curiosity. 'Well?' they ask. 'What was it like?' You spent 50 days strictly managing checkout lanes, scanning barcodes, and chatting with everyday shoppers without a single dark enterprise or digital hack.";
+    options = [
+      "\"It was surprisingly relaxing. Just honest retail work and friendly customers.\"",
+      "\"Honestly, it felt more like a stress simulator than a game.\"",
+      "\"I spent fifty days selling Doom-Flakes. I think I'm qualified to manage a real store now.\"",
+      "\"The simulation felt so vivid. For a second, I actually cared whether our organic milk was fresh.\""
+    ];
+  } else if (casualties === 0) {
+    endingTitle = "Ending: Master Hacker (Zero Kills)";
+    awakeningText = "You lift the headset off your forehead, taking a deep breath of room air as your friends crowd around. 'So, how was the supervillain simulator?' You navigated 50 days of intricate computer hacks, satellite overrides, and syndicate politics—all without shedding a single drop of blood.";
+    options = [
+      "\"Incredible! I hacked global mainframes and climbed to the top of the syndicate without hurting anyone.\"",
+      "\"Ghost in the machine. I slipped through every firewall undetected.\"",
+      "\"It turns out you don't need violence to rule the underground. Just supreme tech skills.\"",
+      "\"My tactical hacking was pristine. The corporate firewalls didn't stand a chance.\""
+    ];
+  } else if (casualties < 25) {
+    endingTitle = "Ending: Shadow Operative (Low Casualty Route)";
+    awakeningText = "The headset clicks off, releasing a wisp of cooling vapor. Your friends look at you expectantly. 'How wild was the game?' You survived 50 grueling days balancing a front-end grocery store with occasional orbital strikes and collateral skirmishes.";
+    options = [
+      "\"It was intense! Balancing checkout lines by day and satellite hacks by night kept me on my toes.\"",
+      "\"A bit messy here and there, but I managed to keep the authorities guessing until the very end.\"",
+      "\"Running a retail front while executing covert grid strikes is harder than it looks!\"",
+      "\"I had to make a few hard calls in the sector, but the underground empire thrived.\""
+    ];
+  } else {
+    endingTitle = "Ending: Supreme Overlord (High Casualty Route)";
+    awakeningText = "You tear off the neural headset, your heart pounding as your room slowly comes into focus around your startled friends. 'Whoa, you look intense. What happened in there?' You left a trail of over 25 casualties across metropolitan districts, achieving absolute Supervillain dominance.";
+    options = [
+      "\"Total domination. The city burned beneath my orbital laser and nobody could stop me.\"",
+      "\"I left nothing in my wake. The superheroes and vigilantes learned to fear my name.\"",
+      "\"Fifty days of absolute terror for the city. I was an unstoppable force of nature.\"",
+      "\"The Apex Purge Syndicate bowed to me. That simulation didn't hold anything back.\""
+    ];
+  }
+
+  document.getElementById('vr-ending-title').innerText = endingTitle;
+  document.getElementById('vr-awakening-text').innerText = awakeningText;
+  document.getElementById('vr-dialogue-options').innerHTML = options.map((opt, i) => `
+    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="selectVREndingDialogue(${i})">
+      💬 ${opt}
+    </button>
+  `).join('');
+
+  document.getElementById('modal-vr-ending').style.display = 'flex';
+}
+
+function triggerDeathEnding() {
+  const casualties = STATE.totalCasualties;
+  let endingTitle = casualties >= 25 ? "Ending: Fallen Supervillain (High Casualty Death)" : "Ending: Intercepted Operative (Low Casualty Death)";
+  let awakeningText = `Your screen flashes red as security countermeasures neutralize your avatar. You slide off the VR headset, greeted by your friends in your room. 'Oof, rough run! How did it end?' You fell in battle after ${STATE.dayNumber} days of operation.`;
+  
+  let options = [
+    "\"Ambushed by elite security protocols! That was brutal.\"",
+    "\"We pushed our luck too far in the grid. Next time we secure the perimeter first.\"",
+    "\"Even in defeat, our underground empire made its mark on the city.\"",
+    "\"Let's boot it up again. I know exactly what mistakes we made.\""
+  ];
+
+  document.getElementById('vr-ending-title').innerText = endingTitle;
+  document.getElementById('vr-awakening-text').innerText = awakeningText;
+  document.getElementById('vr-dialogue-options').innerHTML = options.map((opt, i) => `
+    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="selectVREndingDialogue(${i})">
+      💬 ${opt}
+    </button>
+  `).join('');
+
+  document.getElementById('modal-vr-ending').style.display = 'flex';
+}
+
+function selectVREndingDialogue(idx) {
+  showNotification("Dialogue recorded. You can continue free play or explore the simulation further.");
+  document.getElementById('modal-vr-ending').style.display = 'none';
+}
+
+function reputOnHeadset() {
+  document.getElementById('modal-vr-ending').style.display = 'none';
+  showNotification("Headset re-engaged. Free play mode active (Day 50+).");
+}
+
+function verifyAdminPasscode() {
+  const input = document.getElementById('admin-passcode-input');
+  if (input.value === '1234') {
+    toggleAdminMode(true);
+    input.value = '';
+  } else {
+    alert("Incorrect passcode!");
+    input.value = '';
+  }
+}
+
+function toggleAdminMode(enable) {
+  STATE.adminMode = enable;
+  document.getElementById('admin-auth-panel').style.display = enable ? 'none' : 'block';
+  document.getElementById('admin-status-panel').style.display = enable ? 'block' : 'none';
+  document.getElementById('hud-admin-indicator').style.display = enable ? 'inline-block' : 'none';
+  document.getElementById('admin-casualty-input').value = STATE.totalCasualties;
+  showNotification(enable ? "ADMIN MODE ENABLED: All upgrades free, missions unlocked!" : "Admin Mode Disabled.");
+  renderUI();
+}
+
+function adminSkipToDay50() {
+  STATE.dayNumber = 50;
+  toggleMenu();
+  triggerDay50Ending();
+}
+
+function adminSetCasualties(val) {
+  STATE.totalCasualties = Math.max(0, parseInt(val) || 0);
+  if (STATE.totalCasualties >= 25 && !STATE.isSupervillain) {
+    STATE.isSupervillain = true;
+  }
+  checkCasualtyStatusEscalation();
+  updateHUD();
+}
+
+function applyLayoutMap(tier) {
+  STATE.storeTier = tier;
+  REGISTERS = [
+    { id: 0, tile: { col: 2, row: 9 }, cashierSlot: { col: 1, row: 9 }, queueSlot: { col: 3, row: 9 }, assignedCashier: null, activeCustomer: null, checkoutProgress: 0, checkoutDuration: 0 }
+  ];
+
+  if (tier === 1) {
+    storeMap[9][2] = 5; storeMap[10][2] = 0; storeMap[11][2] = 0;
+    storeMap[2][20] = 10; storeMap[2][21] = 10; storeMap[3][20] = 10; storeMap[3][21] = 10;
+    storeMap[5][16] = 2; storeMap[5][17] = 2; storeMap[6][16] = 2; storeMap[6][17] = 2;
+    BROWSING_POINTS = [
+      { col: 7, row: 5 }, { col: 10, row: 5 }, { col: 11, row: 5 }, { col: 14, row: 5 },
+      { col: 15, row: 5 }, { col: 18, row: 5 }, { col: 19, row: 3 }, { col: 22, row: 3 }
+    ];
+  } else if (tier === 2) {
+    storeMap[9][2] = 5; storeMap[10][2] = 5; storeMap[11][2] = 0;
+    storeMap[2][20] = 10; storeMap[2][21] = 10; storeMap[3][20] = 10; storeMap[3][21] = 10;
+    storeMap[5][16] = 2; storeMap[5][17] = 2; storeMap[6][16] = 2; storeMap[6][17] = 2;
+    storeMap[5][20] = 2; storeMap[5][21] = 2; storeMap[6][20] = 2; storeMap[6][21] = 2;
+    REGISTERS.push(
+      { id: 1, tile: { col: 2, row: 10 }, cashierSlot: { col: 1, row: 10 }, queueSlot: { col: 3, row: 10 }, assignedCashier: null, activeCustomer: null, checkoutProgress: 0, checkoutDuration: 0 }
+    );
+    BROWSING_POINTS = [
+      { col: 7, row: 5 }, { col: 10, row: 5 }, { col: 11, row: 5 }, { col: 14, row: 5 },
+      { col: 15, row: 5 }, { col: 18, row: 5 }, { col: 19, row: 5 }, { col: 22, row: 5 },
+      { col: 19, row: 3 }, { col: 22, row: 3 }
+    ];
+  } else if (tier === 3) {
+    storeMap[9][2] = 5; storeMap[10][2] = 5; storeMap[11][2] = 5;
+    storeMap[2][20] = 10; storeMap[2][21] = 10; storeMap[3][20] = 10; storeMap[3][21] = 10;
+    storeMap[5][8] = 2; storeMap[5][9] = 2; storeMap[6][8] = 2; storeMap[6][9] = 2;
+    storeMap[5][12] = 2; storeMap[5][13] = 2; storeMap[6][12] = 2; storeMap[6][13] = 2;
+    storeMap[5][16] = 2; storeMap[5][17] = 2; storeMap[6][16] = 2; storeMap[6][17] = 2;
+    storeMap[5][20] = 2; storeMap[5][21] = 2; storeMap[6][20] = 2; storeMap[6][21] = 2;
+    REGISTERS.push(
+      { id: 1, tile: { col: 2, row: 10 }, cashierSlot: { col: 1, row: 10 }, queueSlot: { col: 3, row: 10 }, assignedCashier: null, activeCustomer: null, checkoutProgress: 0, checkoutDuration: 0 },
+      { id: 2, tile: { col: 2, row: 11 }, cashierSlot: { col: 1, row: 11 }, queueSlot: { col: 3, row: 11 }, assignedCashier: null, activeCustomer: null, checkoutProgress: 0, checkoutDuration: 0 }
+    );
+    BROWSING_POINTS = [
+      { col: 7, row: 5 }, { col: 10, row: 5 }, { col: 11, row: 5 }, { col: 14, row: 5 },
+      { col: 15, row: 5 }, { col: 18, row: 5 }, { col: 19, row: 5 }, { col: 22, row: 5 },
+      { col: 19, row: 3 }, { col: 22, row: 3 }, { col: 7, row: 8 }, { col: 11, row: 8 }
+    ];
+  }
+}
+
+function calculateDailyCustomers() {
+  if (STATE.dayNumber === 1) return 5;
+  const mult = STATE.marketingMultiplier;
+  const sign = Math.random() < 0.5 ? -1 : 1;
+  const varianceNum = Math.floor(1 + Math.random() * 3);
+  return Math.max(4, Math.round(10 * mult + (sign * mult * 0.5 * varianceNum)));
+}
+
+function dismissTutorialBanner() {
+  STATE.tutorialBannerDismissed = true;
+  document.getElementById('notification-banner').style.display = 'none';
+}
+
+function updateTutorialBanner() {
+  const banner = document.getElementById('notification-banner');
+  const bannerText = document.getElementById('banner-text');
+
+  if (STATE.tutorialBannerDismissed || STATE.tutorialStep > 6 || STATE.dayNumber > 1) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  banner.style.display = 'block';
+  if (STATE.tutorialStep === 1) bannerText.innerText = "TUTORIAL [1/6]: Walk up to any grocery shelf and press [E] or [SPACE] to restock!";
+  else if (STATE.tutorialStep === 2) bannerText.innerText = "TUTORIAL [2/6]: Wait for a shopper to enter the line, walk to the register, and press [E] to check them out!";
+  else if (STATE.tutorialStep === 3) bannerText.innerText = "TUTORIAL [3/6]: Head left into your Private Office. Step near the door to open it and interact with the Desk [E]!";
+  else if (STATE.tutorialStep === 4) bannerText.innerText = "TUTORIAL [4/6]: Walk to the blue Bookshelf inside your office and press [E] to enter your secret Lair!";
+  else if (STATE.tutorialStep === 5) bannerText.innerText = "TUTORIAL [5/6]: Walk over and speak with your Butler Jarvis [E] in the lair for strategic intel!";
+  else if (STATE.tutorialStep === 6) bannerText.innerText = "TUTORIAL [6/6]: Check your TV Supercomputer screen [E] on the right to view global operations and hero radars!";
+}
+
+function init() {
+  applyLayoutMap(1);
+  initRivalPersonality();
+  generateVillainLeaderboardData();
+  generate50GlobalHeroes();
+  sendRivalMessage('start');
+  STATE.dayTotalCustomers = calculateDailyCustomers();
+  PRODUCTS.forEach(p => {
+    p.popularity = rollDemand();
+    p.nextPopularity = rollDemand();
+  });
+  renderUI();
+  updateTutorialBanner();
+  requestAnimationFrame(gameLoop);
+  setInterval(secTimer, 1000);
+}
+
+function showNotification(msg) {
+  const banner = document.getElementById('notification-banner');
+  const bannerText = document.getElementById('banner-text');
+  banner.style.display = 'block';
+  bannerText.innerText = msg;
+}
+
+function findPath(startCol, startRow, targetCol, targetRow) {
+  const map = storeMap;
+  const rows = map.length;
+  const cols = map[0].length;
+  const isWalkable = (c, r) => {
+    if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
+    const tile = map[r][c];
+    return tile === 0 || tile === 8 || tile === 9;
+  };
+
+  if (!isWalkable(targetCol, targetRow)) return [];
+  if (startCol === targetCol && startRow === targetRow) return [];
+
+  const openList = [];
+  const closedSet = new Set();
+  const nodeMap = new Map();
+  const getNode = (c, r) => {
+    const key = `${c},${r}`;
+    if (!nodeMap.has(key)) nodeMap.set(key, { c, r, g: Infinity, h: 0, f: Infinity, parent: null });
+    return nodeMap.get(key);
+  };
+
+  const startNode = getNode(startCol, startRow);
+  startNode.g = 0;
+  startNode.h = Math.abs(targetCol - startCol) + Math.abs(targetRow - startRow);
+  startNode.f = startNode.h;
+  openList.push(startNode);
+
+  while (openList.length > 0) {
+    openList.sort((a, b) => a.f - b.f);
+    const current = openList.shift();
+    if (current.c === targetCol && current.r === targetRow) {
+      const path = [];
+      let temp = current;
+      while (temp.parent) { path.unshift({ col: temp.c, row: temp.r }); temp = temp.parent; }
+      return path;
+    }
+    closedSet.add(`${current.c},${current.r}`);
+    const neighbors = [{c:current.c, r:current.r-1}, {c:current.c, r:current.r+1}, {c:current.c-1, r:current.r}, {c:current.c+1, r:current.r}];
+    for (let nb of neighbors) {
+      if (!isWalkable(nb.c, nb.r) || closedSet.has(`${nb.c},${nb.r}`)) continue;
+      const nbNode = getNode(nb.c, nb.r);
+      const tentativeG = current.g + 1;
+      if (tentativeG < nbNode.g) {
+        nbNode.parent = current;
+        nbNode.g = tentativeG;
+        nbNode.h = Math.abs(targetCol - nb.c) + Math.abs(targetRow - nb.r);
+        nbNode.f = nbNode.g + nbNode.h;
+        if (!openList.some(n => n.c === nb.c && n.r === nb.r)) openList.push(nbNode);
+      }
+    }
+  }
+  return [];
+}
+
+function getActiveQueue(registerId = null) {
+  return npcs
+    .filter(n => !n.isEmployee && (n.state === 'in_line' || n.state === 'at_register') && (registerId === null || n.assignedRegisterId === registerId))
+    .sort((a, b) => a.joinedQueueTime - b.joinedQueueTime);
+}
+
+function getCustomerQueueIndex(cust) {
+  const q = getActiveQueue(cust.assignedRegisterId);
+  return q.indexOf(cust);
+}
+
+function getQueueSlotTile(registerId, index) {
+  const reg = REGISTERS.find(r => r.id === registerId) || REGISTERS[0];
+  return { col: reg.queueSlot.col + index, row: reg.queueSlot.row };
+}
+
+function recalculateLinePositions() {
+  REGISTERS.forEach(reg => {
+    const line = getActiveQueue(reg.id);
+    line.forEach((n, index) => {
+      if (index === 0) n.state = 'at_register';
+      const desiredSlot = getQueueSlotTile(reg.id, index);
+      const c = Math.floor((n.x + 8) / TILE_SIZE);
+      const r = Math.floor((n.y + 8) / TILE_SIZE);
+      if (c !== desiredSlot.col || r !== desiredSlot.row) {
+        n.path = findPath(c, r, desiredSlot.col, desiredSlot.row);
+      }
+    });
+  });
+}
+
+function findBestRegister() {
+  let best = REGISTERS[0];
+  let minCount = Infinity;
+  REGISTERS.forEach(reg => {
+    const count = getActiveQueue(reg.id).length;
+    if (count < minCount) {
+      minCount = count;
+      best = reg;
+    }
+  });
+  return best;
+}
+
+class Employee {
+  constructor(role) {
+    this.x = 11.5 * TILE_SIZE;
+    this.y = 12.0 * TILE_SIZE;
+    this.role = role;
+    this.isEmployee = true;
+    this.speed = 1.0;
+    this.dir = 'up';
+    this.walkFrame = 0;
+    this.isMoving = false;
+    this.path = [];
+    this.timer = 0;
+    this.assignedRegisterId = null;
+
+    this.skinColor = '#fcd0a1';
+    this.shirtColor = '#a3be8c';
+    this.pantsColor = '#4c566a';
+    this.hairColor = '#d08770';
+
+    this.initStation();
+  }
+
+  initStation() {
+    if (STATE.phase === 'day') {
+      const c = Math.floor((this.x + 8) / TILE_SIZE);
+      const r = Math.floor((this.y + 8) / TILE_SIZE);
+      if (this.role === 'cashier') {
+        const availableReg = REGISTERS.find(reg => reg.assignedCashier === null || reg.assignedCashier === this);
+        if (availableReg) {
+          availableReg.assignedCashier = this;
+          this.assignedRegisterId = availableReg.id;
+          this.path = findPath(c, r, availableReg.cashierSlot.col, availableReg.cashierSlot.row);
+        }
+      } else if (this.role === 'stocker') {
+        const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
+        this.path = findPath(c, r, targetShelf.col, targetShelf.row);
+      }
+    }
+  }
+
+  sendHome() {
+    const c = Math.floor((this.x + 8) / TILE_SIZE);
+    const r = Math.floor((this.y + 8) / TILE_SIZE);
+    this.path = findPath(c, r, 11, 12);
+  }
+
+  update() {
+    this.walkFrame += 0.08;
+    checkVisionCone(this);
+
+    if (this.path && this.path.length > 0) {
+      this.isMoving = true;
+      const target = this.path[0];
+      const tPx = target.col * TILE_SIZE + 8;
+      const tPy = target.row * TILE_SIZE + 8;
+      const dx = tPx - this.x;
+      const dy = tPy - this.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > 1.5) {
+        this.x += (dx / dist) * this.speed;
+        this.y += (dy / dist) * this.speed;
+        this.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      } else {
+        this.x = tPx; this.y = tPy;
+        this.path.shift();
+      }
+    } else {
+      this.isMoving = false;
+      this.handleRoleAI();
+    }
+  }
+
+  handleRoleAI() {
+    if (STATE.phase === 'night') return;
+
+    if (this.role === 'cashier') {
+      this.dir = 'right';
+      const reg = REGISTERS.find(r => r.id === this.assignedRegisterId);
+      if (reg) {
+        const c = Math.floor((this.x + 8) / TILE_SIZE);
+        const r = Math.floor((this.y + 8) / TILE_SIZE);
+        if (c !== reg.cashierSlot.col || r !== reg.cashierSlot.row) {
+          this.path = findPath(c, r, reg.cashierSlot.col, reg.cashierSlot.row);
+        }
+
+        const line = getActiveQueue(reg.id);
+        if (line.length > 0 && line[0].state === 'at_register' && !reg.activeCustomer) {
+          startCheckout(line[0], reg);
+        }
+      }
+    } else if (this.role === 'stocker') {
+      if (this.timer <= 0) {
+        const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
+        const c = Math.floor((this.x + 8) / TILE_SIZE);
+        const r = Math.floor((this.y + 8) / TILE_SIZE);
+        this.path = findPath(c, r, targetShelf.col, targetShelf.row);
+        this.timer = 120 + Math.random() * 100;
+      } else {
+        this.timer--;
+      }
+    }
+  }
+}
+
+class Customer {
+  constructor() {
+    this.x = 11.5 * TILE_SIZE;
+    this.y = 12.0 * TILE_SIZE;
+    this.speed = 0.55;
+    this.state = 'shopping';
+
+    this.itemGoal = Math.floor(1 + Math.random() * 4);
+    this.basket = [];
+    this.dislikedCount = 0;
+    this.shoppingTimer = Math.floor(12 + Math.random() * 16);
+    this.aisleVisitTimer = 0;
+    this.pauseTimer = 0;
+    this.timeAlive = 0;
+    this.joinedQueueTime = Infinity;
+    this.assignedRegisterId = null;
+
+    this.path = [];
+    this.isEmployee = false;
+    this.dir = 'up';
+    this.walkFrame = 0;
+    this.isMoving = false;
+    this.skinColor = ['#fcd0a1', '#d49b6a', '#8d5524', '#ffdbac'][Math.floor(Math.random()*4)];
+    this.shirtColor = ['#e0af68', '#f7768e', '#7aa2f7', '#bb9af7', '#7dcfff'][Math.floor(Math.random()*5)];
+    this.pantsColor = ['#343b58', '#24283b', '#414868'][Math.floor(Math.random()*3)];
+    this.hairColor = ['#1a1b26', '#45281e', '#8c4320', '#d08770'][Math.floor(Math.random()*4)];
+
+    this.setPathToAisle();
+  }
+
+  setPathToAisle() {
+    const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
+    const curCol = Math.floor((this.x + 8) / TILE_SIZE);
+    const curRow = Math.floor((this.y + 8) / TILE_SIZE);
+    this.path = findPath(curCol, curRow, pt.col, pt.row);
+    this.aisleVisitTimer = 2 + Math.floor(Math.random() * 3);
+  }
+
+  update() {
+    this.walkFrame += 0.08;
+    this.timeAlive += 1 / 60;
+    checkVisionCone(this);
+
+    if (this.pauseTimer > 0) {
+      this.isMoving = false;
+      return;
+    }
+
+    if (this.path && this.path.length > 0) {
+      this.isMoving = true;
+      const target = this.path[0];
+      const targetPx = target.col * TILE_SIZE + 8;
+      const targetPy = target.row * TILE_SIZE + 8;
+      const dx = targetPx - this.x;
+      const dy = targetPy - this.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > 1.2) {
+        this.x += (dx / dist) * this.speed;
+        this.y += (dy / dist) * this.speed;
+        this.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      } else {
+        this.x = targetPx; this.y = targetPy;
+        this.path.shift();
+      }
+    } else {
+      this.isMoving = false;
+      this.handleStateLogic();
+    }
+  }
+
+  handleStateLogic() {
+    if (this.state === 'shopping') {
+      if (this.shoppingTimer > 0 && this.basket.length < this.itemGoal) {
+        if (this.aisleVisitTimer <= 0) {
+          this.setPathToAisle();
+          const unlockedProds = PRODUCTS.filter(p => p.unlocked);
+
+          if (unlockedProds.length === 0) {
+            triggerSpeechBubble(this.x, this.y, "Nothing left on the shelves!", 1500, 'store');
+            this.rageQuit();
+            return;
+          }
+
+          const picked = unlockedProds[Math.floor(Math.random() * unlockedProds.length)];
+
+          if (picked.stock <= 0) {
+            triggerSpeechBubble(this.x, this.y, `They're out of ${picked.name}!`, 1500, 'store');
+            this.dislikedCount++;
+            if (this.dislikedCount >= 3) {
+              this.rageQuit();
+            }
+            return;
+          }
+
+          const mp = picked.marketPrice;
+          const curP = picked.price;
+          let isAngry = false;
+
+          if (picked.popularity === 'popular') {
+            if (curP > mp * 1.20) {
+              const markupRatio = (curP - mp * 1.20) / (mp * 1.20);
+              if (Math.random() < Math.min(0.95, markupRatio * 2.0)) isAngry = true;
+            }
+          } else if (picked.popularity === 'normal') {
+            if (curP > mp * 1.05) {
+              const markupRatio = (curP - mp * 1.05) / (mp * 1.05);
+              if (Math.random() < Math.min(0.95, markupRatio * 2.0)) isAngry = true;
+            }
+          } else if (picked.popularity === 'unpopular') {
+            if (curP < mp * 0.95) {
+              isAngry = false;
+            } else if (curP > mp) {
+              isAngry = true;
+            } else {
+              if (Math.random() < 0.35) isAngry = true;
+            }
+          }
+
+          if (isAngry) {
+            this.dislikedCount++;
+            STATE.dayCustomerDislikes++;
+            triggerSpeechBubble(this.x, this.y, `$${picked.price} for ${picked.name}?! Ripoff!`, 1500, 'store');
+
+            if (this.dislikedCount >= 3 || (this.basket.length === 0 && this.dislikedCount >= this.itemGoal)) {
+              this.rageQuit();
+              return;
+            }
+            return;
+          }
+
+          picked.stock--;
+          this.basket.push(picked);
+          this.pauseTimer = 1.0;
+        }
+      } else {
+        if (this.basket.length === 0) {
+          this.rageQuit();
+          return;
+        }
+        this.state = 'approaching_register';
+        const bestReg = findBestRegister();
+        this.assignedRegisterId = bestReg.id;
+        const lineSnapshotSize = getActiveQueue(bestReg.id).length;
+        const landingSlot = getQueueSlotTile(bestReg.id, lineSnapshotSize);
+        const curCol = Math.floor((this.x + 8) / TILE_SIZE);
+        const curRow = Math.floor((this.y + 8) / TILE_SIZE);
+        this.path = findPath(curCol, curRow, landingSlot.col, landingSlot.row);
+      }
+    } else if (this.state === 'approaching_register') {
+      this.state = 'in_line';
+      this.joinedQueueTime = performance.now();
+      recalculateLinePositions();
+    } else if (this.state === 'in_line') {
+      recalculateLinePositions();
+    } else if (this.state === 'leaving') {
+      const idx = npcs.indexOf(this);
+      if (idx !== -1) npcs.splice(idx, 1);
+    }
+  }
+
+  rageQuit() {
+    this.state = 'leaving';
+    this.joinedQueueTime = Infinity;
+    STATE.dayWalkouts++;
+    STATE.suspicion = Math.min(100, STATE.suspicion + 5);
+    triggerSpeechBubble(this.x, this.y, "What a terrible supermarket! I'm leaving!", 2000, 'store');
+    const curCol = Math.floor((this.x + 8) / TILE_SIZE);
+    const curRow = Math.floor((this.y + 8) / TILE_SIZE);
+    this.path = findPath(curCol, curRow, 11, 12);
+    updateHUD();
+  }
+}
+
+function checkVisionCone(entity) {
+  if (STATE.currentMap !== 'store') return;
+  const pCol = Math.floor(player.x / TILE_SIZE);
+  const pRow = Math.floor(player.y / TILE_SIZE);
+  const eCol = Math.floor(entity.x / TILE_SIZE);
+  const eRow = Math.floor(entity.y / TILE_SIZE);
+
+  const diffC = pCol - eCol;
+  const diffR = pRow - eRow;
+  const tileDist = Math.abs(diffC) + Math.abs(diffR);
+
+  if (tileDist <= 4) {
+    let inCone = false;
+    if (entity.dir === 'up' && diffR < 0 && Math.abs(diffC) <= Math.abs(diffR)) inCone = true;
+    if (entity.dir === 'down' && diffR > 0 && Math.abs(diffC) <= Math.abs(diffR)) inCone = true;
+    if (entity.dir === 'left' && diffC < 0 && Math.abs(diffR) <= Math.abs(diffC)) inCone = true;
+    if (entity.dir === 'right' && diffC > 0 && Math.abs(diffR) <= Math.abs(diffC)) inCone = true;
+
+    if (inCone && isNearTile(3)) {
+      STATE.suspicion = Math.min(100, STATE.suspicion + 1);
+      if (Math.random() < 0.02) triggerSpeechBubble(entity.x, entity.y, "Hey! What's behind that bookcase?!", 2000, 'store');
+    }
+  }
+}
+
+function spawnCustomer() {
+  if (STATE.customersSpawnedToday >= STATE.dayTotalCustomers) return;
+  STATE.customersSpawnedToday++;
+  npcs.push(new Customer());
+  STATE.spawnCooldown = Math.floor(4 + Math.random() * 8);
+  updateHUD();
+}
+
+function startCheckout(cust, reg) {
+  if (reg.activeCustomer) return;
+  reg.activeCustomer = cust;
+  reg.checkoutDuration = 1.5 + (0.8 * cust.basket.length);
+  reg.checkoutProgress = 0;
+}
+
+function finishCheckout(cust, reg) {
+  const earnings = cust.basket.reduce((sum, item) => sum + item.price, 0);
+  STATE.money += earnings;
+  STATE.daySales += earnings;
+  STATE.dayItemsSold += cust.basket.length;
+  STATE.customersServedToday++;
+  triggerSpeechBubble(cust.x, cust.y, `Paid $${earnings} (${cust.basket.length} items)`, 2000, 'store');
+
+  cust.state = 'leaving';
+  cust.joinedQueueTime = Infinity;
+  const curCol = Math.floor((cust.x + 8) / TILE_SIZE);
+  const curRow = Math.floor((cust.y + 8) / TILE_SIZE);
+  cust.path = findPath(curCol, curRow, 11, 12);
+
+  reg.activeCustomer = null;
+  reg.checkoutProgress = 0;
+
+  if (STATE.dayNumber === 1 && STATE.tutorialStep === 2) {
+    STATE.tutorialStep = 3;
+    updateTutorialBanner();
+  }
+
+  setTimeout(() => { recalculateLinePositions(); }, 80);
+  updateHUD();
+}
+
+let secTick = 0;
+function secTimer() {
+  secTick++;
+  const pCol = Math.floor(player.x / TILE_SIZE);
+  const pRow = Math.floor(player.y / TILE_SIZE);
+  STATE.officeDoorOpen = Math.abs(pCol - OFFICE_DOOR_POS.col) <= 1 && Math.abs(pRow - OFFICE_DOOR_POS.row) <= 1;
+
+  if (STATE.phase === 'day') {
+    npcs.forEach(n => {
+      if (!n.isEmployee) {
+        if (n.pauseTimer > 0) n.pauseTimer -= 1;
+        if (n.state === 'shopping') { 
+          n.shoppingTimer--; 
+          n.aisleVisitTimer--; 
+
+          if (secTick % 3 === 0 && n.timeAlive > 3 && n.pauseTimer <= 0) {
+            const nearShelf = isEntityNearShelf(n);
+            const chance = nearShelf ? 0.30 : 0.10;
+            if (Math.random() < chance) {
+              n.pauseTimer = 1.0;
+            }
+          }
+        }
+      }
+    });
+    if (STATE.customersSpawnedToday < STATE.dayTotalCustomers) {
+      STATE.spawnCooldown--;
+      if (STATE.spawnCooldown <= 0) spawnCustomer();
+    }
+
+    if (STATE.autoProgress) {
+      const remainingShoppers = npcs.filter(n => !n.isEmployee).length;
+      if (STATE.customersSpawnedToday >= STATE.dayTotalCustomers && remainingShoppers === 0) {
+        closeShopForNight();
+      }
+    }
+  } else if (STATE.phase === 'night') {
+    if (STATE.autoProgress) {
+      STATE.nightTimer++;
+      if (STATE.nightTimer >= 8) {
+        STATE.nightTimer = 0;
+        startNextDayShift();
+      }
+    }
+  }
+  if (STATE.tvOpen) renderTVContent();
+  updateHUD();
+}
+
+function isEntityNearShelf(entity) {
+  const col = Math.floor((entity.x + 8) / TILE_SIZE);
+  const row = Math.floor((entity.y + 8) / TILE_SIZE);
+  const curMap = STATE.currentMap === 'store' ? storeMap : lairMap;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (curMap[row + dy] && (curMap[row + dy][col + dx] === 2 || curMap[row + dy][col + dx] === 10 || curMap[row + dy][col + dx] === 11)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function gameLoop() {
+  update();
+  render();
+  if (STATE.minigameActive) updateAndRenderMinigame();
+  requestAnimationFrame(gameLoop);
+}
+
+function update() {
+  REGISTERS.forEach(reg => {
+    if (reg.activeCustomer) {
+      reg.checkoutProgress += 1 / 60;
+      if (reg.checkoutProgress >= reg.checkoutDuration) {
+        finishCheckout(reg.activeCustomer, reg);
+      }
+    }
+  });
+
+  if (!STATE.menuOpen && !STATE.tvOpen && !STATE.minigameActive) {
+    player.vx = 0; player.vy = 0;
+    if (keys['w'] || keys['arrowup']) { player.vy = -player.speed; player.dir = 'up'; }
+    if (keys['s'] || keys['arrowdown']) { player.vy = player.speed; player.dir = 'down'; }
+    if (keys['a'] || keys['arrowleft']) { player.vx = -player.speed; player.dir = 'left'; }
+    if (keys['d'] || keys['arrowright']) { player.vx = player.speed; player.dir = 'right'; }
+
+    player.isMoving = player.vx !== 0 || player.vy !== 0;
+    if (player.isMoving) player.walkFrame += 0.12;
+
+    let nextX = player.x + player.vx;
+    let nextY = player.y + player.vy;
+    if (!checkCollision(nextX, player.y)) player.x = nextX;
+    if (!checkCollision(player.x, nextY)) player.y = nextY;
+  }
+
+  if (STATE.currentMap === 'store') {
+    npcs.forEach(n => n.update());
+  }
+
+  const now = Date.now();
+  speechBubbles = speechBubbles.filter(b => now - b.created < b.duration);
+  checkProximityPrompts();
+}
+
+function checkCollision(x, y) {
+  const currentTileMap = STATE.currentMap === 'store' ? storeMap : lairMap;
+  const col = Math.floor((x + 8) / TILE_SIZE);
+  const row = Math.floor((y + 8) / TILE_SIZE);
+  if (row < 0 || row >= currentTileMap.length || col < 0 || col >= MAP_COLS) return true;
+  const tile = currentTileMap[row][col];
+  return tile === 1 || tile === 2 || tile === 5 || tile === 6 || tile === 7 || tile === 10 || tile === 11;
+}
+
+function drawVisionCone(x, y, dir) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 158, 100, 0.08)';
+  ctx.beginPath();
+  ctx.moveTo(x + 8, y + 8);
+
+  if (dir === 'up') {
+    ctx.lineTo(x - 48, y - 110);
+    ctx.lineTo(x + 64, y - 110);
+  } else if (dir === 'down') {
+    ctx.lineTo(x - 48, y + 120);
+    ctx.lineTo(x + 64, y + 120);
+  } else if (dir === 'left') {
+    ctx.lineTo(x - 110, y - 48);
+    ctx.lineTo(x - 110, y + 64);
+  } else if (dir === 'right') {
+    ctx.lineTo(x + 120, y - 48);
+    ctx.lineTo(x + 120, y + 64);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPerson(x, y, dir, isMoving, walkFrame, skinColor, shirtColor, pantsColor, hairColor, isRobot = false) {
+  ctx.save();
+  ctx.translate(x, y);
+  const bob = isMoving ? Math.sin(walkFrame) * 1.5 : 0;
+  const legSwing = isMoving ? Math.sin(walkFrame) * 2.5 : 0;
+
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  ctx.beginPath(); ctx.ellipse(8, 20, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = pantsColor;
+  ctx.fillRect(4, 13 + bob, 3, 6 + (dir === 'left' || dir === 'right' ? legSwing : 0));
+  ctx.fillRect(9, 13 + bob, 3, 6 - (dir === 'left' || dir === 'right' ? legSwing : 0));
+
+  ctx.fillStyle = shirtColor;
+  ctx.fillRect(3, 6 + bob, 10, 8);
+  ctx.fillStyle = skinColor; ctx.fillRect(4, 0 + bob, 8, 7);
+  ctx.fillStyle = hairColor; ctx.fillRect(4, -1 + bob, 8, 3);
+
+  if (isRobot) {
+    ctx.fillStyle = '#bb9af7';
+    ctx.fillRect(5, 3 + bob, 6, 1.5);
+  } else {
+    ctx.fillStyle = '#000';
+    if (dir === 'down') { ctx.fillRect(5, 3 + bob, 1.5, 1.5); ctx.fillRect(9, 3 + bob, 1.5, 1.5); }
+    else if (dir === 'left') { ctx.fillRect(4, 3 + bob, 1.5, 1.5); }
+    else if (dir === 'right') { ctx.fillRect(10, 3 + bob, 1.5, 1.5); }
+  }
+
+  ctx.restore();
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const curMap = STATE.currentMap === 'store' ? storeMap : lairMap;
+
+  for (let r = 0; r < curMap.length; r++) {
+    for (let c = 0; c < MAP_COLS; c++) {
+      let t = curMap[r][c];
+      let tx = c * TILE_SIZE; let ty = r * TILE_SIZE;
+
+      if (STATE.currentMap === 'store') {
+        ctx.fillStyle = (r + c) % 2 === 0 ? '#f0f3f8' : '#e2e7ef';
+        ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        ctx.strokeStyle = 'rgba(180, 190, 205, 0.3)';
+        ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+      } else {
+        ctx.fillStyle = '#10141f'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        ctx.strokeStyle = '#1e2638'; ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+      }
+
+      if (t === 1) {
+        ctx.fillStyle = STATE.currentMap === 'store' ? '#475569' : '#1e293b';
+        ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        ctx.fillStyle = STATE.currentMap === 'store' ? '#334155' : '#0f172a';
+        ctx.fillRect(tx, ty + TILE_SIZE - 4, TILE_SIZE, 4);
+      } else if (t === 2) {
+        ctx.fillStyle = '#334155'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        ctx.fillStyle = '#cbd5e1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+
+        ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 3);
+        ctx.fillStyle = '#f43f5e'; ctx.fillRect(tx + 2, ty + 7, TILE_SIZE - 4, 1);
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
+        ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
+        ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
+        ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
+
+        ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
+        ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
+        ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
+        ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
+        ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
+      } else if (t === 10) {
+        ctx.fillStyle = '#854d0e'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+        ctx.fillStyle = '#a16207'; ctx.fillRect(tx + 3, ty + 3, TILE_SIZE - 6, TILE_SIZE - 6);
+        ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.arc(tx + 8, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(tx + 16, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.arc(tx + 24, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(tx + 11, ty + 20, 3.5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#eab308'; ctx.beginPath(); ctx.arc(tx + 20, ty + 20, 3.5, 0, Math.PI*2); ctx.fill();
+      } else if (t === 11) {
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        ctx.fillStyle = '#67e8f9'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fillRect(tx + 4, ty + 4, 3, TILE_SIZE - 8);
+        ctx.fillStyle = '#1e40af'; ctx.fillRect(tx + 10, ty + 6, 4, 18);
+        ctx.fillStyle = '#b91c1c'; ctx.fillRect(tx + 17, ty + 6, 4, 18);
+        ctx.fillStyle = '#047857'; ctx.fillRect(tx + 24, ty + 6, 4, 18);
+      } else if (t === 5) {
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+        ctx.fillStyle = '#0f172a'; ctx.fillRect(tx + 3, ty + 3, 12, TILE_SIZE - 6);
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 7, ty + 12, 4, 4);
+        ctx.fillStyle = '#38bdf8'; ctx.fillRect(tx + 16, ty + 4, 12, 10);
+        ctx.fillStyle = '#0284c7'; ctx.fillRect(tx + 18, ty + 6, 8, 6);
+        ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 17, ty + 16, 10, 10);
+      } else if (t === 3) {
+        ctx.fillStyle = '#5c3a21'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        ctx.fillStyle = '#7aa2f7'; ctx.fillRect(tx + 8, ty + 8, TILE_SIZE - 16, 4);
+      } else if (t === 4) {
+        ctx.fillStyle = '#4a2e18'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, TILE_SIZE - 8);
+        ctx.fillStyle = '#2d5a27'; ctx.fillRect(tx + 6, ty + 8, TILE_SIZE - 12, TILE_SIZE - 16);
+        ctx.fillStyle = '#c0caf5'; ctx.fillRect(tx + 10, ty + 6, 12, 10);
+        ctx.fillStyle = '#9ece6a'; ctx.fillRect(tx + 12, ty + 8, 8, 6);
+        ctx.fillStyle = '#e0af68'; ctx.fillRect(tx + 4, ty + 6, 3, 5);
+      } else if (t === 6) {
+        ctx.fillStyle = '#0369a1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        ctx.fillStyle = '#bb9af7'; ctx.fillRect(tx + 6, ty + 6, TILE_SIZE - 12, TILE_SIZE - 12);
+      } else if (t === 7) {
+        ctx.fillStyle = '#020617'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        ctx.fillStyle = '#321d52'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+        const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+        ctx.fillStyle = `rgba(187, 154, 247, ${0.4 + pulse * 0.4})`;
+        ctx.fillRect(tx + 3, ty + 3, TILE_SIZE - 6, TILE_SIZE - 6);
+      } else if (t === 9) {
+        ctx.fillStyle = STATE.officeDoorOpen ? '#deb887' : '#8c4320';
+        ctx.fillRect(tx + (STATE.officeDoorOpen ? 24 : 0), ty, STATE.officeDoorOpen ? 8 : TILE_SIZE, TILE_SIZE);
+      } else if (t === 8) {
+        ctx.fillStyle = 'rgba(122, 162, 247, 0.4)'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+      }
+    }
+  }
+
+  if (STATE.robotTier > 0 && STATE.currentMap === 'store') {
+    drawPerson(2 * TILE_SIZE, 2 * TILE_SIZE, 'down', false, 0, player.skinColor, player.shirtColor, player.pantsColor, player.hairColor, true);
+  }
+
+  if (STATE.currentMap === 'lair') {
+    drawPerson(butler.x, butler.y, butler.dir, butler.isMoving, butler.walkFrame, butler.skinColor, butler.shirtColor, butler.pantsColor, butler.hairColor);
+  }
+
+  REGISTERS.forEach(reg => {
+    if (reg.activeCustomer) {
+      const rx = reg.tile.col * TILE_SIZE;
+      const ry = (reg.tile.row - 1) * TILE_SIZE;
+      ctx.fillStyle = '#1a1b26';
+      ctx.fillRect(rx - 6, ry + 16, 44, 8);
+      ctx.fillStyle = '#9ece6a';
+      const pct = Math.min(1, reg.checkoutProgress / reg.checkoutDuration);
+      ctx.fillRect(rx - 5, ry + 17, 42 * pct, 6);
+    }
+  });
+
+  if (STATE.currentMap === 'store') {
+    npcs.forEach(n => {
+      drawVisionCone(n.x, n.y, n.dir);
+      drawPerson(n.x, n.y, n.dir, n.isMoving, n.walkFrame, n.skinColor, n.shirtColor, n.pantsColor, n.hairColor);
+      if (!n.isEmployee && (n.state === 'in_line' || n.state === 'at_register')) {
+        const qIdx = getCustomerQueueIndex(n);
+        if (qIdx !== -1) {
+          ctx.fillStyle = '#7aa2f7'; ctx.font = 'bold 10px monospace';
+          ctx.fillText(`#${qIdx + 1} (${n.basket.length})`, n.x - 4, n.y - 4);
+        }
+      }
+    });
+  }
+
+  drawPerson(player.x, player.y, player.dir, player.isMoving, player.walkFrame, player.skinColor, player.shirtColor, player.pantsColor, player.hairColor);
+
+  speechBubbles.forEach(b => {
+    if (b.map === STATE.currentMap) {
+      ctx.font = 'bold 11px monospace';
+      const maxBoxWidth = 260;
+      const words = b.text.split(' ');
+      const lines = [];
+      let currentLine = '';
+
+      words.forEach(w => {
+        const testLine = currentLine ? `${currentLine} ${w}` : w;
+        if (ctx.measureText(testLine).width > maxBoxWidth - 24) {
+          lines.push(currentLine);
+          currentLine = w;
+        } else {
+          currentLine = testLine;
+        }
+      });
+      if (currentLine) lines.push(currentLine);
+
+      let maxLineWidth = 0;
+      lines.forEach(l => {
+        const lw = ctx.measureText(l).width;
+        if (lw > maxLineWidth) maxLineWidth = lw;
+      });
+
+      const bubbleW = Math.max(90, maxLineWidth + 20);
+      const lineHeight = 15;
+      const bubbleH = lines.length * lineHeight + 10;
+
+      let drawX = b.x - bubbleW / 2;
+      let drawY = b.y - bubbleH - 12;
+
+      drawX = Math.max(10, Math.min(800 - bubbleW - 10, drawX));
+      drawY = Math.max(50, Math.min(600 - bubbleH - 10, drawY));
+
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#1a1b26';
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(drawX, drawY, bubbleW, bubbleH);
+      ctx.strokeRect(drawX, drawY, bubbleW, bubbleH);
+
+      ctx.fillStyle = '#1a1b26';
+      lines.forEach((lineText, idx) => {
+        ctx.fillText(lineText, drawX + 10, drawY + 14 + (idx * lineHeight));
+      });
+    }
+  });
+}
+
+function handleInteraction() {
+  if (isNearButler()) {
+    speakButler();
+    if (STATE.dayNumber === 1 && STATE.tutorialStep === 5) {
+      STATE.tutorialStep = 6;
+      updateTutorialBanner();
+    }
+    return;
+  }
+  if (isNearTile(7)) {
+    toggleLairTV(true);
+    if (STATE.dayNumber === 1 && STATE.tutorialStep === 6) {
+      STATE.tutorialStep = 7;
+      updateTutorialBanner();
+    }
+    return;
+  }
+  if (isNearTile(3)) {
+    toggleLairSecretEntrance();
+    if (STATE.dayNumber === 1 && STATE.tutorialStep === 4) { STATE.tutorialStep = 5; updateTutorialBanner(); }
+    return;
+  }
+  if (isNearTile(4)) {
+    toggleMenu('store-finance', true);
+    if (STATE.dayNumber === 1 && STATE.tutorialStep === 3) { STATE.tutorialStep = 4; updateTutorialBanner(); }
+    return;
+  }
+  if (isNearTile(5)) {
+    const pCol = Math.floor((player.x + 8) / TILE_SIZE);
+    const pRow = Math.floor((player.y + 8) / TILE_SIZE);
+    const nearReg = REGISTERS.find(r => Math.abs(r.tile.col - pCol) <= 1 && Math.abs(r.tile.row - pRow) <= 1);
+    if (nearReg) {
+      const queue = getActiveQueue(nearReg.id);
+      if (queue[0] && queue[0].state === 'at_register' && !nearReg.activeCustomer) {
+        startCheckout(queue[0], nearReg);
+      }
+    }
+    return;
+  }
+  if (isNearTile(2) || isNearTile(10) || isNearTile(11)) {
+    const unlockedList = PRODUCTS.filter(p => p.unlocked);
+    const prod = unlockedList[0];
+    const maxStock = Math.min(prod.targetStock, prod.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
+
+    if (prod.stock < maxStock && (STATE.adminMode || STATE.money >= prod.cost)) {
+      if (!STATE.adminMode) {
+        STATE.money -= prod.cost; 
+        STATE.dayRestockCosts += prod.cost;
+      }
+      prod.stock += 2;
+      triggerSpeechBubble(player.x, player.y, `Restocked ${prod.name}!`, 4000, 'store');
+      if (STATE.dayNumber === 1 && STATE.tutorialStep === 1) { STATE.tutorialStep = 2; updateTutorialBanner(); }
+      updateHUD();
+    }
+    return;
+  }
+}
+
+function isNearButler() {
+  if (STATE.currentMap !== 'lair') return false;
+  const pCol = Math.floor((player.x + 8) / TILE_SIZE);
+  const pRow = Math.floor((player.y + 8) / TILE_SIZE);
+  const bCol = Math.floor((butler.x + 8) / TILE_SIZE);
+  const bRow = Math.floor((butler.y + 8) / TILE_SIZE);
+  return Math.abs(pCol - bCol) <= 1 && Math.abs(pRow - bRow) <= 1;
+}
+
+function isNearTile(tileID) {
+  const col = Math.floor((player.x + 8) / TILE_SIZE);
+  const row = Math.floor((player.y + 8) / TILE_SIZE);
+  const curMap = STATE.currentMap === 'store' ? storeMap : lairMap;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (curMap[row + dy] && curMap[row + dy][col + dx] === tileID) return true;
+    }
+  }
+  return false;
+}
+
+function toggleLairSecretEntrance() {
+  if (STATE.currentMap === 'store') {
+    STATE.currentMap = 'lair'; player.x = 2 * TILE_SIZE; player.y = 3 * TILE_SIZE;
+  } else {
+    STATE.currentMap = 'store'; player.x = 4 * TILE_SIZE; player.y = 3 * TILE_SIZE;
+  }
+}
+
+function toggleLairTV(show) {
+  STATE.tvOpen = show;
+  document.getElementById('modal-lair-tv').style.display = show ? 'flex' : 'none';
+  if (show) renderTVContent();
+}
+
+function renderTVContent() {
+  const canRunMissions = STATE.adminMode || STATE.phase === 'night' || STATE.robotTier > 0;
+  const availableMissions = MISSIONS.filter(m => STATE.adminMode || STATE.computerTier >= (m.minTier || 1));
+
+  document.getElementById('tv-missions-container').innerHTML = availableMissions.map(m => {
+    let btnHtml = '';
+    const cost = STATE.adminMode ? 0 : m.cost;
+    const diffBadge = `<span style="font-size:10px; padding:2px 6px; border-radius:3px; font-weight:bold; background:${
+      m.difficulty === 'easy' ? '#9ece6a' : m.difficulty === 'medium' ? '#7aa2f7' : m.difficulty === 'hard' ? '#e0af68' : '#f7768e'
+    }; color:#120d1c;">${m.difficulty.toUpperCase()}</span>`;
+
+    if (!canRunMissions) {
+      btnHtml = `<span style="color:#7a819b; font-size:10px;">Requires Night or Decoy Clone</span>`;
+    } else {
+      btnHtml = `<button class="btn-action btn-evil" ${!STATE.adminMode && STATE.money < cost ? 'disabled' : ''} onclick="startMission(${m.id})">${m.isLaser ? 'Target Sector' : 'Launch'} (${STATE.adminMode ? 'FREE' : `$${cost}`})</button>`;
+    }
+
+    return `
+      <div class="mission-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            ${diffBadge}
+            <strong style="color:var(--accent-evil); font-size:12px;">${m.name}</strong>
+          </div>
+          ${btnHtml}
+        </div>
+        <div class="mission-tooltip">
+          <strong>Mission Intel:</strong><br>${m.details}<br><br>
+          <span style="color:var(--accent-gold);">Cost: ${STATE.adminMode ? '$0 (Admin)' : `$${m.cost}`}</span> | <span style="color:var(--accent-evil);">Infamy: +${m.infamy}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('tv-heroes-list').innerHTML = GLOBAL_HEROES.filter(h => h.isAlive).map(h => {
+    const isPlayer = h.nemesisVillainName.includes("You");
+    return `
+      <div onclick="openHeroDossier(${h.id})" style="background:#0b101c; border-left:3px solid ${isPlayer ? 'var(--accent-gold)' : (h.threat === 'Omega Level' ? '#ffd700' : 'var(--accent-evil)')}; padding:5px 8px; cursor:pointer; transition: background 0.15s;" onmouseover="this.style.background='#1b2138'" onmouseout="this.style.background='#0b101c'">
+        <div style="display:flex; justify-content:space-between;">
+          <strong style="color:#fff;">${h.name}</strong>
+          <span style="color:${h.threat === 'Omega Level' ? '#ffd700' : '#f7768e'}; font-weight:bold; font-size:10px;">${h.threat}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; color:#8892b0; font-size:10px; margin-top:2px;">
+          <span>${h.patrol}</span>
+          <span style="color:${isPlayer ? 'var(--accent-gold)' : 'var(--accent-evil)'};">Nemesis: ${h.nemesisVillainName}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const sortedSyndicate = getSortedSyndicateLeaderboard();
+  document.getElementById('tv-leaderboard-body').innerHTML = sortedSyndicate.map((l, i) => `
+    <tr style="background:${l.isPlayer ? 'rgba(187, 154, 247, 0.18)' : 'transparent'};">
+      <td>#${i + 1}</td>
+      <td style="color:${l.isPlayer ? 'var(--accent-gold)' : '#fff'}; font-weight:bold;">${l.name}</td>
+      <td style="color:var(--accent-evil); font-weight:bold;">${l.infamy.toLocaleString()}</td>
+      <td style="color:${l.isSupervillain ? '#f7768e' : '#7a819b'}; font-weight:bold;">${l.isSupervillain ? 'SUPERVILLAIN' : 'Rogue'}</td>
+    </tr>
+  `).join('');
+}
+
+function startMission(id) {
+  const m = MISSIONS.find(x => x.id === id);
+  const cost = STATE.adminMode ? 0 : m.cost;
+  if (!m || (!STATE.adminMode && STATE.money < cost)) return;
+  if (!STATE.adminMode) STATE.money -= cost;
+  launchGridHackMiniGame(id);
+  updateHUD();
+}
+
+function triggerSpeechBubble(x, y, text, duration = 3000, map = STATE.currentMap) { 
+  speechBubbles = speechBubbles.filter(b => b.map !== map || Math.hypot(b.x - x, b.y - y) > 10);
+  speechBubbles.push({ x, y, text, created: Date.now(), duration, map }); 
+}
+
+function checkProximityPrompts() {
+  const isPromptVisible = (
+    isNearButler() ||
+    isNearTile(7) ||
+    isNearTile(3) ||
+    isNearTile(4) ||
+    isNearTile(5) ||
+    isNearTile(2) ||
+    isNearTile(10) ||
+    isNearTile(11)
+  );
+  document.getElementById('action-prompt').style.display = isPromptVisible ? 'block' : 'none';
+}
+
+function closeShopForNight() {
+  STATE.phase = 'night';
+  let wages = STAFF.reduce((acc, s) => acc + (s.count * s.wage), 0);
+  STATE.money -= wages; 
+  STATE.dayCosts = wages;
+
+  let cloneMsg = "No decoy clone used.";
+  if (STATE.robotTier > 0) {
+    const rUpg = ROBOT_UPGRADES[STATE.robotTier - 1];
+    STATE.suspicion = Math.min(100, STATE.suspicion + rUpg.suspicion);
+    cloneMsg = `${rUpg.name} (+${rUpg.suspicion}% Suspicion)`;
+  }
+
+  if (STATE.pendingStoreTier !== STATE.storeTier) {
+    applyLayoutMap(STATE.pendingStoreTier);
+  }
+
+  PRODUCTS.forEach(p => {
+    p.nextPopularity = rollDemand();
+  });
+
+  npcs.forEach(n => {
+    if (n.isEmployee) n.sendHome();
+  });
+  npcs = npcs.filter(n => n.isEmployee);
+
+  displayDailyReport(cloneMsg);
+  updateTutorialBanner(); 
+  updateHUD();
+}
+
+function displayDailyReport(cloneStatus = "None Active") {
+  const net = STATE.daySales - (STATE.dayCosts + STATE.dayRestockCosts);
+  const totalFinished = STATE.customersServedToday + STATE.dayWalkouts;
+  const satisfactionRate = totalFinished > 0 ? Math.round((STATE.customersServedToday / totalFinished) * 100) : 100;
+
+  document.getElementById('report-title').innerText = `Day ${STATE.dayNumber} Financial Audit & Performance`;
+  document.getElementById('rep-rev').innerText = `+$${STATE.daySales}`;
+  document.getElementById('rep-costs').innerText = `-$${STATE.dayCosts}`;
+  document.getElementById('rep-stock-costs').innerText = `-$${STATE.dayRestockCosts}`;
+
+  const netEl = document.getElementById('rep-net-profit');
+  netEl.innerText = `${net >= 0 ? '+' : ''}$${net}`;
+  netEl.className = net >= 0 ? 'profit-positive' : 'profit-negative';
+
+  document.getElementById('rep-served').innerText = STATE.customersServedToday;
+  document.getElementById('rep-walkouts').innerText = STATE.dayWalkouts;
+  document.getElementById('rep-finished').innerText = totalFinished;
+  document.getElementById('rep-items-sold').innerText = STATE.dayItemsSold;
+  document.getElementById('rep-satisfaction').innerText = `${satisfactionRate}%`;
+
+  document.getElementById('rep-casualties').innerText = `${STATE.totalCasualties} (${STATE.civilianCasualties} Civ / ${STATE.vigilanteCasualties} Vig / ${STATE.heroCasualties} Hero)`;
+  document.getElementById('rep-supervillain-status').innerText = STATE.isSupervillain ? (STATE.apexSyndicateMember ? 'APEX PURGE OVERLORD' : 'ACTIVE (CRITICAL HUNT)') : 'Inactive (Rogue Tier)';
+  document.getElementById('rep-supervillain-status').style.color = STATE.isSupervillain ? '#f7768e' : 'var(--accent-green)';
+
+  let suspicionLevel = 'Safe';
+  if (STATE.suspicion > 60) suspicionLevel = 'CRITICAL ALERT';
+  else if (STATE.suspicion > 30) suspicionLevel = 'Elevated';
+  document.getElementById('rep-suspicion').innerText = `${STATE.suspicion}% (${suspicionLevel})`;
+
+  document.getElementById('modal-daily-report').style.display = 'flex';
+}
+
+function closeDailyReport() {
+  document.getElementById('modal-daily-report').style.display = 'none';
+  if (STATE.dayNumber >= 50) {
+    triggerDay50Ending();
+    return;
+  }
+  toggleMenu('store-inv', false);
+}
+
+function proceedDirectlyToNextDay() {
+  document.getElementById('modal-daily-report').style.display = 'none';
+  if (STATE.dayNumber >= 50) {
+    triggerDay50Ending();
+    return;
+  }
+  startNextDayShift();
+}
+
+function startNextDayShift() {
+  if (STATE.dayNumber >= 50) {
+    triggerDay50Ending();
+    return;
+  }
+
+  STATE.phase = 'day'; 
+  STATE.dayNumber++; 
+  STATE.daySales = 0; 
+  STATE.dayCosts = 0;
+  STATE.dayRestockCosts = 0;
+  STATE.dayItemsSold = 0;
+  STATE.dayWalkouts = 0;
+  STATE.dayCustomerDislikes = 0;
+  STATE.customersSpawnedToday = 0; 
+  STATE.customersServedToday = 0; 
+  STATE.dayTotalCustomers = calculateDailyCustomers(); 
+  STATE.spawnCooldown = 2;
+
+  updateDailyRivalLeaderboard();
+
+  PRODUCTS.forEach(p => {
+    p.popularity = p.nextPopularity || rollDemand();
+    p.price = p.pendingPrice;
+    p.targetStock = p.pendingTargetStock;
+  });
+
+  REGISTERS.forEach(r => {
+    r.assignedCashier = null;
+    r.activeCustomer = null;
+    r.checkoutProgress = 0;
+  });
+
+  npcs = [];
+  STAFF.forEach(s => {
+    for (let i = 0; i < s.count; i++) {
+      npcs.push(new Employee(s.role));
+    }
+  });
+
+  showNotification(`Day ${STATE.dayNumber} Open! New prices, layouts, and demand ratings in effect.`);
+  updateTutorialBanner(); 
+  updateHUD();
+}
+
+function upgradeMarketing() {
+  if (STATE.marketingMultiplier >= 8.0) return alert("Marketing already at maximum (8.0x)!");
+  const cost = STATE.adminMode ? 0 : 150;
+  if (!STATE.adminMode && STATE.money < cost) return alert("Need $150 to boost marketing!");
+  if (!STATE.adminMode) STATE.money -= cost; 
+  STATE.marketingMultiplier = Math.min(8.0, parseFloat((STATE.marketingMultiplier + 0.5).toFixed(1))); 
+  renderUI();
+}
+
+function unlockProduct(prodId) {
+  const p = PRODUCTS.find(x => x.id === prodId);
+  const cost = STATE.adminMode ? 0 : p.unlockCost;
+  if (!p || (!STATE.adminMode && STATE.money < cost)) return alert("Insufficient funds to unlock!");
+  if (!STATE.adminMode) STATE.money -= cost;
+  p.unlocked = true;
+  p.stock = Math.min(p.targetStock, 10);
+  showNotification(`Unlocked new product: ${p.name}!`);
+  renderUI();
+}
+
+function buyStock(prodId) {
+  const p = PRODUCTS.find(x => x.id === prodId);
+  const cost = STATE.adminMode ? 0 : p.cost * 3;
+  if (!STATE.adminMode && STATE.money < cost) return alert("Not enough money!");
+
+  const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
+  const maxShelf = Math.min(p.targetStock, p.baseMax + tierBonus);
+  const shelfSpace = Math.max(0, maxShelf - p.stock);
+
+  if (shelfSpace <= 0) {
+    return alert("Shelf is already at maximum target stock!");
+  }
+
+  if (!STATE.adminMode) {
+    STATE.money -= cost;
+    STATE.dayRestockCosts += cost;
+  }
+  p.stock += Math.min(6, shelfSpace);
+
+  renderUI();
+}
+
+function buyLayoutTier(targetTier) {
+  const target = STORE_TIERS.find(t => t.tier === targetTier);
+  const cost = STATE.adminMode ? 0 : target.cost;
+  if (!target || (!STATE.adminMode && STATE.money < cost)) return;
+  if (!STATE.adminMode) STATE.money -= cost;
+  STATE.pendingStoreTier = targetTier;
+
+  if (STATE.phase === 'night' || STATE.adminMode) {
+    applyLayoutMap(targetTier);
+    showNotification(`Store upgraded to ${target.name}!`);
+  } else {
+    showNotification(`Store layout scheduled! Construction will complete tonight for ${target.name}.`);
+  }
+  renderUI();
+}
+
+function buyRobotTier(targetTier) {
+  const target = ROBOT_UPGRADES.find(r => r.tier === targetTier);
+  const cost = STATE.adminMode ? 0 : target.cost;
+  if (!target || (!STATE.adminMode && STATE.money < cost)) return;
+  if (!STATE.adminMode) STATE.money -= cost;
+  STATE.robotTier = targetTier;
+  showNotification(`Constructed ${target.name}! You can now run covert missions during open store hours.`);
+  renderUI();
+}
+
+function buyComputerTier(targetTier) {
+  const target = COMPUTER_UPGRADES.find(c => c.tier === targetTier);
+  const cost = STATE.adminMode ? 0 : target.cost;
+  if (!target || (!STATE.adminMode && STATE.money < cost)) return;
+  if (!STATE.adminMode) STATE.money -= cost;
+  STATE.computerTier = targetTier;
+  showNotification(`Supercomputer upgraded to ${target.name}! Drone operations & Orbital Death-Ray online.`);
+  renderUI();
+}
+
+function updatePendingPrice(prodId, val) {
+  const p = PRODUCTS.find(x => x.id === prodId);
+  if (p) {
+    p.pendingPrice = Math.max(1, parseInt(val) || 1);
+    if (STATE.phase === 'night') {
+      p.price = p.pendingPrice;
+    }
+  }
+}
+
+function updatePendingTargetStock(prodId, val) {
+  const p = PRODUCTS.find(x => x.id === prodId);
+  if (p) {
+    const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
+    p.pendingTargetStock = Math.max(1, Math.min(p.baseMax + tierBonus, parseInt(val) || 1));
+    if (STATE.phase === 'night') {
+      p.targetStock = p.pendingTargetStock;
+    }
+  }
+}
+
+function toggleAutoProgress(val) {
+  STATE.autoProgress = val;
+}
+
+function siphonMoney(amount) {
+  if (STATE.money < amount) return;
+  STATE.money -= amount; 
+  STATE.infamy += Math.floor(amount / 5); 
+  STATE.suspicion = Math.min(100, STATE.suspicion + Math.floor(amount / 10));
+  STATE.didAnyVillainy = true;
+  reassignAllHeroNemeses();
+  checkRivalRankTriggers();
+  updateHUD();
+}
+
+function breedExperiment() {
+  const cost = STATE.adminMode ? 0 : 120;
+  if (!STATE.adminMode && STATE.money < cost) return;
+  if (!STATE.adminMode) STATE.money -= cost; 
+  STATE.infamy += 30; 
+  STATE.didAnyVillainy = true;
+  reassignAllHeroNemeses();
+  checkRivalRankTriggers();
+  updateHUD();
+}
+
+function toggleMenu(defaultTab, isDeskAccess = false) {
+  STATE.menuOpen = !STATE.menuOpen;
+  STATE.isAtDeskMenu = isDeskAccess;
+
+  const modal = document.getElementById('modal-menu');
+  modal.style.display = STATE.menuOpen ? 'flex' : 'none';
+
+  document.querySelectorAll('.villain-feature').forEach(el => {
+    el.style.display = isDeskAccess ? 'none' : '';
+  });
+
+  document.getElementById('modal-menu-title').innerHTML = isDeskAccess ? 
+    `Office Desk Computer (Store Terminal) <button class="close-btn" onclick="toggleMenu()">✕</button>` : 
+    `Management Dashboard <button class="close-btn" onclick="toggleMenu()">✕</button>`;
+
+  if (STATE.menuOpen) {
+    renderUI();
+    if (defaultTab) switchTab(defaultTab);
+  }
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.modal-content').forEach(c => c.style.display = 'none');
+  const targetBtn = document.getElementById('tab-btn-' + tabId);
+  const targetContent = document.getElementById('tab-' + tabId);
+  if (targetBtn) targetBtn.classList.add('active');
+  if (targetContent) targetContent.style.display = 'block';
+
+  if (tabId === 'rival-mail') {
+    rivalMail.forEach(m => m.read = true);
+    updateUnreadCount();
+    renderMailList();
+  }
+}
+
+function updateHUD() {
+  document.getElementById('val-money').innerText = STATE.money;
+  document.getElementById('val-infamy').innerText = STATE.infamy;
+  document.getElementById('val-suspicion').innerText = STATE.suspicion;
+  document.getElementById('val-phase').innerText = `Day ${STATE.dayNumber} (${STATE.phase === 'day' ? 'Store Open' : 'Night'})`;
+  const totalCompleted = STATE.customersServedToday + STATE.dayWalkouts;
+  document.getElementById('val-cust-count').innerText = `${totalCompleted}/${STATE.dayTotalCustomers}`;
+}
+
+function renderUI() {
+  updateHUD();
+  const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
+
+  document.getElementById('inventory-table').innerHTML = PRODUCTS.map(p => {
+    const maxCap = p.baseMax + tierBonus;
+    const tagClassToday = p.popularity === 'popular' ? 'tag-popular' : (p.popularity === 'normal' ? 'tag-normal' : 'tag-unpopular');
+    const tagClassNext = p.nextPopularity === 'popular' ? 'tag-popular' : (p.nextPopularity === 'normal' ? 'tag-normal' : 'tag-unpopular');
+    const bulkCost = STATE.adminMode ? 0 : p.cost * 3;
+    const unlockCost = STATE.adminMode ? 0 : p.unlockCost;
+
+    if (p.unlocked) {
+      return `<tr>
+        <td><strong>${p.name}</strong></td>
+        <td><span class="tag-pop ${tagClassToday}">${p.popularity.toUpperCase()}</span></td>
+        <td><span class="tag-pop ${tagClassNext}">${p.nextPopularity ? p.nextPopularity.toUpperCase() : '--'}</span></td>
+        <td>$${p.marketPrice}</td>
+        <td><span style="color:${p.price > p.marketPrice ? 'var(--accent-evil)' : 'var(--accent-green)'}; font-weight:bold;">$${p.price}</span></td>
+        <td>
+          <input type="number" min="1" max="999" value="${p.pendingPrice}" onchange="updatePendingPrice('${p.id}', this.value)">
+        </td>
+        <td>
+          ${p.stock} / <input type="number" min="1" max="${maxCap}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
+        </td>
+        <td><button class="btn-action" onclick="buyStock('${p.id}')">Bulk +6 (${STATE.adminMode ? 'FREE' : `$${bulkCost}`})</button></td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td style="color:#7a819b;">Locked: ${p.name}</td>
+        <td><span class="tag-pop ${tagClassToday}">${p.popularity.toUpperCase()}</span></td>
+        <td><span class="tag-pop ${tagClassNext}">${p.nextPopularity ? p.nextPopularity.toUpperCase() : '--'}</span></td>
+        <td style="color:#7a819b;">$${p.marketPrice}</td>
+        <td style="color:#7a819b;">--</td>
+        <td style="color:#7a819b;">--</td>
+        <td style="color:#7a819b;">--</td>
+        <td><button class="btn-action" ${!STATE.adminMode && STATE.money < unlockCost ? 'disabled' : ''} onclick="unlockProduct('${p.id}')">Unlock (${STATE.adminMode ? 'FREE' : `$${unlockCost}`})</button></td>
+      </tr>`;
+    }
+  }).join('');
+
+  document.getElementById('layout-upgrade-section').innerHTML = STORE_TIERS.map(t => {
+    const isCurrent = STATE.storeTier === t.tier;
+    const isPending = STATE.pendingStoreTier === t.tier;
+    const isUnlocked = STATE.storeTier >= t.tier;
+    const cost = STATE.adminMode ? 0 : t.cost;
+
+    let btnLabel = `Upgrade (${STATE.adminMode ? 'FREE' : `$${cost}`})`;
+    if (isCurrent) btnLabel = `<span style="color:var(--accent-green); font-weight:bold;">Active Layout</span>`;
+    else if (isPending) btnLabel = `<span style="color:var(--accent-gold); font-weight:bold;">Pending for Tonight</span>`;
+
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#16161e; padding:8px; margin-bottom:6px; border:1px solid var(--border);">
+        <div>
+          <strong>${t.name} (Tier ${t.tier})</strong><br>
+          <span style="font-size:11px; color:#a9b1d6;">${t.shelves} Aisles | ${t.registers} Cashiers | +${t.maxStockBoost} Capacity</span>
+        </div>
+        <div>
+          ${(isCurrent || isPending) ? btnLabel : 
+            `<button class="btn-action" ${!STATE.adminMode && (STATE.money < cost || isUnlocked) ? 'disabled' : ''} onclick="buyLayoutTier(${t.tier})">
+              Upgrade (${STATE.adminMode ? 'FREE' : `$${cost}`})
+            </button>`}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('computer-upgrade-section').innerHTML = COMPUTER_UPGRADES.map(c => {
+    const isCurrent = STATE.computerTier === c.tier;
+    const isUnlocked = STATE.computerTier >= c.tier;
+    const cost = STATE.adminMode ? 0 : c.cost;
+
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#16161e; padding:8px; margin-bottom:6px; border:1px solid var(--accent-cyan);">
+        <div>
+          <strong style="color:var(--accent-cyan);">${c.name} (Tier ${c.tier})</strong><br>
+          <span style="font-size:11px; color:#a9b1d6;">${c.desc}</span>
+        </div>
+        <div>
+          ${isCurrent ? '<span style="color:var(--accent-green); font-weight:bold;">Active Core</span>' : 
+            `<button class="btn-action" style="background:var(--accent-cyan); color:#080d1a;" ${!STATE.adminMode && (STATE.money < cost || isUnlocked) ? 'disabled' : ''} onclick="buyComputerTier(${c.tier})">
+              Upgrade (${STATE.adminMode ? 'FREE' : `$${cost}`})
+            </button>`}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('robot-upgrade-section').innerHTML = ROBOT_UPGRADES.map(r => {
+    const isCurrent = STATE.robotTier === r.tier;
+    const isUnlocked = STATE.robotTier >= r.tier;
+    const cost = STATE.adminMode ? 0 : r.cost;
+
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#16161e; padding:8px; margin-bottom:6px; border:1px solid var(--accent-evil-deep);">
+        <div>
+          <strong style="color:var(--accent-evil);">${r.name}</strong><br>
+          <span style="font-size:11px; color:#a9b1d6;">${r.desc}</span>
+        </div>
+        <div>
+          ${isCurrent ? '<span style="color:var(--accent-evil); font-weight:bold;">Active Clone</span>' : 
+            `<button class="btn-action btn-evil" ${!STATE.adminMode && (STATE.money < cost || isUnlocked) ? 'disabled' : ''} onclick="buyRobotTier(${r.tier})">
+              Construct (${STATE.adminMode ? 'FREE' : `$${cost}`})
+            </button>`}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const maxCashiersAllowed = STORE_TIERS[STATE.storeTier - 1].registers;
+  document.getElementById('staff-table').innerHTML = STAFF.map(s => {
+    const isCashier = s.role === 'cashier';
+    const limitReached = !STATE.adminMode && isCashier && s.count >= maxCashiersAllowed;
+    const cost = STATE.adminMode ? 0 : 50;
+    const btnText = limitReached ? `Limit (${maxCashiersAllowed} Reg)` : `Hire (${STATE.adminMode ? 'FREE' : `$${cost}`})`;
+
+    return `<tr>
+      <td>${s.name}</td>
+      <td>${s.count} ${isCashier ? `(Max: ${maxCashiersAllowed})` : ''}</td>
+      <td>$${s.wage}/day</td>
+      <td><button class="btn-action" ${limitReached || (!STATE.adminMode && STATE.money < cost) ? 'disabled' : ''} onclick="hireStaff('${s.role}')">${btnText}</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('val-marketing-mult').innerText = `${STATE.marketingMultiplier}x`;
+
+  const mBtn = document.getElementById('btn-upgrade-marketing');
+  if (mBtn) {
+    mBtn.disabled = STATE.marketingMultiplier >= 8.0;
+    mBtn.innerText = `Boost Marketing Campaign (${STATE.adminMode ? 'FREE' : '$150'})`;
+  }
+
+  const shiftDiv = document.getElementById('shift-controls');
+  shiftDiv.innerHTML = STATE.phase === 'day' ? `<button class="btn-action btn-danger" onclick="closeShopForNight()">Close Shop & End Day Shift</button>` : `<button class="btn-action" onclick="startNextDayShift()">Start Next Day Shift</button>`;
+
+  const syndicate = getSortedSyndicateLeaderboard();
+  document.getElementById('leaderboard-table').innerHTML = syndicate.map((l, i) => `
+    <tr style="background:${l.isPlayer ? 'rgba(187, 154, 247, 0.15)' : 'transparent'};">
+      <td>#${i + 1}</td>
+      <td style="color:${l.isPlayer ? 'var(--accent-gold)' : '#fff'}; font-weight:bold;">${l.name}</td>
+      <td style="color:var(--accent-evil); font-weight:bold;">${l.infamy.toLocaleString()}</td>
+      <td style="color:${l.isSupervillain ? '#f7768e' : '#7a819b'}; font-weight:bold;">${l.isSupervillain ? 'SUPERVILLAIN' : 'Rogue'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('heroes-list').innerHTML = GLOBAL_HEROES.filter(h => h.isAlive).map(h => {
+    const isPlayer = h.nemesisVillainName.includes("You");
+    return `
+      <div onclick="openHeroDossier(${h.id})" style="background:#16192b; border-left:3px solid ${isPlayer ? 'var(--accent-gold)' : (h.threat === 'Omega Level' ? '#ffd700' : 'var(--accent-evil)')}; padding:6px 10px; cursor:pointer;" onmouseover="this.style.background='#212642'" onmouseout="this.style.background='#16192b'">
+        <div style="display:flex; justify-content:space-between;">
+          <strong style="color:#fff;">${h.name}</strong>
+          <span style="color:${h.threat === 'Omega Level' ? '#ffd700' : '#f7768e'}; font-weight:bold; font-size:10px;">${h.threat}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:10px; margin-top:2px;">
+          <span style="color:#8892b0;">${h.patrol}</span>
+          <span style="color:${isPlayer ? 'var(--accent-gold)' : 'var(--accent-evil)'};">Nemesis: ${h.nemesisVillainName}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updateUnreadCount();
+  renderMailList();
+}
+
+function hireStaff(role) {
+  const maxCashiersAllowed = STORE_TIERS[STATE.storeTier - 1].registers;
+  const s = STAFF.find(x => x.role === role);
+
+  if (!STATE.adminMode && role === 'cashier' && s.count >= maxCashiersAllowed) {
+    return alert(`Cannot hire more cashiers than available registers (${maxCashiersAllowed})! Upgrade your store layout first.`);
+  }
+  const cost = STATE.adminMode ? 0 : 50;
+  if (!STATE.adminMode && STATE.money < cost) return alert("Need $50 hiring bonus!");
+
+  if (!STATE.adminMode) STATE.money -= cost;
+  s.count++;
+  if (STATE.phase === 'day') {
+    npcs.push(new Employee(role));
+  }
+  renderUI();
+}
+
+init();
+</script>
+</body>
+</html>
