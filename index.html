@@ -2827,12 +2827,13 @@ function closeMinigame(success) {
 function triggerDay50Ending() {
   const casualties = STATE.totalCasualties;
   const didVillainy = STATE.didAnyVillainy;
+  const zeroInfamy = STATE.infamy === 0; // <-- Added check for 0 infamy
 
   let endingTitle = "";
   let awakeningText = "";
   let options = [];
 
-  if (!didVillainy) {
+  if (!didVillainy && zeroInfamy) {
     endingTitle = "Ending: Peaceful Grocer (Zero Villainy)";
     awakeningText = "You pull off your VR headset and blink against the warm bedroom light. Your friends are staring at you with curiosity. 'Well?' they ask. 'What was it like?' You spent 50 days strictly managing checkout lanes, scanning barcodes, and chatting with everyday shoppers without a single dark enterprise or digital hack.";
     options = [
