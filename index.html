@@ -2891,6 +2891,53 @@ function triggerDay50Ending() {
   document.getElementById('modal-vr-ending').style.display = 'flex';
 }
 
+function triggerDeathEnding() {
+  const casualties = STATE.totalCasualties;
+
+  let endingTitle = "";
+  let awakeningText = "";
+  let options = [];
+
+  if (casualties === 0) {
+    endingTitle = "Ending: Admin death (Unofficial ending)";
+    awakeningText = "Wow, look at you. You found the admin code how sneaky. Maybe we should be watching out for you.";
+    options = [
+      "\"SXQgd2FzIHN1cnByaXNpbmdseSByZWxheGluZy4gSnVzdCBob25lc3QgcmV0YWlsIHdvcmsgYW5kIGZyaWVuZGx5IGN1c3RvbWVycy4=\"",
+      "\"Ubatfgrl, vg sryg zber yvxr n fgerrs fvzhyngbhev guna n tnir.\"",
+      "\"V fcrag svsgl qnlf fryyvat Qbbz-Synxrf. V guvax V'z dhnyvsvrq gb znantr n erny fgber abj.\"",
+      "\"VGhlIHNpbXVsYXRpb24gZmVsdCBzbyB2aXZpZC4gRm9yIGEgc2Vjb25kLCBJIGFjdHVhbGx5IGNhcmVkIHdoZXRoZXIgb3VyIG9yZ2FuaWMgbWlsayB3YXMgZnJlc2g=\""
+    ];
+  } else if (casualties < 25) {
+    endingTitle = "Ending: Intercepted Operative (Low Casualty Death)";
+    awakeningText = `Your screen flashes red as security countermeasures neutralize your avatar. You throw the VR headset, the look on your face a mix of terror and shock. Your friends yell 'What's your problem. That was expensive.' You fell in battle after ${STATE.dayNumber} days of operation.`;
+    options = [
+      "\"F###.\"",
+      "\"Hah, my bad. I don't know what came over me.\"",
+      "\"*You simply tremble remembering just how painful death was*.\"",
+      "\"*You cry into your hands*\""
+    ];
+  } else {
+    endingTitle = "Ending: Fallen Supervillain (High Casualty Death)";
+    awakeningText = `Your screen flashes red as security countermeasures neutralize your avatar. You throw the VR headset, the look on your face a mix of terror and shock. Your friends yell 'What's your problem. That was expensive.' You fell in battle after ${STATE.dayNumber} days of operation.`;
+    options = [
+      "\"*Your eyes are filled with rage*.\"",
+      "\"*You just sit there trying to gather your thoughts*.\"",
+      "\"Right.\"",
+      "\"Don't you ever speak to me in that tone!\""
+    ];
+  } // Properly closes the if/else chain
+
+  document.getElementById('vr-ending-title').innerText = endingTitle;
+  document.getElementById('vr-awakening-text').innerText = awakeningText;
+  document.getElementById('vr-dialogue-options').innerHTML = options.map((opt, i) => `
+    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="selectVREndingDialogue(${i})">
+      💬 ${opt}
+    </button>
+  `).join('');
+
+  document.getElementById('modal-vr-ending').style.display = 'flex';
+}
+
 function selectVREndingDialogue(idx) {
   showNotification("Dialogue recorded. You can continue free play or explore the simulation further.");
   document.getElementById('modal-vr-ending').style.display = 'none';
