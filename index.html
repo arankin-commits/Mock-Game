@@ -1143,6 +1143,54 @@ function sendApexSyndicateInvite() {
   renderMailList();
 }
 
+function restartGame() {
+  // Hide the VR ending modal
+  document.getElementById('modal-vr-ending').style.display = 'none';
+  
+  // Reset key STATE values to fresh defaults
+  STATE.money = 250;
+  STATE.infamy = 0;
+  STATE.suspicion = 5;
+  STATE.dayNumber = 1;
+  STATE.phase = 'day';
+  STATE.totalCasualties = 0;
+  STATE.civilianCasualties = 0;
+  STATE.vigilanteCasualties = 0;
+  STATE.heroCasualties = 0;
+  STATE.isSupervillain = false;
+  STATE.apexSyndicateMember = false;
+  STATE.didAnyVillainy = false;
+  STATE.storeTier = 1;
+  STATE.pendingStoreTier = 1;
+  STATE.robotTier = 0;
+  STATE.computerTier = 1;
+  STATE.marketingMultiplier = 1.0;
+  STATE.gameStarted = false; // Brings back the title screen if you want, or set to true to skip straight to gameplay
+
+  // Reset products stock and unlock states
+  PRODUCTS.forEach((p, idx) => {
+    p.stock = idx < 3 ? 15 : 0;
+    p.price = p.marketPrice;
+    p.pendingPrice = p.marketPrice;
+    p.unlocked = idx < 3;
+    p.popularity = 'normal';
+  });
+
+  // Reset NPCs and layout
+  npcs = [];
+  applyLayoutMap(1);
+
+  // Show the title screen again so the player can click Play
+  const titleScreen = document.getElementById('title-screen');
+  if (titleScreen) {
+    titleScreen.style.display = 'flex';
+  } else {
+    STATE.gameStarted = true; // Fallback if title screen isn't used
+  }
+
+  showNotification("Game restarted successfully!");
+}
+  
 function acceptApexInvite() {
   STATE.apexSyndicateMember = true;
   STATE.didAnyVillainy = true;
@@ -2883,7 +2931,7 @@ function triggerDay50Ending() {
   document.getElementById('vr-ending-title').innerText = endingTitle;
   document.getElementById('vr-awakening-text').innerText = awakeningText;
   document.getElementById('vr-dialogue-options').innerHTML = options.map((opt, i) => `
-    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="selectVREndingDialogue(${i})">
+    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="(${i}, false)">
       💬 ${opt}
     </button>
   `).join('');
@@ -2930,7 +2978,7 @@ function triggerDeathEnding() {
   document.getElementById('vr-ending-title').innerText = endingTitle;
   document.getElementById('vr-awakening-text').innerText = awakeningText;
   document.getElementById('vr-dialogue-options').innerHTML = options.map((opt, i) => `
-    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="selectVREndingDialogue(${i})">
+    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="(${i}, true)">
       💬 ${opt}
     </button>
   `).join('');
@@ -2938,9 +2986,15 @@ function triggerDeathEnding() {
   document.getElementById('modal-vr-ending').style.display = 'flex';
 }
 
-function selectVREndingDialogue(idx) {
-  showNotification("Dialogue recorded. You can continue free play or explore the simulation further.");
-  document.getElementById('modal-vr-ending').style.display = 'none';
+function selectVREndingDialogue(idx, isDeath) {
+  if (isDeath) {
+    // Only restart the game if it was a death ending
+    restartGame();
+  } else {
+    // For Day 50 completions, just close the modal and allow free play
+    document.getElementById('modal-vr-ending').style.display = 'none';
+    showNotification("Simulation dialogue recorded. Free play mode active.");
+  }
 }
 
 function reputOnHeadset() {
