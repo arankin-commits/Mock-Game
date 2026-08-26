@@ -2949,7 +2949,7 @@ function triggerDay50Ending() {
   document.getElementById('vr-ending-title').innerText = endingTitle;
   document.getElementById('vr-awakening-text').innerText = awakeningText;
   document.getElementById('vr-dialogue-options').innerHTML = options.map((opt, i) => `
-    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="(${i}, false)">
+    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="selectVREndingDialogue(${i}, false)">
       💬 ${opt}
     </button>
   `).join('');
@@ -3141,19 +3141,16 @@ function updateTutorialBanner() {
   const banner = document.getElementById('notification-banner');
   const bannerText = document.getElementById('banner-text');
 
-  if (STATE.tutorialBannerDismissed || STATE.tutorialStep > 6 || STATE.dayNumber > 1) {
+  if (STATE.tutorialBannerDismissed || STATE.tutorialStep > 3 || STATE.dayNumber > 1) {
     banner.style.display = 'none';
     return;
   }
 
   banner.style.display = 'block';
-  if (STATE.tutorialStep === 1) bannerText.innerText = "TUTORIAL [1/6]: Walk up to any grocery shelf and press [E] or [SPACE] to restock!";
-  else if (STATE.tutorialStep === 2) bannerText.innerText = "TUTORIAL [2/6]: Wait for a shopper to enter the line, walk to the register, and press [E] to check them out!";
-  else if (STATE.tutorialStep === 3) bannerText.innerText = "TUTORIAL [3/6]: Head left into your Private Office. Step near the door to open it and interact with the Desk [E]!";
-  else if (STATE.tutorialStep === 4) bannerText.innerText = "TUTORIAL [4/6]: Walk to the blue Bookshelf inside your office and press [E] to enter your secret Lair!";
-  else if (STATE.tutorialStep === 5) bannerText.innerText = "TUTORIAL [5/6]: Walk over and speak with your Butler Jarvis [E] in the lair for strategic intel!";
-  else if (STATE.tutorialStep === 6) bannerText.innerText = "TUTORIAL [6/6]: Check your TV Supercomputer screen [E] on the right to view global operations and hero radars!";
-}
+  if (STATE.tutorialStep === 1) bannerText.innerText = "TUTORIAL [1/3]: Walk up to any grocery shelf and press [E] or [SPACE] to restock!";
+  else if (STATE.tutorialStep === 2) bannerText.innerText = "TUTORIAL [2/3]: Wait for a shopper to enter the line, walk to the register, and press [E] to check them out!";
+  else if (STATE.tutorialStep === 3) bannerText.innerText = "TUTORIAL [3/3]: Head left into your Private Office. Step near the door to open it and interact with the Desk [E]!";
+ }
 
 function init() {
   applyLayoutMap(1);
