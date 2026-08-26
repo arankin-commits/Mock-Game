@@ -2833,7 +2833,7 @@ function triggerDay50Ending() {
   let awakeningText = "";
   let options = [];
 
-  if (!didVillainy && zeroInfamy) {
+  if (!didVillainy && zeroInfamy && casualties === 0) {
     endingTitle = "Ending: Peaceful Grocer (Zero Villainy)";
     awakeningText = "You pull off your VR headset and blink against the warm bedroom light. Your friends are staring at you with curiosity. 'Well?' they ask. 'What was it like?' You spent 50 days strictly managing checkout lanes, scanning barcodes, and chatting with everyday shoppers without a single dark enterprise or digital hack.";
     options = [
