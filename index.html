@@ -800,6 +800,10 @@
           <label style="font-size:11px;">Set Infamy:</label>
           <input type="number" id="admin-infamy-input" value="0" min="0" max="99999" onchange="adminSetInfamy(this.value)" style="width:80px;">
         </div>
+
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+          <button class="btn-action btn-danger" onclick="adminTriggerDeath()">☠️ Trigger Death Ending</button>
+        </div>
         
         <button class="btn-action btn-danger" onclick="toggleAdminMode(false)">Disable Admin Mode</button>
       </div>
@@ -2889,15 +2893,38 @@ function triggerDay50Ending() {
 
 function triggerDeathEnding() {
   const casualties = STATE.totalCasualties;
-  let endingTitle = casualties >= 25 ? "Ending: Fallen Supervillain (High Casualty Death)" : "Ending: Intercepted Operative (Low Casualty Death)";
-  let awakeningText = `Your screen flashes red as security countermeasures neutralize your avatar. You slide off the VR headset, greeted by your friends in your room. 'Oof, rough run! How did it end?' You fell in battle after ${STATE.dayNumber} days of operation.`;
-  
-  let options = [
-    "\"Ambushed by elite security protocols! That was brutal.\"",
-    "\"We pushed our luck too far in the grid. Next time we secure the perimeter first.\"",
-    "\"Even in defeat, our underground empire made its mark on the city.\"",
-    "\"Let's boot it up again. I know exactly what mistakes we made.\""
-  ];
+
+  let endingTitle = "";
+  let awakeningText = "";
+  let options = [];
+
+  if (casualties === 0) {
+    endingTitle = "Ending: Admin death (Unofficial ending)";
+    awakeningText = "Wow, look at you. You found the admin code how sneaky. Maybe we should be watching out for you.";
+    options = [
+      "\"SXQgd2FzIHN1cnByaXNpbmdseSByZWxheGluZy4gSnVzdCBob25lc3QgcmV0YWlsIHdvcmsgYW5kIGZyaWVuZGx5IGN1c3RvbWVycy4=.\"",
+      "\"Ubatfgrl, vg sryg zber yvxr n fgerrs fvzhyngbhev guna n tnir.\"",
+      "\"V fcrag svsgl qnlf fryyvat Qbbz-Synxrf. V guvax V'z dhnyvsvrq gb znantr n erny fgber abj.\"",
+      "\"VGhlIHNpbXVsYXRpb24gZmVsdCBzbyB2aXZpZC4gRm9yIGEgc2Vjb25kLCBJIGFjdHVhbGx5IGNhcmVkIHdoZXRoZXIgb3VyIG9yZ2FuaWMgbWlsayB3YXMgZnJlc2g=.\""
+    ];
+  } else if (casualties < 25) {
+    endingTitle = "Ending: Intercepted Operative (Low Casualty Death)";
+    awakeningText = "Your screen flashes red as security countermeasures neutralize your avatar. You throw the VR headset, the look on your face a mix of terror and shock. Your friends yell 'What's your problem. That was expensive.' You fell in battle after ${STATE.dayNumber} days of operation.";
+    options = [
+      "\"F###.\"",
+      "\"Hah, my bad. I don't know what came over me.\"",
+      "\"*You simply tremble remembering just how painful death was*.\"",
+      "\"*You cry into your hands*\""
+    ];
+  } else if (casualties >= 25) {
+    endingTitle = "Ending: Fallen Supervillain (High Casualty Death)";
+    awakeningText = "Your screen flashes red as security countermeasures neutralize your avatar. You throw the VR headset, the look on your face a mix of terror and shock. Your friends yell 'What's your problem. That was expensive.' You fell in battle after ${STATE.dayNumber} days of operation.";
+    options = [
+      "\"*Your eyes are filled with rage*.\"",
+      "\"*You just sit there trying to gather your thoughts*.\"",
+      "\"Right.\"",
+      "\"Don't you ever speak to me in that tone!\""
+    ];
 
   document.getElementById('vr-ending-title').innerText = endingTitle;
   document.getElementById('vr-awakening-text').innerText = awakeningText;
@@ -2962,6 +2989,20 @@ function adminSetInfamy(val) {
   reassignAllHeroNemeses();
   checkRivalRankTriggers();
   updateHUD();
+}
+
+function adminTriggerDeath() {
+  // Close the management dashboard/menu modal so the ending modal displays cleanly
+  if (STATE.menuOpen) {
+    toggleMenu();
+  }
+  // If the minigame or other modals are active, abort them
+  if (STATE.minigameActive) {
+    closeMinigame(false);
+  }
+  
+  // Fire the death ending sequence
+  triggerDeathEnding();
 }
 
 function applyLayoutMap(tier) {
