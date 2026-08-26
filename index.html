@@ -491,9 +491,9 @@
   <div id="hud">
     <div id="title-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; gap: 20px;">
       <h1 style="color: var(--accent-store); font-size: 28px; text-align: center; text-shadow: 0 0 10px rgba(122,162,247,0.5);">A Bizzare Supermarket</h1>
-      <p style="color: var(--text); font-size: 12px; margin-bottom: 10px;">Definitely Not a Supervillain</p>
-      <button class="btn-action" style="padding: 12px 32px; font-size: 14px;" onclick="startGameFromTitle()">Play Game</button>
+      <p style="color: var(--text); font-size: 12px; margin-bottom: 10px;"></p>
     </div>
+    <button class="btn-action" style="padding: 12px 32px; font-size: 14px;" onclick="startGameFromTitle()">Play Game</button>
     <div class="hud-stat hud-money">$<span id="val-money">250</span></div>
     <div class="hud-stat hud-evil">Infamy: <span id="val-infamy">0</span></div>
     <div class="hud-stat hud-suspicion">Suspicion: <span id="val-suspicion">5</span>%</div>
@@ -503,7 +503,7 @@
     <button id="burger-btn" onclick="toggleMenu('store-inv', false)">[TAB] Menu</button>
   </div>
 
-  <div id="notification-banner">
+  <div id="notification-banner" style="display: none;">
     <span id="banner-text">TUTORIAL: Walk up to any grocery shelf and press [E] or [SPACE] to restock!</span>
     <button id="banner-close-btn" onclick="dismissTutorialBanner()">✕</button>
   </div>
@@ -1200,6 +1200,12 @@ const titleScreen = document.getElementById('title-screen');
 function startGameFromTitle() {
   STATE.gameStarted = true;
   document.getElementById('title-screen').style.display = 'none';
+  
+  const banner = document.getElementById('notification-banner');
+  if (banner && !STATE.tutorialBannerDismissed) {
+    banner.style.display = 'block';
+  }
+  
   showNotification("TUTORIAL: Walk up to any grocery shelf and press [E] or [SPACE] to restock!");
 }
   
