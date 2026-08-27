@@ -4289,6 +4289,8 @@ function triggerSpeechBubble(x, y, text, duration = 3000, map = STATE.currentMap
 }
 
 function checkProximityPrompts() {
+  const nearCustomer = npcs.some(n => !n.isEmployee && Math.abs(player.x - n.x) < 36 && Math.abs(player.y - n.y) < 36);
+  
   const isPromptVisible = (
     nearCustomer ||
     isNearButler() ||
