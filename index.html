@@ -3012,7 +3012,7 @@ function triggerDeathEnding() {
   document.getElementById('vr-ending-title').innerText = endingTitle;
   document.getElementById('vr-awakening-text').innerText = awakeningText;
   document.getElementById('vr-dialogue-options').innerHTML = options.map((opt, i) => `
-    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="(${i}, true)">
+    <button class="btn-action" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="selectVREndingDialogue(${i}, true)">
       💬 ${opt}
     </button>
   `).join('');
@@ -4276,6 +4276,7 @@ function closeShopForNight() {
 
   let firedOrArrested = false;
 
+  // Check if suspicion hit 100 at any point during the run
   if (STATE.suspicionReached100) {
     if (STATE.hasEnteredLair) {
       // 100% chance of game over if lair entered
@@ -4288,10 +4289,10 @@ function closeShopForNight() {
     } else {
       // 50% chance of being fired before next shift if lair not entered
       if (Math.random() < 0.50) {
-        triggerFiredEnding(); // Or a custom fired screen
+        triggerFiredEnding(); 
         firedOrArrested = true;
       } else {
-        showNotification("CRITICAL: Suspicion hit 100%, but you narrowly avoided termination this time. Watch out!");
+        showNotification("CRITICAL: Suspicion hit 100% previously, but you narrowly avoided termination this time. Watch out!");
       }
     }
   } else if (STATE.suspicion > 80) {
