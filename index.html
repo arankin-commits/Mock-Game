@@ -499,8 +499,9 @@
   
   <div id="hud">
     <div class="hud-stat hud-money">$<span id="val-money">250</span></div>
-    <div class="hud-stat hud-evil">Infamy: <span id="val-infamy">0</span></div>
-    <div class="hud-stat hud-suspicion">Suspicion: <span id="val-suspicion">5</span>%</div>
+
+    <div class="hud-stat hud-evil" id="hud-infamy-container" style="display:none;">Infamy: <span id="val-infamy">0</span></div>
+    <div class="hud-stat hud-suspicion" id="hud-suspicion-container" style="display:none;">Suspicion: <span id="val-suspicion">5</span>%</div>
     <div class="hud-stat">Shoppers: <span id="val-cust-count">0/5</span></div>
     <div class="hud-stat"><span id="val-phase">Day 1</span></div>
     <div class="hud-stat" id="hud-admin-indicator" style="display:none; color:#ff9e64;">[ADMIN]</div>
@@ -4088,7 +4089,11 @@ function toggleLairSecretEntrance() {
   if (STATE.currentMap === 'store') {
     STATE.currentMap = 'lair'; player.x = 2 * TILE_SIZE; player.y = 3 * TILE_SIZE;
     
-    STATE.hasEnteredLair = true;
+    if (!STATE.hasEnteredLair) {
+      STATE.hasEnteredLair = true;
+      document.getElementById('hud-infamy-container').style.display = 'flex';
+      document.getElementById('hud-suspicion-container').style.display = 'flex';
+    }
   } else {
     STATE.currentMap = 'store'; player.x = 5 * TILE_SIZE; player.y = 2 * TILE_SIZE;
   }
