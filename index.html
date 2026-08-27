@@ -3469,6 +3469,8 @@ class Customer {
     this.timeAlive = 0;
     this.joinedQueueTime = Infinity;
     this.assignedRegisterId = null;
+    this.dialogues = this.generateRandomDialogues();
+    this.dialogueIndex = 0; // Tracks which line they say next when interacted with
 
     this.path = [];
     this.isEmployee = false;
@@ -3482,6 +3484,37 @@ class Customer {
 
     this.setPathToAisle();
   }
+
+  generateRandomDialogues() {
+    const pools = [
+      // Life stories / small talk
+      "Man, my cat kept me up half the night playing with bottle caps.",
+      "I swear my commute gets longer every single week.",
+      "Just trying to survive the work week, you know how it is.",
+      "My neighbor is building a giant trebuchet in their backyard. Should I be worried?",
+      
+      // What they're doing / buying
+      "I'm just running errands before my kid's soccer practice.",
+      "Picking up snacks for a movie marathon tonight.",
+      "I only came in for one thing, but my basket is already full...",
+      `Grabbed some of these ${PRODUCTS.filter(p=>p.unlocked)[Math.floor(Math.random()*PRODUCTS.filter(p=>p.unlocked).length)]?.name || 'items'} because they looked decent.`,
+  
+      // What they're going to cook
+      "Thinking about making a sketchy stir-fry tonight with whatever's in the fridge.",
+      "Attempting a lasagna recipe I found online. Wish me luck.",
+      "Just making some simple soup tonight, keeping it cozy.",
+      "Honestly? Probably just eating cereal for dinner. Again.",
+  
+      // Weather / casual banter
+      "Sure hope it doesn't rain, I left my car windows rolled down.",
+      "The weather outside is gorgeous today, perfect for walking.",
+      "Feels like a storm is brewing tonight, the air is heavy."
+  ];
+
+  // Shuffle and pick 3 unique random lines for this customer
+  const shuffled = [...pools].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 3);
+}
 
   setPathToAisle() {
     const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
@@ -4073,6 +4106,15 @@ function render() {
 }
 
 function handleInteraction() {
+  const nearbyCustomer = npcs.find(n => !n.isEmployee && Math.abs(player.x - n.x) < 36 && Math.abs(player.y - n.y) < 36);
+  if (nearbyCustomer) {
+    const currentLine = nearbyCustomer.dialogues[nearbyCustomer.dialogueIndex];
+    triggerSpeechBubble(nearbyCustomer.x, nearbyCustomer.y, `Customer: "${currentLine}"`, 3500, 'store');
+    
+    // Cycle to the next dialogue option (loops back if they press 4 times)
+    nearbyCustomer.dialogueIndex = (nearbyCustomer.dialogueIndex + 1) % nearbyCustomer.dialogues.length;
+    return;
+  }
   if (isNearButler()) {
     speakButler();
     if (STATE.dayNumber === 1 && STATE.tutorialStep === 5) {
@@ -4248,6 +4290,7 @@ function triggerSpeechBubble(x, y, text, duration = 3000, map = STATE.currentMap
 
 function checkProximityPrompts() {
   const isPromptVisible = (
+    nearCustomer ||
     isNearButler() ||
     isNearTile(7) ||
     isNearTile(3) ||
@@ -4257,7 +4300,16 @@ function checkProximityPrompts() {
     isNearTile(10) ||
     isNearTile(11)
   );
-  document.getElementById('action-prompt').style.display = isPromptVisible ? 'block' : 'none';
+  
+  const promptEl = document.getElementById('action-prompt');
+  if (promptEl) {
+    promptEl.style.display = isPromptVisible ? 'block' : 'none';
+    if (nearCustomer && !isNearButler() && !isNearTile(5)) {
+      promptEl.innerText = "[E / SPACE] Talk to Customer";
+    } else {
+      promptEl.innerText = "[E / SPACE] Interact";
+    }
+  }
 }
 
 function closeShopForNight() {
