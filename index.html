@@ -833,6 +833,7 @@ const STATE = {
   infamy: 0,
   suspicion: 5,
   gameStarted: false,
+  jarvisWelcomed: false,
   daySales: 0,
   dayCosts: 0,
   dayRestockCosts: 0,
@@ -1495,6 +1496,12 @@ function getSortedSyndicateLeaderboard() {
 }
 
 function speakButler() {
+  if (!STATE.jarvisWelcomed) {
+    STATE.jarvisWelcomed = true;
+    triggerSpeechBubble(butler.x, butler.y, "Hello master, I'm glad you've decided to change your mind. I look forward to your villainous exploits", 6000, 'lair');
+    return; // Stop here so it doesn't trigger the random quotes on the first talk
+  }
+  
   const syndicate = getSortedSyndicateLeaderboard();
   const playerRank = syndicate.findIndex(s => s.isPlayer) + 1;
   const topVillain = syndicate[0] ? syndicate[0].name : "Lord Apocalypse";
