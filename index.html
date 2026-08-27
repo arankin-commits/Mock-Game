@@ -631,7 +631,7 @@
       </div>
     </div>
 
-    <div class="report-card" style="margin-bottom:10px;">
+    <div id="villian-report-card" class="report-card" style="margin-bottom:10px;">
       <h4>Villain Underground Intel</h4>
       <div class="report-line"><span>Casualty Record:</span><span style="color:#f7768e; font-weight:bold;" id="rep-casualties">0 (Civilian Front)</span></div>
       <div class="report-line"><span>Supervillain Status:</span><span style="color:var(--accent-evil); font-weight:bold;" id="rep-supervillain-status">Inactive</span></div>
@@ -4255,6 +4255,11 @@ function displayDailyReport(cloneStatus = "None Active") {
   if (STATE.suspicion > 60) suspicionLevel = 'CRITICAL ALERT';
   else if (STATE.suspicion > 30) suspicionLevel = 'Elevated';
   document.getElementById('rep-suspicion').innerText = `${STATE.suspicion}% (${suspicionLevel})`;
+
+  const villainCard = document.getElementById('villian-report-card');
+  if (villainCard) {
+    villainCard.style.display = STATE.hasEnteredLair ? 'block' : 'none';
+  }
 
   document.getElementById('modal-daily-report').style.display = 'flex';
 }
