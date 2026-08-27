@@ -835,6 +835,7 @@ const STATE = {
   money: 250,
   infamy: 0,
   suspicion: 5,
+  suspicionReached100: false,
   gameStarted: false,
   jarvisWelcomed: false,
   hasEnteredLair: false,
@@ -3019,6 +3020,48 @@ function triggerDeathEnding() {
   document.getElementById('modal-vr-ending').style.display = 'flex';
 }
 
+function triggerImprisonedEnding() {
+  const endingTitle = "Ending: Imprisoned (Arrested)";
+  const awakeningText = "You tear off the neural headset, your heart pounding as your room slowly comes into focus around your startled friends. 'Whoa, you look intense. What happened in there? Was someone trying to rob your store lol' You left a trail of bodies during you time in the game, wasn't this just supposed to be a game about running a supermarket.";
+  const options = [
+    "\"So, it was just a game.\"",
+    "\"The game was whatever, I guess.\"",
+    "\"They took me in.\"",
+    "\"What a game.\""
+  ];
+
+  document.getElementById('vr-ending-title').innerText = endingTitle;
+  document.getElementById('vr-awakening-text').innerText = awakeningText;
+  document.getElementById('vr-dialogue-options').innerHTML = options.map((opt, i) => `
+    <button class="btn-action btn-danger" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="selectVREndingDialogue(${i}, true)">
+      💬 ${opt}
+    </button>
+  `).join('');
+
+  document.getElementById('modal-vr-ending').style.display = 'flex';
+}
+
+function triggerFiredEnding() {
+  const endingTitle = "Ending: Fired (Terminated from Management)";
+  const awakeningText = "The headset clicks off, releasing a wisp of cooling vapor. Your friends look at you expectantly. 'So, how was the supermarket simulator?'";
+  const options = [
+    "\"I... I got fired.\"",
+    "\"Wow, I can't even hold a job in a game, huh.\"",
+    "\"I got f###### fired\"",
+    "\"*You stare in disbelief*\""
+  ];
+
+  document.getElementById('vr-ending-title').innerText = endingTitle;
+  document.getElementById('vr-awakening-text').innerText = awakeningText;
+  document.getElementById('vr-dialogue-options').innerHTML = options.map((opt, i) => `
+    <button class="btn-action btn-danger" style="text-align:left; padding:8px 12px; background:#1e2438; color:#c0caf5; border:1px solid #3b4261;" onclick="selectVREndingDialogue(${i}, true)">
+      💬 ${opt}
+    </button>
+  `).join('');
+
+  document.getElementById('modal-vr-ending').style.display = 'flex';
+}
+
 function selectVREndingDialogue(idx, isDeath) {
   if (isDeath) {
     // Only restart the game if it was a death ending
@@ -3561,6 +3604,9 @@ class Customer {
     this.joinedQueueTime = Infinity;
     STATE.dayWalkouts++;
     STATE.suspicion = Math.min(100, STATE.suspicion + 5);
+    if (STATE.suspicion >= 100) {
+      STATE.suspicionReached100 = true;
+    }
     triggerSpeechBubble(this.x, this.y, "What a terrible supermarket! I'm leaving!", 2000, 'store');
     const curCol = Math.floor((this.x + 8) / TILE_SIZE);
     const curRow = Math.floor((this.y + 8) / TILE_SIZE);
@@ -3589,6 +3635,9 @@ function checkVisionCone(entity) {
 
     if (inCone && isNearTile(3)) {
       STATE.suspicion = Math.min(100, STATE.suspicion + 1);
+      if (STATE.suspicion >= 100) {
+        STATE.suspicionReached100 = true;
+      }
       if (Math.random() < 0.02) triggerSpeechBubble(entity.x, entity.y, "Hey! What's behind that bookcase?!", 2000, 'store');
     }
   }
@@ -4206,6 +4255,9 @@ function closeShopForNight() {
   if (STATE.robotTier > 0) {
     const rUpg = ROBOT_UPGRADES[STATE.robotTier - 1];
     STATE.suspicion = Math.min(100, STATE.suspicion + rUpg.suspicion);
+    if (STATE.suspicion >= 100) {
+      STATE.suspicionReached100 = true;
+    }
     cloneMsg = `${rUpg.name} (+${rUpg.suspicion}% Suspicion)`;
   }
 
@@ -4222,7 +4274,44 @@ function closeShopForNight() {
   });
   npcs = npcs.filter(n => n.isEmployee);
 
-  displayDailyReport(cloneMsg);
+  let firedOrArrested = false;
+
+  if (STATE.suspicionReached100) {
+    if (STATE.hasEnteredLair) {
+      // 100% chance of game over if lair entered
+      if (STATE.totalCasualties > 0) {
+        triggerDeathEnding();
+      } else {
+        triggerImprisonedEnding();
+      }
+      firedOrArrested = true;
+    } else {
+      // 50% chance of being fired before next shift if lair not entered
+      if (Math.random() < 0.50) {
+        triggerFiredEnding(); // Or a custom fired screen
+        firedOrArrested = true;
+      } else {
+        showNotification("CRITICAL: Suspicion hit 100%, but you narrowly avoided termination this time. Watch out!");
+      }
+    }
+  } else if (STATE.suspicion > 80) {
+    if (STATE.hasEnteredLair) {
+      showNotification("The people are on to you!");
+    } else {
+      showNotification("You may be fired soon!");
+    }
+  }
+
+  // If not fired/arrested, proceed to display the regular daily report
+  if (!firedOrArrested) {
+    displayDailyReport(cloneMsg);
+  }
+
+  // Ensure the menu closes so the player sees the report/ending overlay
+  if (STATE.menuOpen) {
+    toggleMenu();
+  }
+
   updateTutorialBanner(); 
   updateHUD();
 }
@@ -4435,6 +4524,9 @@ function siphonMoney(amount) {
   STATE.money -= amount; 
   STATE.infamy += Math.floor(amount / 5); 
   STATE.suspicion = Math.min(100, STATE.suspicion + Math.floor(amount / 10));
+  if (STATE.suspicion >= 100) {
+    STATE.suspicionReached100 = true;
+  }
   STATE.didAnyVillainy = true;
   reassignAllHeroNemeses();
   checkRivalRankTriggers();
