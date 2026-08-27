@@ -3200,6 +3200,11 @@ function applyLayoutMap(tier) {
 function calculateDailyCustomers() {
   if (STATE.dayNumber === 1) return 5;
   const mult = STATE.marketingMultiplier;
+  
+  if (STATE.isSupervillain && STATE.infamy > 5000) {
+    mult = Math.max(0.2, mult - 0.6); // Decreases effective traffic multiplier out of fear
+  }
+  
   const sign = Math.random() < 0.5 ? -1 : 1;
   const varianceNum = Math.floor(1 + Math.random() * 3);
   return Math.max(4, Math.round(10 * mult + (sign * mult * 0.5 * varianceNum)));
@@ -3471,6 +3476,9 @@ class Customer {
     this.assignedRegisterId = null;
     this.dialogues = this.generateRandomDialogues();
     this.dialogueIndex = 0; // Tracks which line they say next when interacted with
+    this.isMourning = this.determineMourningState();
+    this.mourningTopic = this.isMourning ? this.getMourningTopic() : null;
+    this.mourningPushCount = 0; // Tracks if you keep pushing them when they want to be left alone
 
     this.path = [];
     this.isEmployee = false;
@@ -3509,12 +3517,45 @@ class Customer {
       "Sure hope it doesn't rain, I left my car windows rolled down.",
       "The weather outside is gorgeous today, perfect for walking.",
       "Feels like a storm is brewing tonight, the air is heavy."
-  ];
+    ];
+  
+    // Shuffle and pick 3 unique random lines for this customer
+    const shuffled = [...pools].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 3);
+  }
 
-  // Shuffle and pick 3 unique random lines for this customer
-  const shuffled = [...pools].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 3);
-}
+  determineMourningState() {
+    // Can only mourn if there are actual casualties or property destruction
+    const hasCasualties = STATE.totalCasualties > 0;
+    return hasCasualties && Math.random() < 0.35;
+  }
+  
+  getMourningTopic() {
+    const topics = [];
+    
+    // If heroes or vigilantes were killed, pick a specific dead hero's name
+    const deadHeroes = GLOBAL_HEROES.filter(h => !h.isAlive);
+    if (deadHeroes.length > 0 && Math.random() < 0.5) {
+      const hero = deadHeroes[Math.floor(Math.random() * deadHeroes.length)];
+      topics.push({ type: 'hero', text: `I still can't believe ${hero.name} is really gone... the city feels so unsafe now.` });
+    }
+  
+    // If civilian casualties occurred, mention grieving families
+    if (STATE.civilianCasualties > 0 && Math.random() < 0.5) {
+      topics.push({ type: 'family', text: `I went to the memorial service for the families affected by the recent attacks. Absolutely heartbreaking.` });
+    }
+  
+    // If destruction/casualties occurred, mention property/area destruction
+    if (STATE.totalCasualties > 0 && Math.random() < 0.5) {
+      topics.push({ type: 'property', text: `They're still clearing out the rubble from where my cousin used to live. Everything is ruined.` });
+    }
+  
+    if (topics.length === 0) {
+      topics.push({ type: 'family', text: `Things haven't been the same since the recent tragedies in the city.` });
+    }
+  
+    return topics[Math.floor(Math.random() * topics.length)];
+  }
 
   setPathToAisle() {
     const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
@@ -3740,6 +3781,12 @@ function secTimer() {
   const pCol = Math.floor(player.x / TILE_SIZE);
   const pRow = Math.floor(player.y / TILE_SIZE);
   STATE.officeDoorOpen = Math.abs(pCol - OFFICE_DOOR_POS.col) <= 1 && Math.abs(pRow - OFFICE_DOOR_POS.row) <= 1;
+
+  if (!n.isEmployee && n.state === 'shopping' && STATE.isSupervillain && STATE.infamy > 5000) {
+    if (Math.random() < 0.002) { // Rare random unprompted warning
+      triggerSpeechBubble(n.x, n.y, "I need to hurry up and get out of here... there's been too many villain attacks lately.", 3000, 'store');
+    }
+  }
 
   if (STATE.phase === 'day') {
     npcs.forEach(n => {
@@ -4108,13 +4155,26 @@ function render() {
 function handleInteraction() {
   const nearbyCustomer = npcs.find(n => !n.isEmployee && Math.abs(player.x - n.x) < 36 && Math.abs(player.y - n.y) < 36);
   if (nearbyCustomer) {
-    const currentLine = nearbyCustomer.dialogues[nearbyCustomer.dialogueIndex];
-    triggerSpeechBubble(nearbyCustomer.x, nearbyCustomer.y, `Customer: "${currentLine}"`, 3500, 'store');
-    
-    // Cycle to the next dialogue option (loops back if they press 4 times)
-    nearbyCustomer.dialogueIndex = (nearbyCustomer.dialogueIndex + 1) % nearbyCustomer.dialogues.length;
+    if (nearbyCustomer.isMourning) {
+      if (nearbyCustomer.mourningPushCount === 0) {
+        triggerSpeechBubble(nearbyCustomer.x, nearbyCustomer.y, `Customer: "${nearbyCustomer.mourningTopic.text}"`, 4000, 'store');
+        nearbyCustomer.mourningPushCount++;
+      } else if (nearbyCustomer.mourningPushCount === 1) {
+        triggerSpeechBubble(nearbyCustomer.x, nearbyCustomer.y, `Customer: "Please... I'd really rather be left alone right now."`, 3500, 'store');
+        nearbyCustomer.mourningPushCount++;
+      } else {
+        // Pushed too far: get mad and leave the store (counts towards walkout/dissatisfaction)
+        triggerSpeechBubble(nearbyCustomer.x, nearbyCustomer.y, `Customer: "Are you serious?! Have some respect, I'm getting out of here!"`, 4000, 'store');
+        nearbyCustomer.rageQuit();
+      }
+    } else {
+      const currentLine = nearbyCustomer.dialogues[nearbyCustomer.dialogueIndex];
+      triggerSpeechBubble(nearbyCustomer.x, nearbyCustomer.y, `Customer: "${currentLine}"`, 3500, 'store');
+      nearbyCustomer.dialogueIndex = (nearbyCustomer.dialogueIndex + 1) % nearbyCustomer.dialogues.length;
+    }
     return;
   }
+  
   if (isNearButler()) {
     speakButler();
     if (STATE.dayNumber === 1 && STATE.tutorialStep === 5) {
