@@ -812,6 +812,10 @@
           <label style="font-size:11px;">Set Infamy:</label>
           <input type="number" id="admin-infamy-input" value="0" min="0" max="99999" onchange="adminSetInfamy(this.value)" style="width:80px;">
         </div>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+          <label style="font-size:11px;">Set Suspicion:</label>
+          <input type="number" id="admin-suspicion-input" value="5" min="0" max="100" onchange="adminSetSuspicion(this.value)" style="width:60px;">
+        </div>
 
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
           <button class="btn-action btn-danger" onclick="adminTriggerDeath()">☠️ Trigger Death Ending</button>
@@ -3096,6 +3100,7 @@ function toggleAdminMode(enable) {
   document.getElementById('hud-admin-indicator').style.display = enable ? 'inline-block' : 'none';
   document.getElementById('admin-casualty-input').value = STATE.totalCasualties;
   document.getElementById('admin-infamy-input').value = STATE.infamy;
+  document.getElementById('admin-suspicion-input').value = STATE.suspicion;
   showNotification(enable ? "ADMIN MODE ENABLED: All upgrades free, missions unlocked!" : "Admin Mode Disabled.");
   renderUI();
 }
@@ -3121,7 +3126,17 @@ function adminSetInfamy(val) {
   checkRivalRankTriggers();
   updateHUD();
 }
-
+  
+function adminSetSuspicion(val) {
+  let parsed = parseInt(val) || 0;
+  STATE.suspicion = Math.max(0, Math.min(100, parsed));
+  
+  if (STATE.suspicion >= 100) {
+    STATE.suspicionReached100 = true;
+  }
+  updateHUD();
+}
+  
 function adminTriggerDeath() {
   // Close the management dashboard/menu modal so the ending modal displays cleanly
   if (STATE.menuOpen) {
