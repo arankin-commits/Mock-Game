@@ -834,6 +834,7 @@ const STATE = {
   suspicion: 5,
   gameStarted: false,
   jarvisWelcomed: false,
+  hasEnteredLair: false,
   daySales: 0,
   dayCosts: 0,
   dayRestockCosts: 0,
@@ -4086,6 +4087,8 @@ function isNearTile(tileID) {
 function toggleLairSecretEntrance() {
   if (STATE.currentMap === 'store') {
     STATE.currentMap = 'lair'; player.x = 2 * TILE_SIZE; player.y = 3 * TILE_SIZE;
+    
+    STATE.hasEnteredLair = true;
   } else {
     STATE.currentMap = 'store'; player.x = 5 * TILE_SIZE; player.y = 2 * TILE_SIZE;
   }
@@ -4446,6 +4449,10 @@ function toggleMenu(defaultTab, isDeskAccess = false) {
 
   document.querySelectorAll('.villain-feature').forEach(el => {
     el.style.display = isDeskAccess ? 'none' : '';
+  });
+
+  document.querySelectorAll('.villain-tab').forEach(el => {
+    el.style.display = STATE.hasEnteredLair ? 'inline-block' : 'none';
   });
 
   document.getElementById('modal-menu-title').innerHTML = isDeskAccess ? 
