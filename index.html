@@ -4451,6 +4451,16 @@ function checkProximityPrompts() {
 }
 
 function closeShopForNight() {
+  const remainingShoppers = npcs.filter(n => !n.isEmployee).length;
+  
+  if (remainingShoppers > 0 && !STATE.autoProgress) {
+    STATE.suspicion = Math.min(100, STATE.suspicion + 15);
+    if (STATE.suspicion >= 100) {
+      STATE.suspicionReached100 = true;
+    }
+    showNotification(`You closed shop with ${remainingShoppers} customers still inside. if you keep closing the shop early you may get fired`);
+  }
+  
   STATE.phase = 'night';
   let wages = STAFF.reduce((acc, s) => acc + (s.count * s.wage), 0);
   STATE.money -= wages; 
