@@ -872,6 +872,8 @@ const STATE = {
   officeDoorOpen: false,
   nightTimer: 0,
   selectedHeroId: null,
+  superpowerPotionsCount: 0,
+  apexPurgeJoined: false,
 
   // Supervillain & Casualty Tracking
   totalCasualties: 0,
@@ -1222,13 +1224,93 @@ function startGameFromTitle() {
   
   showNotification("TUTORIAL: Walk up to any grocery shelf and press [E] or [SPACE] to restock!");
 }
+
+function buySuperpowerPotion() {
+  const cost = STATE.adminMode ? 0 : 200;
+  if (!STATE.adminMode && STATE.money < cost) return alert("Need $200 to brew a superpower serum!");
+  if (!STATE.adminMode) STATE.money -= cost;
+  STATE.superpowerPotionsCount++;
+  showNotification("Superpower potion brewed successfully!");
+  renderUI();
+}
+
+function challengeHeroToFight() {
+  if (STATE.superpowerPotionsCount <= 0) return alert("You need a Superpower Potion to challenge a hero!");
+  STATE.superpowerPotionsCount--;
+
+  // 5% chance it's a vigilante if you've killed someone, otherwise a hero
+  const isVigilante = STATE.totalCasualties > 0 && Math.random() < 0.05;
+  const targetPool = isVigilante ? 
+    [{ name: "Vigilante Bounty Hunter", threat: "High", attributes: ["Street Combat", "Tactical Armor"] }] : 
+    GLOBAL_HEROES.filter(h => h.isAlive);
+
+  if (targetPool.length === 0) return alert("No active targets available on radar!");
+  const opponent = targetPool[Math.floor(Math.random() * targetPool.length)];
+
+  // Launch 2D Fighting Game Minigame
+  launchFightingGame(opponent, isVigilante);
+  updateHUD();
+}
+
+let fightingState = {
+  active: false,
+  opponentName: "",
+  playerHp: 100,
+  opponentHp: 100,
+  playerAction: 'idle',
+  opponentAction: 'idle',
+  timer: 60,
+  gameOverText: null
+};
+
+function launchFightingGame(opponent, isVigilante) {
+  fightingState.active = true;
+  fightingState.opponentName = opponent.name;
+  fightingState.playerHp = 100;
+  fightingState.opponentHp = 100;
+  fightingState.timer = 60;
+  fightingState.gameOverText = null;
+
+  STATE.minigameActive = true;
+  document.getElementById('modal-minigame').style.display = 'flex';
+  document.getElementById('minigame-title').innerText = `ARCADE DUEL: YOU VS ${opponent.name.toUpperCase()}`;
+  document.getElementById('minigame-instructions').innerText = "Controls: [A/D] Move | [J] Punch | [K] Kick | [L] Special Super Move";
+}
+
+// Add key controls for fighting mode inside your global keydown event listener:
+window.addEventListener('keydown', (e) => {
+  if (!fightingState.active) return;
+  
+  if (e.key.toLowerCase() === 'j') {
+    // Punch
+    fightingState.opponentHp -= Math.floor(5 + Math.random() * 8);
+    fightingState.playerAction = 'punch';
+  } else if (e.key.toLowerCase() === 'k') {
+    // Kick
+    fightingState.opponentHp -= Math.floor(8 + Math.random() * 10);
+    fightingState.playerAction = 'kick';
+  } else if (e.key.toLowerCase() === 'l') {
+    // Special Super Move
+    fightingState.opponentHp -= Math.floor(18 + Math.random() * 15);
+    fightingState.playerAction = 'special';
+  }
+});
   
 function acceptApexInvite() {
   STATE.apexSyndicateMember = true;
+  STATE.apexPurgeJoined = true;
   STATE.didAnyVillainy = true;
-  showNotification("☣ YOU HAVE JOINED THE APEX PURGE SYNDICATE! Regular syndicates distrust you, but your destructive power is unmatched.");
-  triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master... joining the Apex Purge means other villains will despise us. I disapprove of cold-blooded villain slaughter, but I remain at your side."`, 6000, 'lair');
+
+  // 1. Rival stops seeing you as a rival (remove Dr. Malevolent or modify rivalry triggers)
+  rivalVillains = rivalVillains.filter(v => !v.name.includes("Dr. Malevolent"));
+
+  // 2. Removed from standard leaderboard (handled in sorting/display)
+  // 3. Cannot ally with other villains (disable regular syndicate interactions)
+
+  showNotification("☣ APEX PURGE PACT ACCEPTED: You have cut ties with standard syndicates. Your rival has abandoned you.");
+  triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
   renderMailList();
+  renderUI();
 }
 
 function updateUnreadCount() {
@@ -1493,12 +1575,16 @@ function updateDailyRivalLeaderboard() {
 
 function getSortedSyndicateLeaderboard() {
   const fullList = rivalVillains.map(v => ({ ...v, isPlayer: false }));
-  fullList.push({
-    name: "You (Store Manager)",
-    infamy: STATE.infamy,
-    isSupervillain: STATE.isSupervillain,
-    isPlayer: true
-  });
+  
+  // If you joined Apex Purge, you are removed from the standard syndicate board entirely
+  if (!STATE.apexPurgeJoined) {
+    fullList.push({
+      name: "You (Store Manager)",
+      infamy: STATE.infamy,
+      isSupervillain: STATE.isSupervillain,
+      isPlayer: true
+    });
+  }
 
   fullList.sort((a, b) => b.infamy - a.infamy);
   return fullList.slice(0, 25);
@@ -2237,6 +2323,21 @@ function spawnBossEnemy() {
     hasArmor: false,
     armorRechargeTimer: 0
   });
+}
+
+function renderSuperpowerSection() {
+  if (STATE.computerTier >= 4) {
+    return `
+      <div style="background:#16161e; border:1px solid var(--accent-cyan); padding:10px; margin-top:10px; border-radius:4px;">
+        <h4 style="color:var(--accent-cyan);">Superpower Bio-Serums (Potions)</h4>
+        <p style="font-size:11px; color:#a9b1d6; margin-bottom:8px;">Brew illegal superpower serums to challenge active city heroes in 1v1 combat.</p>
+        <p style="font-size:11px; color:var(--accent-gold);">Potions in Stash: <strong>${STATE.superpowerPotionsCount}</strong></p>
+        <button class="btn-action" style="background:var(--accent-cyan); color:#080d1a;" onclick="buySuperpowerPotion()">Brew Potion ($200)</button>
+        <button class="btn-action btn-danger" ${STATE.superpowerPotionsCount <= 0 ? 'disabled' : ''} onclick="challengeHeroToFight()">⚔️ Challenge Hero to Fight</button>
+      </div>
+    `;
+  }
+  return '';
 }
 
 function updateAndRenderMinigame() {
@@ -3199,7 +3300,7 @@ function applyLayoutMap(tier) {
 
 function calculateDailyCustomers() {
   if (STATE.dayNumber === 1) return 5;
-  const mult = STATE.marketingMultiplier;
+  let mult = STATE.marketingMultiplier;
   
   if (STATE.isSupervillain && STATE.infamy > 5000) {
     mult = Math.max(0.2, mult - 0.6); // Decreases effective traffic multiplier out of fear
@@ -3782,15 +3883,14 @@ function secTimer() {
   const pRow = Math.floor(player.y / TILE_SIZE);
   STATE.officeDoorOpen = Math.abs(pCol - OFFICE_DOOR_POS.col) <= 1 && Math.abs(pRow - OFFICE_DOOR_POS.row) <= 1;
 
-  if (!n.isEmployee && n.state === 'shopping' && STATE.isSupervillain && STATE.infamy > 5000) {
-    if (Math.random() < 0.002) { // Rare random unprompted warning
-      triggerSpeechBubble(n.x, n.y, "I need to hurry up and get out of here... there's been too many villain attacks lately.", 3000, 'store');
-    }
-  }
-
   if (STATE.phase === 'day') {
     npcs.forEach(n => {
       if (!n.isEmployee) {
+        if (!n.isEmployee && n.state === 'shopping' && STATE.isSupervillain && STATE.infamy > 5000) {
+          if (Math.random() < 0.002) { // Rare random unprompted warning
+            triggerSpeechBubble(n.x, n.y, "I need to hurry up and get out of here... there's been too many villain attacks lately.", 3000, 'store');
+          }
+        }
         if (n.pauseTimer > 0) n.pauseTimer -= 1;
         if (n.state === 'shopping') { 
           n.shoppingTimer--; 
