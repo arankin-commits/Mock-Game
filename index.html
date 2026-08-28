@@ -1278,9 +1278,22 @@ function renderMailList() {
 
   container.innerHTML = rivalMail.map(m => {
     const isApex = m.from.includes("APEX PURGE");
-    const acceptBtn = (m.isInvite && !STATE.apexSyndicateMember) ? 
-      `<button class="btn-action btn-danger" style="margin-top:6px;" onclick="acceptApexInvite()">ACCEPT APEX PACT</button>` : 
-      (STATE.apexSyndicateMember && m.isInvite ? `<span style="color:#9ece6a; font-size:10px; font-weight:bold;">[MEMBERSHIP ACTIVE]</span>` : '');
+    
+    let inviteActions = '';
+    if (m.isInvite) {
+      if (STATE.apexSyndicateMember) {
+        inviteActions = `<span style="color:#9ece6a; font-size:10px; font-weight:bold; display:block; margin-top:6px;">[ACCEPTED: APEX PURGE MEMBERSHIP ACTIVE]</span>`;
+      } else if (STATE.apexInviteDeclined) {
+        inviteActions = `<span style="color:#f7768e; font-size:10px; font-weight:bold; display:block; margin-top:6px;">[DECLINED: INVITATION REJECTED]</span>`;
+      } else {
+        inviteActions = `
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn-action btn-danger" style="padding:4px 12px;" onclick="respondApexInvite(true)">YES (Accept Pact)</button>
+            <button class="btn-action" style="padding:4px 12px; background:#3b4261; color:#c0caf5;" onclick="respondApexInvite(false)">NO (Decline)</button>
+          </div>
+        `;
+      }
+    }
 
     return `
       <div style="background:#16192b; border-left:3px solid ${isApex ? '#f7768e' : 'var(--accent-evil)'}; padding:8px 12px; border-radius:4px; margin-bottom:6px;">
@@ -1289,10 +1302,35 @@ function renderMailList() {
           <span style="color:#7a819b; font-size:10px;">Day ${m.day}</span>
         </div>
         <p style="color:#c0caf5; font-size:11px; line-height:1.4;">${m.text}</p>
-        ${acceptBtn}
+        ${inviteActions}
       </div>
     `;
   }).join('');
+}
+
+if (STATE.apexInviteDeclined === undefined) {
+  STATE.apexInviteDeclined = false;
+}
+
+function respondApexInvite(accepted) {
+  if (accepted) {
+    STATE.apexSyndicateMember = true;
+    STATE.apexPurgeJoined = true;
+    STATE.didAnyVillainy = true;
+
+    // Remove Dr. Malevolent as a rival and isolate from standard syndicate leaderboard
+    rivalVillains = rivalVillains.filter(v => !v.name.includes("Dr. Malevolent"));
+
+    showNotification("☣ APEX PURGE PACT ACCEPTED: You have cut ties with standard syndicates. Your rival has abandoned you.");
+    triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
+  } else {
+    STATE.apexInviteDeclined = true;
+    showNotification("❌ INVITATION DECLINED: You remain part of the standard syndicates. The Apex Purge watches in silence.");
+    triggerSpeechBubble(butler.x, butler.y, `Jarvis: "A bold refusal, master. We keep our standard syndicate connections for now."`, 5000, 'lair');
+  }
+
+  renderMailList();
+  renderUI();
 }
 
 function generateVillainLeaderboardData() {
