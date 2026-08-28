@@ -840,6 +840,8 @@ const STATE = {
   infamy: 0,
   suspicion: 5,
   suspicionReached100: false,
+  daysWithoutSuspicionIncrease: 0,
+  lastRecordedSuspicion: 5,
   gameStarted: false,
   jarvisWelcomed: false,
   hasEnteredLair: false,
@@ -1180,6 +1182,7 @@ function sendApexSyndicateInvite() {
     read: false,
     isInvite: true
   });
+  
   updateUnreadCount();
   renderMailList();
 }
@@ -4596,6 +4599,42 @@ function startNextDayShift() {
   processPendingMorningMail();
 
   updateDailyRivalLeaderboard();
+
+  // 1. Check if suspicion increased since yesterday
+  if (STATE.suspicion < STATE.lastRecordedSuspicion) {
+    // Suspicion went down or stayed stable, check if it stayed flat or decreased
+    // (We track increases below)
+  }
+
+  // 2. Determine daily suspicion drop based on walkouts (no one left angry)
+  let suspicionDrop = 5;
+  if (STATE.dayWalkouts === 0) {
+    suspicionDrop = 10;
+    showNotification("🌟 SPOTLESS SHIFT: No customers left angry. Suspicion dropped by 10%!");
+  } else {
+    showNotification(`📉 Daily Audit: Suspicion dropped by ${suspicionDrop}% due to clean operations.`);
+  }
+
+  // Apply the drop
+  let newSuspicion = Math.max(0, STATE.suspicion - suspicionDrop);
+
+  // 3. Track 10-day streak of zero-increase suspicion
+  if (newSuspicion <= STATE.lastRecordedSuspicion) {
+    STATE.daysWithoutSuspicionIncrease++;
+  } else {
+    // Suspicion went up during the day (e.g. from siphoning funds, bots, or walkouts)
+    STATE.daysWithoutSuspicionIncrease = 0;
+  }
+
+  // If 10 consecutive days without an increase, drop suspicion completely to 0!
+  if (STATE.daysWithoutSuspicionIncrease >= 10) {
+    newSuspicion = 0;
+    STATE.daysWithoutSuspicionIncrease = 0;
+    showNotification("✨ 10-DAY CLEAN STREAK: Local investigators closed your file. Suspicion reset to 0%!");
+  }
+
+  STATE.suspicion = newSuspicion;
+  STATE.lastRecordedSuspicion = STATE.suspicion; // Save baseline for the next day
 
   PRODUCTS.forEach(p => {
     p.popularity = p.nextPopularity || rollDemand();
