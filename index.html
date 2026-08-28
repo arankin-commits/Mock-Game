@@ -1150,6 +1150,25 @@ function sendRivalMessage(triggerKey) {
   renderMailList();
 }
 
+let pendingMorningMail = [];
+
+function stagingPendingMail(type) {
+  pendingMorningMail.push(type);
+}
+
+function processPendingMorningMail() {
+  pendingMorningMail.forEach(type => {
+    if (type === 'apexInvite') {
+      sendApexSyndicateInvite();
+    } else if (type === 'vigilanteWarning') {
+      sendRivalMessage('vigilanteWarning');
+    } else {
+      sendRivalMessage(type);
+    }
+  });
+  pendingMorningMail = []; // Clear queue
+}
+
 function sendApexSyndicateInvite() {
   if (STATE.supervillainSyndicateMailSent) return;
   STATE.supervillainSyndicateMailSent = true;
@@ -1224,77 +1243,6 @@ function startGameFromTitle() {
   
   showNotification("TUTORIAL: Walk up to any grocery shelf and press [E] or [SPACE] to restock!");
 }
-
-function buySuperpowerPotion() {
-  const cost = STATE.adminMode ? 0 : 200;
-  if (!STATE.adminMode && STATE.money < cost) return alert("Need $200 to brew a superpower serum!");
-  if (!STATE.adminMode) STATE.money -= cost;
-  STATE.superpowerPotionsCount++;
-  showNotification("Superpower potion brewed successfully!");
-  renderUI();
-}
-
-function challengeHeroToFight() {
-  if (STATE.superpowerPotionsCount <= 0) return alert("You need a Superpower Potion to challenge a hero!");
-  STATE.superpowerPotionsCount--;
-
-  // 5% chance it's a vigilante if you've killed someone, otherwise a hero
-  const isVigilante = STATE.totalCasualties > 0 && Math.random() < 0.05;
-  const targetPool = isVigilante ? 
-    [{ name: "Vigilante Bounty Hunter", threat: "High", attributes: ["Street Combat", "Tactical Armor"] }] : 
-    GLOBAL_HEROES.filter(h => h.isAlive);
-
-  if (targetPool.length === 0) return alert("No active targets available on radar!");
-  const opponent = targetPool[Math.floor(Math.random() * targetPool.length)];
-
-  // Launch 2D Fighting Game Minigame
-  launchFightingGame(opponent, isVigilante);
-  updateHUD();
-}
-
-let fightingState = {
-  active: false,
-  opponentName: "",
-  playerHp: 100,
-  opponentHp: 100,
-  playerAction: 'idle',
-  opponentAction: 'idle',
-  timer: 60,
-  gameOverText: null
-};
-
-function launchFightingGame(opponent, isVigilante) {
-  fightingState.active = true;
-  fightingState.opponentName = opponent.name;
-  fightingState.playerHp = 100;
-  fightingState.opponentHp = 100;
-  fightingState.timer = 60;
-  fightingState.gameOverText = null;
-
-  STATE.minigameActive = true;
-  document.getElementById('modal-minigame').style.display = 'flex';
-  document.getElementById('minigame-title').innerText = `ARCADE DUEL: YOU VS ${opponent.name.toUpperCase()}`;
-  document.getElementById('minigame-instructions').innerText = "Controls: [A/D] Move | [J] Punch | [K] Kick | [L] Special Super Move";
-}
-
-// Add key controls for fighting mode inside your global keydown event listener:
-window.addEventListener('keydown', (e) => {
-  if (!fightingState.active) return;
-  
-  if (e.key.toLowerCase() === 'j') {
-    // Punch
-    fightingState.opponentHp -= Math.floor(5 + Math.random() * 8);
-    fightingState.playerAction = 'punch';
-  } else if (e.key.toLowerCase() === 'k') {
-    // Kick
-    fightingState.opponentHp -= Math.floor(8 + Math.random() * 10);
-    fightingState.playerAction = 'kick';
-  } else if (e.key.toLowerCase() === 'l') {
-    // Special Super Move
-    fightingState.opponentHp -= Math.floor(18 + Math.random() * 15);
-    fightingState.playerAction = 'special';
-  }
-});
   
 function acceptApexInvite() {
   STATE.apexSyndicateMember = true;
@@ -1502,15 +1450,17 @@ function processDailyVillainAttrition() {
 function checkCasualtyStatusEscalation() {
   if (STATE.totalCasualties >= 1 && !STATE.rivalMilestonesSent.vigilanteWarning) {
     STATE.rivalMilestonesSent.vigilanteWarning = true;
-    sendRivalMessage('vigilanteWarning');
+    // Stage vigilante warning for next morning
+    stagingPendingMail('vigilanteWarning');
   }
 
   if (STATE.totalCasualties >= 25 && !STATE.isSupervillain) {
     STATE.isSupervillain = true;
-    showNotification("⚠️ WARNING: CASUALTIES EXCEEDED 25! You have attained SUPERVILLAIN status.");
+    showNotification("⚠️ WARNING: CASUALTIES EXCEEDED 25! Supervillain status unlocked.");
     triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master, casualties have exceeded 25. You are now designated a SUPERVILLAIN. The Apex Purge Syndicate is watching."`, 5000, 'lair');
-    sendRivalMessage('supervillain');
-    sendApexSyndicateInvite();
+    
+    // Stage Apex Purge invite for next morning
+    stagingPendingMail('apexInvite');
   }
 }
 
@@ -2323,21 +2273,6 @@ function spawnBossEnemy() {
     hasArmor: false,
     armorRechargeTimer: 0
   });
-}
-
-function renderSuperpowerSection() {
-  if (STATE.computerTier >= 4) {
-    return `
-      <div style="background:#16161e; border:1px solid var(--accent-cyan); padding:10px; margin-top:10px; border-radius:4px;">
-        <h4 style="color:var(--accent-cyan);">Superpower Bio-Serums (Potions)</h4>
-        <p style="font-size:11px; color:#a9b1d6; margin-bottom:8px;">Brew illegal superpower serums to challenge active city heroes in 1v1 combat.</p>
-        <p style="font-size:11px; color:var(--accent-gold);">Potions in Stash: <strong>${STATE.superpowerPotionsCount}</strong></p>
-        <button class="btn-action" style="background:var(--accent-cyan); color:#080d1a;" onclick="buySuperpowerPotion()">Brew Potion ($200)</button>
-        <button class="btn-action btn-danger" ${STATE.superpowerPotionsCount <= 0 ? 'disabled' : ''} onclick="challengeHeroToFight()">⚔️ Challenge Hero to Fight</button>
-      </div>
-    `;
-  }
-  return '';
 }
 
 function updateAndRenderMinigame() {
@@ -4619,6 +4554,8 @@ function startNextDayShift() {
   STATE.customersServedToday = 0; 
   STATE.dayTotalCustomers = calculateDailyCustomers(); 
   STATE.spawnCooldown = 2;
+
+  processPendingMorningMail();
 
   updateDailyRivalLeaderboard();
 
