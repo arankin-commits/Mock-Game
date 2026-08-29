@@ -4196,59 +4196,50 @@ function render() {
                   ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
                 }
               } else if (t === 2) {
-                const prodIndex = Math.floor(shelfIndex / 2);
-                const prod = unlockedList[prodIndex];
-      
-                if (prod) {
-                  // Unlocked product shelf (4 blocks wide total per shelf pair = 2 tiles)
-                  ctx.fillStyle = '#1e2536'; 
-                  ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-                  ctx.strokeStyle = '#3b4261'; 
-                  ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
-      
-                  ctx.fillStyle = '#2d3748';
-                  ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 4);
-                  ctx.fillRect(tx + 2, ty + 20, TILE_SIZE - 4, 4);
-      
-                  if (prod.backStock > 0) {
-                    ctx.fillStyle = prod.color || '#7aa2f7';
-                    ctx.fillRect(tx + 6, ty + 10, TILE_SIZE - 12, 10);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 8px monospace';
-                    ctx.fillText(`${prod.backStock}`, tx + 4, ty + 18);
+                  const prodIndex = Math.floor(shelfIndex / 2);
+                  const prod = unlockedList[prodIndex];
+        
+                  if (prod) {
+                    // Draw standard shelf look (same as store shelves up top)
+                    ctx.fillStyle = '#334155'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+                    ctx.fillStyle = '#cbd5e1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        
+                    ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 3);
+                    ctx.fillStyle = '#f43f5e'; ctx.fillRect(tx + 2, ty + 7, TILE_SIZE - 4, 1);
+                    
+                    // Only show colored squares / product bars if backStock > 0
+                    if (prod.backStock > 0) {
+                      ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
+                      ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
+                      ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
+                      ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
+                    }
+        
+                    ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
+                    ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
+                    
+                    // Only show bottom colored squares if backStock > 0
+                    if (prod.backStock > 0) {
+                      ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
+                      ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
+                      ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
+                    }
+        
+                    // Small text overlay showing available quantity
+                    ctx.fillStyle = prod.backStock > 0 ? '#1e293b' : '#ef4444';
+                    ctx.font = 'bold 7px monospace';
+                    ctx.fillText(prod.backStock > 0 ? `${prod.backStock}` : 'EMPTY', tx + 3, ty + 14);
+        
+                    // Hover tooltip check
+                    if (STATE.mouseX >= tx && STATE.mouseX <= tx + TILE_SIZE && STATE.mouseY >= ty && STATE.mouseY <= ty + TILE_SIZE) {
+                      STATE.backroomHoverText = `Backstock Shelf: ${prod.name} (${prod.backStock} units available)`;
+                    }
                   } else {
-                    ctx.fillStyle = '#4a5568';
-                    ctx.font = '8px monospace';
-                    ctx.fillText("EMPTY", tx + 3, ty + 16);
+                    // Locked product shelf: hidden/blank dark space
+                    ctx.fillStyle = '#0b0d14';
+                    ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
                   }
-      
-                  if (STATE.mouseX >= tx && STATE.mouseX <= tx + TILE_SIZE && STATE.mouseY >= ty && STATE.mouseY <= ty + TILE_SIZE) {
-                    STATE.backroomHoverText = `Backstock Shelf: ${prod.name} (${prod.backStock} units available)`;
-                  }
-                } else {
-                  // Locked product shelf: hidden/blank empty space
-                  ctx.fillStyle = '#0b0d14';
-                  ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-                }
-                shelfIndex++;
-              }
-            }
-          }
-      
-          // Draw hover tooltip if active
-          if (STATE.backroomHoverText) {
-            ctx.fillStyle = 'rgba(15, 17, 26, 0.9)';
-            ctx.strokeStyle = '#7aa2f7';
-            ctx.lineWidth = 1;
-            ctx.fillRect(STATE.mouseX + 10, STATE.mouseY - 25, ctx.measureText(STATE.backroomHoverText).width + 16, 22);
-            ctx.strokeRect(STATE.mouseX + 10, STATE.mouseY - 25, ctx.measureText(STATE.backroomHoverText).width + 16, 22);
-      
-            ctx.fillStyle = '#fff';
-            ctx.font = '10px monospace';
-            ctx.fillText(STATE.backroomHoverText, STATE.mouseX + 18, STATE.mouseY - 11);
-            STATE.backroomHoverText = null;
-          }
-          return;
+                  shelfIndex++;
       } else {
         ctx.fillStyle = '#10141f'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
         ctx.strokeStyle = '#1e2638'; ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
