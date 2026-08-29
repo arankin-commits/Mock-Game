@@ -721,9 +721,7 @@
 
     <div id="tab-game-guide" class="modal-content" style="display:none;">
       <h3 style="color:var(--accent-store); margin-bottom:10px;">Supermarket & Supervillain Operator Manual</h3>
-      <div id="dynamic-guide-container"></div>
-    </div>
-
+      
       <div class="guide-box">
         <strong style="color:var(--accent-store);">1. Store Operations & Shelf Restocking</strong>
         <p style="margin-top:4px;">Walk up to any aisle shelf, cooler, or produce rack and press <strong>[E]</strong> or <strong>[SPACE]</strong> to restock from inventory. Check out shoppers at active registers when they reach the front of the line.</p>
@@ -3328,9 +3326,9 @@ function updateTutorialBanner() {
     
   } else if (STATE.tutorialStage === 8) {
     bannerText.innerText = "TUTORIAL [8/13]: Open up the menu and order stock of an item. Walk over to the door in the bottom right of the store";
-  else if (STATE.tutorialStage === 9) {
+  } else if (STATE.tutorialStage === 9) {
     bannerText.innerText = "TUTORIAL [9/13]: This is the storage room where you can grab items to put on the aisles. Walk up to a shelf and grab some items. You can only hold 5 items at a time. Leave the storage room";
-  else if (STATE.tutorialStage === 10) {
+  } else if (STATE.tutorialStage === 10) {
     bannerText.innerText = "TUTORIAL [10/13]: Now walk up to an empty aisle and press [E] or [SPACE] to restock items. Each aisle can hold 10 items. Make sure to restock to prevent walkouts";
     
   } else if (STATE.tutorialStage === 7) {
