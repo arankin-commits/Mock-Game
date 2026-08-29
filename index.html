@@ -719,12 +719,12 @@
       </div>
     </div>
 
-    <div id="tab-game-guide" class="modal-content" style="display:none;">
+    <!-- <div id="tab-game-guide" class="modal-content" style="display:none;">
       <h3 style="color:var(--accent-store); margin-bottom:10px;">Supermarket & Supervillain Operator Manual</h3>
-      <!-- <div id="dynamic-guide-container"></div> -->
+      <div id="dynamic-guide-container"></div>
     </div>
 
-      <!-- <div class="guide-box">
+      <div class="guide-box">
         <strong style="color:var(--accent-store);">1. Store Operations & Shelf Restocking</strong>
         <p style="margin-top:4px;">Walk up to any aisle shelf, cooler, or produce rack and press <strong>[E]</strong> or <strong>[SPACE]</strong> to restock from inventory. Check out shoppers at active registers when they reach the front of the line.</p>
       </div>
@@ -748,8 +748,8 @@
             • <strong>Escalation Thresholds:</strong> Casualties $\ge 1$ triggers vigilante hunters. Casualties $\ge 25$ unlocks <strong>Supervillain Status</strong> with extreme hero retaliation and syndicate threats!
           </p>
         </div>
-      </div>
-    </div> -->
+      </div> -->
+    </div>
 
     <div id="tab-lair-intel" class="modal-content villain-feature" style="display:none;">
       <h4 style="color:var(--accent-evil);">Global Supervillain Syndicate Top 25</h4>
@@ -3351,7 +3351,7 @@ function updateTutorialBanner() {
     } else if (STATE.lairTutorialStage === 2) {
       bannerText.innerText = "LAIR TUTORIAL [2/3]: Interact with the Supercomputer terminal (blinking) to do supervillain missions (can be done after shop is closed), and look at the active heroes and supervillain leaderboard. Click Close Feed in the top right.";
     } else if (STATE.lairTutorialStage === 3) {
-      bannerText.innerText = "LAIR TUTORIAL [3/3]: Open the menu [TAB], and click ";
+      bannerText.innerText = "LAIR TUTORIAL [3/3]: Open the menu [TAB], and click . Here you can siphon funds to use for villain";
     } else if (STATE.lairTutorialStage === 3) {
       bannerText.innerText = "LAIR TUTORIAL [3/3]: Move back and forth between your secret lair and the front store anytime by interacting with the blue bookcase";
     }
