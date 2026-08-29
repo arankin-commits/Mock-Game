@@ -83,7 +83,7 @@
     font-size: 13px;
     font-weight: bold;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    z-index: 15;
+    z-index: 150;
     text-align: center;
     max-width: 700px;
   }
@@ -720,7 +720,7 @@
     </div>
 
     <div id="tab-game-guide" class="modal-content" style="display:none;">
-      <h3 style="color:var(--accent-store); margin-bottom:10px;">Supermarket & Supervillain Operator Manual</h3>
+      <!-- <h3 style="color:var(--accent-store); margin-bottom:10px;">Supermarket & Supervillain Operator Manual</h3> -->
       <div id="dynamic-guide-container"></div>
     </div>
 
@@ -999,21 +999,21 @@ function rollDemand() {
 }
 
 let PRODUCTS = [
-  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 15, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68' },
+  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 15, targetStock: 14, pendingTargetStock: 14, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68' },
   { id: 'soda', name: 'Toxic-Cola', popularity: 'popular', nextPopularity: 'popular', cost: 3, marketPrice: 8, price: 8, pendingPrice: 8, stock: 18, targetStock: 18, pendingTargetStock: 18, baseMax: 30, unlocked: true, unlockCost: 0, color: '#7aa2f7' },
   { id: 'meat', name: 'Mystery Meat', popularity: 'normal', nextPopularity: 'normal', cost: 10, marketPrice: 24, price: 24, pendingPrice: 24, stock: 8, targetStock: 8, pendingTargetStock: 8, baseMax: 15, unlocked: true, unlockCost: 0, color: '#f7768e' },
-  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a' },
-  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5' },
-  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887' },
-  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 20, pendingTargetStock: 20, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64' },
-  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca' },
-  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de' },
-  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 12, pendingTargetStock: 12, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7' },
-  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89' },
-  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68' },
-  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e' },
-  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 8, pendingTargetStock: 8, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8' },
-  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 6, pendingTargetStock: 6, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e' }
+  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a' },
+  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5' },
+  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887' },
+  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64' },
+  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca' },
+  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de' },
+  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7' },
+  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89' },
+  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68' },
+  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e' },
+  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8' },
+  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e' }
 ];
 
 const MISSIONS = [
@@ -4964,6 +4964,10 @@ function toggleMenu(defaultTab, isDeskAccess = false) {
   const modal = document.getElementById('modal-menu');
   modal.style.display = STATE.menuOpen ? 'flex' : 'none';
 
+  if (!STATE.menuOpen) {
+    document.querySelectorAll('.modal-content').forEach(c => c.style.display = 'none');
+  }
+
   document.querySelectorAll('.villain-feature').forEach(el => {
     el.style.display = isDeskAccess ? 'none' : '';
   });
@@ -5046,7 +5050,7 @@ function renderUI() {
         </td>
         <td>
           ${p.stock} / <input type="number" min="1" max="${maxStorage}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
-          <div style="font-size:9px; color:#7a819b; margin-top:2px;">(Total Pool: ${totalUsed} / ${maxStorage})</div>
+          <div style="font-size:9px; color:#7a819b; margin-top:2px;">(Total Pool: ${totalTargetSum} / ${maxStorage})</div>
         </td>
         <td><button class="btn-action" onclick="buyStock('${p.id}')">Bulk +6 (${STATE.adminMode ? 'FREE' : `$${bulkCost}`})</button></td>
       </tr>`;
