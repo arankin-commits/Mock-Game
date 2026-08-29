@@ -3311,41 +3311,43 @@ function updateTutorialBanner() {
   banner.style.display = 'block';
   // Store Tutorial Stages (1 - 13)
   if (STATE.tutorialStage === 1) {
-    bannerText.innerText = "TUTORIAL [1/15]: Press [TAB] or walk into the office (top left) and interact [E/SPACE] with the computer to open the menu. Once in the menu, click on the Stock & Pricing";
+    bannerText.innerText = "TUTORIAL [1/13]: Press [TAB] or walk into the office (top left) and interact [E/SPACE] with the computer to open the menu!";
   } else if (STATE.tutorialStage === 2) {
-    bannerText.innerText = "TUTORIAL [2/15]: [Stock & Pricing Tab] Set your prices and target stock levels here before opening. You may want to raise prices or lower prices based on tomorrow's demand. Click the Bulk button";
-     // new
+    bannerText.innerText = "TUTORIAL [2/13]: [Stock & Pricing Tab] Set your prices and target stock levels here before opening.";
   } else if (STATE.tutorialStage === 3) {
-  bannerText.innerText = "TUTORIAL [3/15]: [Stock & Pricing Tab] The bulk button orders stock of an item. Shelf stock is the current item count on the aisles target is the maximum. You can change the max. Click on Layout & Staff";
+    bannerText.innerText = "TUTORIAL [3/13]: [Layout & Staff Tab] Upgrade aisle shelving tiers, hire staff, and boost marketing campaigns.";
   } else if (STATE.tutorialStage === 4) {
-    bannerText.innerText = "TUTORIAL [4/15]: [Layout & Staff Tab] Upgrade aisle shelving tiers, hire staff, and boost marketing campaigns to increase the number of shoppers. Click on Office & Automation";
+    bannerText.innerText = "TUTORIAL [4/13]: [Office & Automation Tab] View revenue stats, open and close shop, and automate workflow.";
   } else if (STATE.tutorialStage === 5) {
-    bannerText.innerText = "TUTORIAL [5/15]: [Office & Automation Tab] View revenue stats, open and close shop, and automate your workflow. Click on Tutorial & Guide";
-    // new
+    bannerText.innerText = "TUTORIAL [5/13]: Close the menu using [TAB], then walk up to shelves and press [E] or [SPACE] to restock!";
   } else if (STATE.tutorialStage === 6) {
-    bannerText.innerText = "TUTORIAL [6/15]: [Tutorial & Guide] You can come here to view the tutorial at any time. Click on Admin Mode";
+    bannerText.innerText = "TUTORIAL [6/13]: Open the menu again [TAB], go to Office & Automation, and click 'Start Next Day Shift'.";
   } else if (STATE.tutorialStage === 7) {
-    bannerText.innerText = "TUTORIAL [7/15]: [Admin Mode] You can unlock Admin Mode with the passcode. Close the menu using [E/SPACE] near the computer, [TAB], or by clicking the red x in the top right";
-    
+    bannerText.innerText = "TUTORIAL [7/13]: Watch out for high customer traffic! Restock items to prevent walkouts.";
   } else if (STATE.tutorialStage === 8) {
-    bannerText.innerText = "TUTORIAL [8/15]: Open up the menu and order stock of an item. Walk over to the door in the bottom right of the store";
+    bannerText.innerText = "TUTORIAL [8/13]: Walk up to any shopper in the store and press [E] or [SPACE] to chat.";
   } else if (STATE.tutorialStage === 9) {
-    bannerText.innerText = "TUTORIAL [9/15]: This is the storage room where you can grab items to put on the aisles. Walk up to a shelf and grab some items. You can only hold 5 items at a time. Leave the storage room";
+    bannerText.innerText = "TUTORIAL [9/13]: Hire a cashier or stand at the register and press [E] to check out waiting shoppers.";
   } else if (STATE.tutorialStage === 10) {
-    bannerText.innerText = "TUTORIAL [10/15]: Now walk up to an empty aisle and press [E] or [SPACE] to restock items. Each aisle can hold 10 items. Make sure to restock to prevent walkouts";
-    
+    bannerText.innerText = "TUTORIAL [10/13]: Serve all customers before closing to avoid a +15% suspicion penalty.";
   } else if (STATE.tutorialStage === 11) {
-    bannerText.innerText = "TUTORIAL [11/15]: Once you finish stocking, open the menu again [TAB], go to Office & Automation, and click Start Next Day Shift to open the shop";
+    bannerText.innerText = "TUTORIAL [11/13]: Open the menu [TAB], go to Office & Automation, and click 'Close Shop & End Day Shift'.";
   } else if (STATE.tutorialStage === 12) {
-    bannerText.innerText = "TUTORIAL [12/15]: Walk up to any shopper in the store and press [E] or [SPACE] to chat with them and hear their stories";
-  } else if (STATE.tutorialStage === 13) {
-    bannerText.innerText = "TUTORIAL [13/15]: Hire a cashier or stand at the register (bottom left) and press [E] to check out waiting shoppers when they reach the front";
-  } else if (STATE.tutorialStage === 14) {
-    bannerText.innerText = "TUTORIAL [14/15]: Closing before all shoppers have been served is considered closing early closing early may result in loss of job. When the day is done, open the menu [TAB], go to Office & Automation, and click Close Shop & End Day Shift";
-  } else (STATE.tutorialStage === 15) {
-    bannerText.innerText = "TUTORIAL [15/15]: [End of Day Report] Review your financial audit, net daily profits, and customer satisfaction ratings";
+    bannerText.innerText = "TUTORIAL [12/13]: [End of Day Report] Review your financial audit and customer satisfaction ratings.";
+  } else if (STATE.tutorialStage === 13 && STATE.hasEnteredLair) {
+    bannerText.innerText = "TUTORIAL [13/13]: [Secret Lair Unlocked] Step into the blue bookcase to enter your subterranean lair!";
   }
- }
+
+  if (STATE.currentMap === 'lair' && STATE.lairTutorialStage <= 3) {
+    if (STATE.lairTutorialStage === 1) {
+      bannerText.innerText = "LAIR TUTORIAL [1/3]: Walk up to Butler Jarvis and press [E] or [SPACE] for intel.";
+    } else if (STATE.lairTutorialStage === 2) {
+      bannerText.innerText = "LAIR TUTORIAL [2/3]: Interact with the Supercomputer terminal to run supervillain missions.";
+    } else if (STATE.lairTutorialStage === 3) {
+      bannerText.innerText = "LAIR TUTORIAL [3/3]: Move back and forth between your secret lair and store via the blue bookcase.";
+    }
+  }
+}
 
 function init() {
   applyLayoutMap(1);
