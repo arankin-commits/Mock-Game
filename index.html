@@ -916,13 +916,19 @@ let storeMap = [
 
 const backroomMap = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
-  [1, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [12, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 12, 12, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];
 
 const lairMap = [
@@ -1224,14 +1230,14 @@ function getMaxStoreStorage() {
 function toggleBackroomEntrance() {
   if (STATE.currentMap === 'store') {
     STATE.currentMap = 'backroom';
-    // Spawn player inside the backroom near the bottom entrance door
-    player.x = 11 * TILE_SIZE;
+    // Spawn player just inside the backroom west entrance
+    player.x = 2 * TILE_SIZE;
     player.y = 6 * TILE_SIZE;
   } else if (STATE.currentMap === 'backroom') {
     STATE.currentMap = 'store';
-    // Place player right in front of the backroom store door (tile 12 at row 11, col 11/12)
-    player.x = 11.5 * TILE_SIZE;
-    player.y = 11 * TILE_SIZE;
+    // Return player right outside the store's backroom entrance or office area
+    player.x = 5 * TILE_SIZE;
+    player.y = 2 * TILE_SIZE;
   }
 }
 
@@ -4153,44 +4159,85 @@ function render() {
         ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
         ctx.strokeStyle = 'rgba(180, 190, 205, 0.3)';
         ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
-      } else if (t === 2 && STATE.currentMap === 'backroom') {
-        const prodIndex = Math.floor(shelfIndex / 2);
-        const prod = unlockedList[prodIndex];
-
-        // Base shelf tile background
-        ctx.fillStyle = '#1e2536'; 
-        ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-        ctx.strokeStyle = '#3b4261'; 
-        ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
-
-        if (prod) {
-          // Draw shelf structure lines to make it look like a rack
-          ctx.fillStyle = '#2d3748';
-          ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 4);
-          ctx.fillRect(tx + 2, ty + 20, TILE_SIZE - 4, 4);
-
-          if (prod.backStock > 0) {
-            // FULL SHELF VISUAL (1 or more items)
-            ctx.fillStyle = prod.color || '#7aa2f7';
-            ctx.fillRect(tx + 6, ty + 10, TILE_SIZE - 12, 10);
-            
-            // Item count label
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 8px monospace';
-            ctx.fillText(`${prod.backStock}`, tx + 4, ty + 18);
-          } else {
-            // EMPTY SHELF VISUAL (0 items, but looks like a shelf)
-            ctx.fillStyle = '#4a5568';
-            ctx.font = '8px monospace';
-            ctx.fillText("EMPTY", tx + 3, ty + 16);
+      } else if (STATE.currentMap === 'backroom') {
+          let unlockedList = PRODUCTS.filter(p => p.unlocked);
+          let shelfIndex = 0;
+      
+          for (let r = 0; r < curMap.length; r++) {
+            for (let c = 0; c < MAP_COLS; c++) {
+              let t = curMap[r][c];
+              let tx = c * TILE_SIZE; 
+              let ty = r * TILE_SIZE;
+      
+              // Floor styling
+              ctx.fillStyle = (r + c) % 2 === 0 ? '#141824' : '#10141f';
+              ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+              ctx.strokeStyle = '#1e2638';
+              ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+      
+              if (t === 1) {
+                // Check if this is the west wall entrance opening (col 0, rows 6 & 7)
+                if (c === 0 && (r === 6 || r === 7)) {
+                  ctx.fillStyle = '#deb887'; // Doorway opening color
+                  ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+                } else {
+                  ctx.fillStyle = '#1e293b';
+                  ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+                }
+              } else if (t === 2) {
+                const prodIndex = Math.floor(shelfIndex / 2);
+                const prod = unlockedList[prodIndex];
+      
+                if (prod) {
+                  // Unlocked product shelf (4 blocks wide total per shelf pair = 2 tiles)
+                  ctx.fillStyle = '#1e2536'; 
+                  ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+                  ctx.strokeStyle = '#3b4261'; 
+                  ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+      
+                  ctx.fillStyle = '#2d3748';
+                  ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 4);
+                  ctx.fillRect(tx + 2, ty + 20, TILE_SIZE - 4, 4);
+      
+                  if (prod.backStock > 0) {
+                    ctx.fillStyle = prod.color || '#7aa2f7';
+                    ctx.fillRect(tx + 6, ty + 10, TILE_SIZE - 12, 10);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 8px monospace';
+                    ctx.fillText(`${prod.backStock}`, tx + 4, ty + 18);
+                  } else {
+                    ctx.fillStyle = '#4a5568';
+                    ctx.font = '8px monospace';
+                    ctx.fillText("EMPTY", tx + 3, ty + 16);
+                  }
+      
+                  if (STATE.mouseX >= tx && STATE.mouseX <= tx + TILE_SIZE && STATE.mouseY >= ty && STATE.mouseY <= ty + TILE_SIZE) {
+                    STATE.backroomHoverText = `Backstock Shelf: ${prod.name} (${prod.backStock} units available)`;
+                  }
+                } else {
+                  // Locked product shelf: hidden/blank empty space
+                  ctx.fillStyle = '#0b0d14';
+                  ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+                }
+                shelfIndex++;
+              }
+            }
           }
-
-          // Hover tooltip check
-          if (STATE.mouseX >= tx && STATE.mouseX <= tx + TILE_SIZE && STATE.mouseY >= ty && STATE.mouseY <= ty + TILE_SIZE) {
-            STATE.backroomHoverText = `Backstock Shelf: ${prod.name} (${prod.backStock} units available)`;
+      
+          // Draw hover tooltip if active
+          if (STATE.backroomHoverText) {
+            ctx.fillStyle = 'rgba(15, 17, 26, 0.9)';
+            ctx.strokeStyle = '#7aa2f7';
+            ctx.lineWidth = 1;
+            ctx.fillRect(STATE.mouseX + 10, STATE.mouseY - 25, ctx.measureText(STATE.backroomHoverText).width + 16, 22);
+            ctx.strokeRect(STATE.mouseX + 10, STATE.mouseY - 25, ctx.measureText(STATE.backroomHoverText).width + 16, 22);
+      
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px monospace';
+            ctx.fillText(STATE.backroomHoverText, STATE.mouseX + 18, STATE.mouseY - 11);
+            STATE.backroomHoverText = null;
           }
-        }
-        shelfIndex++;
+          return;
       } else {
         ctx.fillStyle = '#10141f'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
         ctx.strokeStyle = '#1e2638'; ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
@@ -4421,13 +4468,14 @@ function handleInteraction() {
   // Check if interacting with the backroom door (tile 12)
   const pCol = Math.floor((player.x + 8) / TILE_SIZE);
   const pRow = Math.floor((player.y + 8) / TILE_SIZE);
-  const curMap = STATE.currentMap === 'store' ? storeMap : (STATE.currentMap === 'backroom' ? backroomMap : lairMap);
-  
-  if (curMap[pRow] && (curMap[pRow][pCol] === 12 || (pRow+1 < curMap.length && curMap[pRow+1][pCol] === 12))) {
-    toggleBackroomEntrance();
-    if (STATE.tutorialStep === 8) { STATE.tutorialStep = 9; updateTutorialBanner(); }
-    return;
-  }
+  if (STATE.currentMap === 'store' && pCol === 0 && (pRow === 6 || pRow === 7)) {
+      toggleBackroomEntrance();
+      return;
+    }
+  if (STATE.currentMap === 'backroom' && pCol === 0 && (pRow === 6 || pRow === 7)) {
+      toggleBackroomEntrance();
+      return;
+    }
   
   if (isNearTile(5)) {
     const pCol = Math.floor((player.x + 8) / TILE_SIZE);
