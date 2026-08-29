@@ -1239,6 +1239,7 @@ function startGameFromTitle() {
   STATE.gameStarted = true;
   document.getElementById('title-screen').style.display = 'none';
 
+  STATE.dayNumber = 0;
   STATE.phase = 'night';
 
   PRODUCTS.forEach(p => {
