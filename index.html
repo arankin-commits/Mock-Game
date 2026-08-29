@@ -1230,14 +1230,12 @@ function getMaxStoreStorage() {
 function toggleBackroomEntrance() {
   if (STATE.currentMap === 'store') {
     STATE.currentMap = 'backroom';
-    // Spawn player just inside the backroom west entrance
-    player.x = 2 * TILE_SIZE;
+    player.x = 2 * TILE_SIZE; // Spawn near west side of backroom
     player.y = 6 * TILE_SIZE;
   } else if (STATE.currentMap === 'backroom') {
     STATE.currentMap = 'store';
-    // Return player right outside the store's backroom entrance or office area
-    player.x = 5 * TILE_SIZE;
-    player.y = 2 * TILE_SIZE;
+    player.x = 23 * TILE_SIZE; // Pop out right before the right-wall door in store
+    player.y = 10.5 * TILE_SIZE;
   }
 }
 
@@ -4044,6 +4042,19 @@ function gameLoop() {
 
 function update() {
   if (!STATE.gameStarted) return;
+
+  // --- Backroom Automatic Doorway Transition ---
+  const pCol = Math.floor((player.x + 8) / TILE_SIZE);
+  const pRow = Math.floor((player.y + 8) / TILE_SIZE);
+
+  if (STATE.currentMap === 'store' && pCol === 24 && (pRow === 10 || pRow === 11)) {
+    toggleBackroomEntrance();
+    return;
+  }
+  if (STATE.currentMap === 'backroom' && pCol === 0 && (pRow === 6 || pRow === 7)) {
+    toggleBackroomEntrance();
+    return;
+  }
   
   REGISTERS.forEach(reg => {
     if (reg.activeCustomer) {
