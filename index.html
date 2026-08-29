@@ -904,11 +904,22 @@ let storeMap = [
   [1, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+];
+
+const backroomMap = [
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [1, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 12, 12, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];
 
 const lairMap = [
@@ -955,9 +966,9 @@ const butler = {
 };
 
 const STORE_TIERS = [
-  { tier: 1, name: "Corner Mart", cost: 0, shelves: 4, registers: 1, maxStockBoost: 40 },
-  { tier: 2, name: "Supermarket Express", cost: 400, shelves: 7, registers: 2, maxStockBoost: 70 },
-  { tier: 3, name: "Mega Mart", cost: 950, shelves: 10, registers: 3, maxStockBoost: 100 }
+  { tier: 1, name: "Corner Mart", cost: 0, shelves: 4, registers: 1, maxStockBoost: 40, backroomStorage: 100 },
+  { tier: 2, name: "Supermarket Express", cost: 400, shelves: 7, registers: 2, maxStockBoost: 70, backroomStorage: 220 },
+  { tier: 3, name: "Mega Mart", cost: 950, shelves: 10, registers: 3, maxStockBoost: 100, backroomStorage: 400 }
 ];
 
 const ROBOT_UPGRADES = [
@@ -996,21 +1007,21 @@ function rollDemand() {
 }
 
 let PRODUCTS = [
-  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 15, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68' },
-  { id: 'soda', name: 'Toxic-Cola', popularity: 'popular', nextPopularity: 'popular', cost: 3, marketPrice: 8, price: 8, pendingPrice: 8, stock: 18, targetStock: 18, pendingTargetStock: 18, baseMax: 30, unlocked: true, unlockCost: 0, color: '#7aa2f7' },
-  { id: 'meat', name: 'Mystery Meat', popularity: 'normal', nextPopularity: 'normal', cost: 10, marketPrice: 24, price: 24, pendingPrice: 24, stock: 8, targetStock: 8, pendingTargetStock: 8, baseMax: 15, unlocked: true, unlockCost: 0, color: '#f7768e' },
-  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a' },
-  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5' },
-  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887' },
-  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 20, pendingTargetStock: 20, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64' },
-  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca' },
-  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de' },
-  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 12, pendingTargetStock: 12, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7' },
-  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89' },
-  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68' },
-  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e' },
-  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 8, pendingTargetStock: 8, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8' },
-  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 6, pendingTargetStock: 6, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e' }
+  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 15, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68', backStock: 60 },
+  { id: 'soda', name: 'Toxic-Cola', popularity: 'popular', nextPopularity: 'popular', cost: 3, marketPrice: 8, price: 8, pendingPrice: 8, stock: 18, targetStock: 18, pendingTargetStock: 18, baseMax: 30, unlocked: true, unlockCost: 0, color: '#7aa2f7', backStock: 60 },
+  { id: 'meat', name: 'Mystery Meat', popularity: 'normal', nextPopularity: 'normal', cost: 10, marketPrice: 24, price: 24, pendingPrice: 24, stock: 8, targetStock: 8, pendingTargetStock: 8, baseMax: 15, unlocked: true, unlockCost: 0, color: '#f7768e', backStock: 60 },
+  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a', backStock: 60 },
+  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5', backStock: 60 },
+  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887', backStock: 60 },
+  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 20, pendingTargetStock: 20, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64', backStock: 60 },
+  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca', backStock: 60 },
+  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de', backStock: 60 },
+  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 12, pendingTargetStock: 12, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7', backStock: 60 },
+  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89', backStock: 60 },
+  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68', backStock: 60},
+  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e', backStock: 60 },
+  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 8, pendingTargetStock: 8, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8', backStock: 60 },
+  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 6, pendingTargetStock: 6, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e', backStock: 60 }
 ];
 
 const MISSIONS = [
@@ -1207,6 +1218,28 @@ function getMaxStoreStorage() {
   return STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
 }
 
+function toggleBackroomEntrance() {
+  if (STATE.currentMap === 'store') {
+    STATE.currentMap = 'backroom';
+    player.x = 11.5 * TILE_SIZE;
+    player.y = 6 * TILE_SIZE;
+  } else if (STATE.currentMap === 'backroom') {
+    STATE.currentMap = 'store';
+    player.x = 11.5 * TILE_SIZE;
+    player.y = 12 * TILE_SIZE;
+  }
+}
+
+function getTotalBackStock() {
+  let total = 0;
+  PRODUCTS.forEach(p => { if (p.unlocked) total += p.backStock; });
+  return total;
+}
+
+function getMaxBackroomStorage() {
+  return STORE_TIERS[STATE.storeTier - 1].backroomStorage;
+}
+  
 function restartGame() {
   // Hide the VR ending modal
   document.getElementById('modal-vr-ending').style.display = 'none';
@@ -3588,6 +3621,7 @@ class Employee {
         }
       }
     } else if (this.role === 'stocker') {
+      // Stocker AI: checks backstock, travels to backroom if needed, holds up to 6 items
       if (this.timer <= 0) {
         const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
         const c = Math.floor((this.x + 8) / TILE_SIZE);
@@ -4094,7 +4128,7 @@ function drawPerson(x, y, dir, isMoving, walkFrame, skinColor, shirtColor, pants
 
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const curMap = STATE.currentMap === 'store' ? storeMap : lairMap;
+  const curMap = STATE.currentMap === 'store' ? storeMap : (STATE.currentMap === 'backroom' ? backroomMap : lairMap);
 
   for (let r = 0; r < curMap.length; r++) {
     for (let c = 0; c < MAP_COLS; c++) {
@@ -4106,6 +4140,15 @@ function render() {
         ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
         ctx.strokeStyle = 'rgba(180, 190, 205, 0.3)';
         ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+      } else if (t === 2 && STATE.currentMap === 'backroom') {
+        ctx.fillStyle = '#242b38'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        ctx.strokeStyle = '#3b4261'; ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+
+        // Map shelf coordinates or index to unlocked products
+        // If a product is unlocked, display its name on the shelf; otherwise keep it blank/hidden
+        ctx.fillStyle = '#7aa2f7';
+        ctx.font = '8px monospace';
+        ctx.fillText("Back Shelf", tx + 2, ty + 16);
       } else {
         ctx.fillStyle = '#10141f'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
         ctx.strokeStyle = '#1e2638'; ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
@@ -4333,6 +4376,17 @@ function handleInteraction() {
     toggleMenu('store-finance', true);
     return;
   }
+  // Check if interacting with the backroom door (tile 12)
+  const pCol = Math.floor((player.x + 8) / TILE_SIZE);
+  const pRow = Math.floor((player.y + 8) / TILE_SIZE);
+  const curMap = STATE.currentMap === 'store' ? storeMap : (STATE.currentMap === 'backroom' ? backroomMap : lairMap);
+  
+  if (curMap[pRow] && (curMap[pRow][pCol] === 12 || (pRow+1 < curMap.length && curMap[pRow+1][pCol] === 12))) {
+    toggleBackroomEntrance();
+    if (STATE.tutorialStep === 8) { STATE.tutorialStep = 9; updateTutorialBanner(); }
+    return;
+  }
+  
   if (isNearTile(5)) {
     const pCol = Math.floor((player.x + 8) / TILE_SIZE);
     const pRow = Math.floor((player.y + 8) / TILE_SIZE);
