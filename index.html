@@ -83,7 +83,7 @@
     font-size: 13px;
     font-weight: bold;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    z-index: 150;
+    z-index: 15;
     text-align: center;
     max-width: 700px;
   }
@@ -489,7 +489,7 @@
 
 <div id="game-container">
   <!-- Title Screen Overlay -->
-  <div id="title-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: space-between; align-items: center; z-index: 160; padding: 40px 20px;">
+  <div id="title-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: space-between; align-items: center; z-index: 100; padding: 40px 20px;">
     <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 40px;">
       <h1 style="color: var(--accent-store); font-size: 28px; text-align: center; text-shadow: 0 0 10px rgba(122,162,247,0.5);">A Bizzare Supermarket</h1>
       <p style="color: var(--text); font-size: 12px;"></p>
@@ -721,7 +721,7 @@
 
     <div id="tab-game-guide" class="modal-content" style="display:none;">
       <h3 style="color:var(--accent-store); margin-bottom:10px;">Supermarket & Supervillain Operator Manual</h3>
-      
+
       <div class="guide-box">
         <strong style="color:var(--accent-store);">1. Store Operations & Shelf Restocking</strong>
         <p style="margin-top:4px;">Walk up to any aisle shelf, cooler, or produce rack and press <strong>[E]</strong> or <strong>[SPACE]</strong> to restock from inventory. Check out shoppers at active registers when they reach the front of the line.</p>
@@ -864,8 +864,7 @@ const STATE = {
   customersSpawnedToday: 0,
   customersServedToday: 0,
   spawnCooldown: 2, 
-  tutorialStage: 1, // 1 through 13 for store, 14+ for lair
-  lairTutorialStage: 1,
+  tutorialStep: 1,
   tutorialBannerDismissed: false,
   autoProgress: false,
   storeTier: 1,
@@ -956,9 +955,9 @@ const butler = {
 };
 
 const STORE_TIERS = [
-  { tier: 1, name: "Corner Mart", cost: 0, shelves: 4, registers: 1, maxStorage: 40 },
-  { tier: 2, name: "Supermarket Express", cost: 400, shelves: 7, registers: 2, maxStorage: 70 },
-  { tier: 3, name: "Mega Mart", cost: 950, shelves: 10, registers: 3, maxStorage: 100 }
+  { tier: 1, name: "Corner Mart", cost: 0, shelves: 4, registers: 1, maxStockBoost: 0 },
+  { tier: 2, name: "Supermarket Express", cost: 400, shelves: 7, registers: 2, maxStockBoost: 15 },
+  { tier: 3, name: "Mega Mart", cost: 950, shelves: 10, registers: 3, maxStockBoost: 30 }
 ];
 
 const ROBOT_UPGRADES = [
@@ -997,21 +996,21 @@ function rollDemand() {
 }
 
 let PRODUCTS = [
-  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 15, targetStock: 14, pendingTargetStock: 14, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68' },
+  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 15, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68' },
   { id: 'soda', name: 'Toxic-Cola', popularity: 'popular', nextPopularity: 'popular', cost: 3, marketPrice: 8, price: 8, pendingPrice: 8, stock: 18, targetStock: 18, pendingTargetStock: 18, baseMax: 30, unlocked: true, unlockCost: 0, color: '#7aa2f7' },
   { id: 'meat', name: 'Mystery Meat', popularity: 'normal', nextPopularity: 'normal', cost: 10, marketPrice: 24, price: 24, pendingPrice: 24, stock: 8, targetStock: 8, pendingTargetStock: 8, baseMax: 15, unlocked: true, unlockCost: 0, color: '#f7768e' },
-  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a' },
-  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5' },
-  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887' },
-  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64' },
-  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca' },
-  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de' },
-  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7' },
-  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89' },
-  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68' },
-  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e' },
-  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8' },
-  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e' }
+  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a' },
+  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5' },
+  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887' },
+  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 20, pendingTargetStock: 20, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64' },
+  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca' },
+  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de' },
+  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 12, pendingTargetStock: 12, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7' },
+  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 15, pendingTargetStock: 15, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89' },
+  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68' },
+  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 10, pendingTargetStock: 10, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e' },
+  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 8, pendingTargetStock: 8, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8' },
+  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 6, pendingTargetStock: 6, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e' }
 ];
 
 const MISSIONS = [
@@ -1246,8 +1245,13 @@ function startGameFromTitle() {
   PRODUCTS.forEach(p => {
     p.stock = 0;
   });  
+  // const banner = document.getElementById('notification-banner');
+  // if (banner && !STATE.tutorialBannerDismissed) {
+  //   banner.style.display = 'block';
+  // }
   
-  // showNotification("PRE-DAY PREPARATION: Welcome to Day 1. Your shelves are completely empty! Order stock and set your prices before opening the shop.");
+  // showNotification("TUTORIAL: Walk up to any grocery shelf and press [E] or [SPACE] to restock!");
+  showNotification("PRE-DAY PREPARATION: Welcome to Day 1. Your shelves are completely empty! Order stock and set your prices before opening the shop.");
 }
   
 function acceptApexInvite() {
@@ -3299,111 +3303,16 @@ function updateTutorialBanner() {
   const banner = document.getElementById('notification-banner');
   const bannerText = document.getElementById('banner-text');
 
-  if (STATE.tutorialBannerDismissed) {
+  if (STATE.tutorialBannerDismissed || STATE.tutorialStep > 3 || STATE.dayNumber > 1) {
     banner.style.display = 'none';
     return;
   }
 
   banner.style.display = 'block';
-  
-  // Store Tutorial Stages (1 - 13)
-  if (STATE.tutorialStage === 1) {
-    bannerText.innerText = "TUTORIAL [1/14]: Press [TAB] or walk into the office (top left) and interact [E/SPACE] with the computer to open the menu. Once in the menu, click on the Stock & Pricing";
-  } else if (STATE.tutorialStage === 2) {
-    bannerText.innerText = "TUTORIAL [2/14]: [Stock & Pricing Tab] Set your prices and target stock levels here before opening. You may want to raise prices or lower prices based on tomorrow's demand. Click the Bulk button";
-     // new
-  } else if (STATE.tutorialStage === 3) {
-  bannerText.innerText = "TUTORIAL [3/14]: [Stock & Pricing Tab] The bulk button orders stock of an item. Shelf stock is the current item count on the aisles; target is the maximum. You can change the max. Click on Layout & Staff";
-  } else if (STATE.tutorialStage === 4) {
-    bannerText.innerText = "TUTORIAL [4/13]: [Layout & Staff Tab] Upgrade aisle shelving tiers, hire staff, and boost marketing campaigns to increase the number of shoppers. Click on Office & Automation";
-  } else if (STATE.tutorialStage === 5) {
-    bannerText.innerText = "TUTORIAL [5/13]: [Office & Automation Tab] View revenue stats, open and close shop, and automate your workflow. Click on Tutorial & Guide";
-    // new
-  } else if (STATE.tutorialStage === 6) {
-    bannerText.innerText = "TUTORIAL [6/13]: [Tutorial & Guide] You can come here to view the tutorial at any time. Click on Admin Mode";
-  } else if (STATE.tutorialStage === 7) {
-    bannerText.innerText = "TUTORIAL [7/13]: [Admin Mode] You can unlock Admin Mode with the passcode. Close the menu using [E/SPACE] near the computer, [TAB], or by clicking the red x in the top right";
-    
-  } else if (STATE.tutorialStage === 8) {
-    bannerText.innerText = "TUTORIAL [8/13]: Open up the menu and order stock of an item. Walk over to the door in the bottom right of the store";
-  } else if (STATE.tutorialStage === 9) {
-    bannerText.innerText = "TUTORIAL [9/13]: This is the storage room where you can grab items to put on the aisles. Walk up to a shelf and grab some items. You can only hold 5 items at a time. Leave the storage room";
-  } else if (STATE.tutorialStage === 10) {
-    bannerText.innerText = "TUTORIAL [10/13]: Now walk up to an empty aisle and press [E] or [SPACE] to restock items. Each aisle can hold 10 items. Make sure to restock to prevent walkouts";
-    
-  } else if (STATE.tutorialStage === 7) {
-    bannerText.innerText = "TUTORIAL [7/13]: Once you finish stocking, open the menu again [TAB], go to Office & Automation, and click 'Start Next Day Shift' to open the shop";
-  } else if (STATE.tutorialStage === 9) {
-    bannerText.innerText = "TUTORIAL [9/13]: Walk up to any shopper in the store and press [E] or [SPACE] to chat with them and hear their stories";
-  } else if (STATE.tutorialStage === 10) {
-    bannerText.innerText = "TUTORIAL [10/13]: Hire a cashier or stand at the register (bottom left) and press [E] to check out waiting shoppers when they reach the front";
-  } else if (STATE.tutorialStage === 11) {
-    bannerText.innerText = "TUTORIAL [11/13]: Closing before all shoppers have been served is considered closing early; closing early may result in loss of job. When the day is done, open the menu [TAB], go to Office & Automation, and click 'Close Shop & End Day Shift'";
-  } else if (STATE.tutorialStage === 13) {
-    bannerText.innerText = "TUTORIAL [13/13]: [End of Day Report] Review your financial audit, net daily profits, and customer satisfaction ratings";
-
-  // Lair Tutorial Stages (triggered once inside the lair)
-  if (STATE.currentMap === 'lair' && STATE.lairTutorialStage <= 3) {
-    if (STATE.lairTutorialStage === 1) {
-      bannerText.innerText = "LAIR TUTORIAL [1/3]: Walk up to Butler Jarvis and press [E] or [SPACE] to receive secret underworld intel and syndicate status";
-    } else if (STATE.lairTutorialStage === 2) {
-      bannerText.innerText = "LAIR TUTORIAL [2/3]: Interact with the Supercomputer terminal (blinking) to do supervillain missions (can be done after shop is closed), and look at the active heroes and supervillain leaderboard. Click Close Feed in the top right.";
-    } else if (STATE.lairTutorialStage === 3) {
-      bannerText.innerText = "LAIR TUTORIAL [3/3]: Open the menu [TAB], and click . Here you can siphon funds to use for villain";
-    } else if (STATE.lairTutorialStage === 3) {
-      bannerText.innerText = "LAIR TUTORIAL [3/3]: Move back and forth between your secret lair and the front store anytime by interacting with the blue bookcase";
-    }
-  }
-
-  updateGuideTabContent();
-}
-
-function updateGuideTabContent() {
-  const container = document.getElementById('dynamic-guide-container');
-  if (!container) return;
-
-  let html = `
-    <div class="guide-box">
-      <strong>1. Stock & Pricing</strong>
-      <p style="margin-top:4px;">Access via computer/menu. Set your prices and target stock levels before daybreak to maximize profit margins based on daily demand ratings.</p>
-    </div>
-    <div class="guide-box">
-      <strong>2. Layout & Staff</strong>
-      <p style="margin-top:4px;">Upgrade aisle shelving tiers, hire cashiers and stockers to automate tasks, and launch marketing campaigns to drive up customer traffic.</p>
-    </div>
-    <div class="guide-box">
-      <strong>3. Office & Automation</strong>
-      <p style="margin-top:4px;">Manage shift progression, view register revenues, handle manual shift controls, and siphon funds if you dare.</p>
-    </div>
-    <div class="guide-box">
-      <strong>4. Shelf Restocking & Inventory</strong>
-      <p style="margin-top:4px;">Close the menu and walk up to any grocery shelf, cooler, or produce rack. Press [E] or [SPACE] to restock items so you never run out during high traffic.</p>
-    </div>
-    <div class="guide-box">
-      <strong>5. Customer Interaction & Registers</strong>
-      <p style="margin-top:4px;">Talk to shoppers by pressing [E] to hear their stories. Check out customers at the active register to earn revenue and keep satisfaction high.</p>
-    </div>
-    <div class="guide-box">
-      <strong>6. Closing Shop & End-of-Day Audit</strong>
-      <p style="margin-top:4px;">Serve all shoppers before closing. Closing early spikes your suspicion by +15%. Review your financial audit and net daily profits in the end-of-day report.</p>
-    </div>
-  `;
-
-  if (STATE.hasEnteredLair) {
-    html += `
-      <div class="guide-box villain">
-        <strong style="color:var(--accent-evil);">7. The Secret Underground Lair & Butler Jarvis</strong>
-        <p style="margin-top:4px;">Accessed via the blue bookcase in your office. Speak with Butler Jarvis for global syndicate intel and criminal standing.</p>
-      </div>
-      <div class="guide-box villain">
-        <strong style="color:var(--accent-evil);">8. Nexus-9 Supercomputer & Orbital Operations</strong>
-        <p style="margin-top:4px;">Use the supercomputer terminal to hack grid networks, track 50 global superheroes, and target metropolitan districts with orbital death-rays.</p>
-      </div>
-    `;
-  }
-
-  container.innerHTML = html;
-}
+  if (STATE.tutorialStep === 1) bannerText.innerText = "TUTORIAL [1/3]: Walk up to any grocery shelf and press [E] or [SPACE] to restock!";
+  else if (STATE.tutorialStep === 2) bannerText.innerText = "TUTORIAL [2/3]: Wait for a shopper to enter the line, walk to the register, and press [E] to check them out!";
+  else if (STATE.tutorialStep === 3) bannerText.innerText = "TUTORIAL [3/3]: Head left into your Private Office. Step near the door to open it and interact with the Desk [E]!";
+ }
 
 function init() {
   applyLayoutMap(1);
@@ -3923,8 +3832,6 @@ function startCheckout(cust, reg) {
 }
 
 function finishCheckout(cust, reg) {
-  if (STATE.tutorialStage === 9) { STATE.tutorialStage = 10; updateTutorialBanner(); }
-  
   const earnings = cust.basket.reduce((sum, item) => sum + item.price, 0);
   STATE.money += earnings;
   STATE.daySales += earnings;
@@ -4329,8 +4236,6 @@ function render() {
 }
 
 function handleInteraction() {
-  if (STATE.tutorialStage === 8) { STATE.tutorialStage = 9; updateTutorialBanner(); }
-  
   const nearbyCustomer = npcs.find(n => !n.isEmployee && Math.abs(player.x - n.x) < 36 && Math.abs(player.y - n.y) < 36);
   if (nearbyCustomer) {
     if (nearbyCustomer.isMourning) {
@@ -4433,13 +4338,6 @@ function isNearTile(tileID) {
 
 function toggleLairSecretEntrance() {
   if (STATE.currentMap === 'store') {
-  // entering lair
-    if (STATE.tutorialStage <= 12) { STATE.tutorialStage = 13; }
-    if (STATE.lairTutorialStage === 0 || STATE.lairTutorialStage === 3) { STATE.lairTutorialStage = 1; }
-    updateTutorialBanner();
-  }
-  
-  if (STATE.currentMap === 'store') {
     STATE.currentMap = 'lair'; player.x = 2 * TILE_SIZE; player.y = 3 * TILE_SIZE;
     
     if (!STATE.hasEnteredLair) {
@@ -4528,26 +4426,6 @@ function startMission(id) {
   updateHUD();
 }
 
-function getTotalUsedStorage() {
-  let totalStock = 0;
-  PRODUCTS.forEach(p => {
-    if (p.unlocked) totalStock += p.stock;
-  });
-  return totalStock;
-}
-
-function getTotalTargetStorage() {
-  let totalTarget = 0;
-  PRODUCTS.forEach(p => {
-    if (p.unlocked) totalTarget += p.targetStock;
-  });
-  return totalTarget;
-}
-
-function getMaxStoreStorage() {
-  return STORE_TIERS[STATE.storeTier - 1].maxStorage;
-}
-
 function triggerSpeechBubble(x, y, text, duration = 3000, map = STATE.currentMap) { 
   speechBubbles = speechBubbles.filter(b => b.map !== map || Math.hypot(b.x - x, b.y - y) > 10);
   speechBubbles.push({ x, y, text, created: Date.now(), duration, map }); 
@@ -4580,8 +4458,6 @@ function checkProximityPrompts() {
 }
 
 function closeShopForNight() {
-  if (STATE.tutorialStage === 11) { STATE.tutorialStage = 12; updateTutorialBanner(); }
-  
   const remainingShoppers = npcs.filter(n => !n.isEmployee).length;
   
   if (remainingShoppers > 0 && !STATE.autoProgress) {
@@ -4719,8 +4595,6 @@ function proceedDirectlyToNextDay() {
 }
 
 function startNextDayShift() {
-  if (STATE.tutorialStage === 6) { STATE.tutorialStage = 7; updateTutorialBanner(); }
-  
   if (STATE.dayNumber >= 50) {
     triggerDay50Ending();
     return;
@@ -4828,25 +4702,19 @@ function buyStock(prodId) {
   const cost = STATE.adminMode ? 0 : p.cost * 3;
   if (!STATE.adminMode && STATE.money < cost) return alert("Not enough money!");
 
-  const currentTotalStock = getTotalUsedStorage();
-  const maxStorage = getMaxStoreStorage();
-  const availableStoreSpace = maxStorage - currentTotalStock;
+  const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
+  const maxShelf = Math.min(p.targetStock, p.baseMax + tierBonus);
+  const shelfSpace = Math.max(0, maxShelf - p.stock);
 
-  const itemSpaceNeeded = Math.max(0, p.targetStock - p.stock);
-  const restockAmount = Math.min(6, itemSpaceNeeded, availableStoreSpace);
-
-  if (restockAmount <= 0) {
-    if (currentTotalStock >= maxStorage) {
-      return alert("Total store aisle storage is completely full!");
-    }
-    return alert("Shelf is already at its target stock!");
+  if (shelfSpace <= 0) {
+    return alert("Shelf is already at maximum target stock!");
   }
 
   if (!STATE.adminMode) {
     STATE.money -= cost;
     STATE.dayRestockCosts += cost;
   }
-  p.stock += restockAmount;
+  p.stock += Math.min(6, shelfSpace);
 
   renderUI();
 }
@@ -4899,31 +4767,13 @@ function updatePendingPrice(prodId, val) {
 
 function updatePendingTargetStock(prodId, val) {
   const p = PRODUCTS.find(x => x.id === prodId);
-  if (!p) return;
-
-  const newTarget = Math.max(1, parseInt(val) || 1);
-  
-  // Calculate what total storage would be if this target change is applied
-  let otherTargetsSum = 0;
-  PRODUCTS.forEach(item => {
-    if (item.unlocked && item.id !== prodId) {
-      otherTargetsSum += item.targetStock;
+  if (p) {
+    const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
+    p.pendingTargetStock = Math.max(1, Math.min(p.baseMax + tierBonus, parseInt(val) || 1));
+    if (STATE.phase === 'night') {
+      p.targetStock = p.pendingTargetStock;
     }
-  });
-
-  const maxAllowed = getMaxStoreStorage();
-  if (otherTargetsSum + newTarget > maxAllowed) {
-    alert(`Exceeds maximum store storage space (${maxAllowed})! Lower other targets first.`);
-    return;
   }
-
-  p.pendingTargetStock = newTarget;
-  if (STATE.phase === 'night') {
-    p.targetStock = p.pendingTargetStock;
-  }
-  
-  // Re-render the UI so the total storage readout updates instantly
-  renderUI();
 }
 
 function toggleAutoProgress(val) {
@@ -4956,18 +4806,11 @@ function breedExperiment() {
 }
 
 function toggleMenu(defaultTab, isDeskAccess = false) {
-  if (!STATE.menuOpen && STATE.tutorialStage === 5) { STATE.tutorialStage = 6; updateTutorialBanner(); }
-  if (STATE.menuOpen && STATE.tutorialStage === 10) { STATE.tutorialStage = 11; updateTutorialBanner(); }
-  
   STATE.menuOpen = !STATE.menuOpen;
   STATE.isAtDeskMenu = isDeskAccess;
 
   const modal = document.getElementById('modal-menu');
   modal.style.display = STATE.menuOpen ? 'flex' : 'none';
-
-  if (!STATE.menuOpen) {
-    document.querySelectorAll('.modal-content').forEach(c => c.style.display = 'none');
-  }
 
   document.querySelectorAll('.villain-feature').forEach(el => {
     el.style.display = isDeskAccess ? 'none' : '';
@@ -4998,10 +4841,6 @@ function toggleMenu(defaultTab, isDeskAccess = false) {
 }
 
 function switchTab(tabId) {
-  if (tabId === 'store-inv' && STATE.tutorialStage === 1) { STATE.tutorialStage = 2; updateTutorialBanner(); }
-  else if (tabId === 'store-upgrades' && STATE.tutorialStage === 2) { STATE.tutorialStage = 3; updateTutorialBanner(); }
-  else if (tabId === 'store-finance' && STATE.tutorialStage === 3) { STATE.tutorialStage = 4; updateTutorialBanner(); }
-  
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.modal-content').forEach(c => c.style.display = 'none');
   const targetBtn = document.getElementById('tab-btn-' + tabId);
@@ -5035,9 +4874,6 @@ function renderUI() {
     const tagClassNext = p.nextPopularity === 'popular' ? 'tag-popular' : (p.nextPopularity === 'normal' ? 'tag-normal' : 'tag-unpopular');
     const bulkCost = STATE.adminMode ? 0 : p.cost * 3;
     const unlockCost = STATE.adminMode ? 0 : p.unlockCost;
-    const totalUsed = getTotalUsedStorage();
-    const totalTargetSum = getTotalTargetStorage();
-    const maxStorage = getMaxStoreStorage();
 
     if (p.unlocked) {
       return `<tr>
@@ -5050,8 +4886,7 @@ function renderUI() {
           <input type="number" min="1" max="999" value="${p.pendingPrice}" onchange="updatePendingPrice('${p.id}', this.value)">
         </td>
         <td>
-          ${p.stock} / <input type="number" min="1" max="${maxStorage}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
-          <div style="font-size:9px; color:#7a819b; margin-top:2px;">(Total Pool: ${totalTargetSum} / ${maxStorage})</div>
+          ${p.stock} / <input type="number" min="1" max="${maxCap}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
         </td>
         <td><button class="btn-action" onclick="buyStock('${p.id}')">Bulk +6 (${STATE.adminMode ? 'FREE' : `$${bulkCost}`})</button></td>
       </tr>`;
