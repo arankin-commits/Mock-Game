@@ -955,9 +955,9 @@ const butler = {
 };
 
 const STORE_TIERS = [
-  { tier: 1, name: "Corner Mart", cost: 0, shelves: 4, registers: 1, maxStockBoost: 0 },
-  { tier: 2, name: "Supermarket Express", cost: 400, shelves: 7, registers: 2, maxStockBoost: 15 },
-  { tier: 3, name: "Mega Mart", cost: 950, shelves: 10, registers: 3, maxStockBoost: 30 }
+  { tier: 1, name: "Corner Mart", cost: 0, shelves: 4, registers: 1, maxStockBoost: 40 },
+  { tier: 2, name: "Supermarket Express", cost: 400, shelves: 7, registers: 2, maxStockBoost: 70 },
+  { tier: 3, name: "Mega Mart", cost: 950, shelves: 10, registers: 3, maxStockBoost: 100 }
 ];
 
 const ROBOT_UPGRADES = [
@@ -1185,6 +1185,26 @@ function sendApexSyndicateInvite() {
   
   updateUnreadCount();
   renderMailList();
+}
+
+function getTotalUsedStorage() {
+  let totalStock = 0;
+  PRODUCTS.forEach(p => {
+    if (p.unlocked) totalStock += p.stock;
+  });
+  return totalStock;
+}
+
+function getTotalTargetStorage() {
+  let totalTarget = 0;
+  PRODUCTS.forEach(p => {
+    if (p.unlocked) totalTarget += p.targetStock;
+  });
+  return totalTarget;
+}
+
+function getMaxStoreStorage() {
+  return STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
 }
 
 function restartGame() {
@@ -4737,19 +4757,25 @@ function buyStock(prodId) {
   const cost = STATE.adminMode ? 0 : p.cost * 3;
   if (!STATE.adminMode && STATE.money < cost) return alert("Not enough money!");
 
-  const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
-  const maxShelf = Math.min(p.targetStock, p.baseMax + tierBonus);
-  const shelfSpace = Math.max(0, maxShelf - p.stock);
+  const currentTotalStock = getTotalUsedStorage();
+  const maxStorage = getMaxStoreStorage();
+  const availableStoreSpace = maxStorage - currentTotalStock;
 
-  if (shelfSpace <= 0) {
-    return alert("Shelf is already at maximum target stock!");
+  const itemSpaceNeeded = Math.max(0, p.targetStock - p.stock);
+  const restockAmount = Math.min(6, itemSpaceNeeded, availableStoreSpace);
+
+  if (restockAmount <= 0) {
+    if (currentTotalStock >= maxStorage) {
+      return alert("Total store aisle storage is completely full!");
+    }
+    return alert("Shelf is already at its target stock!");
   }
 
   if (!STATE.adminMode) {
     STATE.money -= cost;
     STATE.dayRestockCosts += cost;
   }
-  p.stock += Math.min(6, shelfSpace);
+  p.stock += restockAmount;
 
   renderUI();
 }
@@ -4802,13 +4828,31 @@ function updatePendingPrice(prodId, val) {
 
 function updatePendingTargetStock(prodId, val) {
   const p = PRODUCTS.find(x => x.id === prodId);
-  if (p) {
-    const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
-    p.pendingTargetStock = Math.max(1, Math.min(p.baseMax + tierBonus, parseInt(val) || 1));
-    if (STATE.phase === 'night') {
-      p.targetStock = p.pendingTargetStock;
+  if (!p) return;
+
+  const newTarget = Math.max(1, parseInt(val) || 1);
+  
+  // Calculate what total storage would be if this target change is applied
+  let otherTargetsSum = 0;
+  PRODUCTS.forEach(item => {
+    if (item.unlocked && item.id !== prodId) {
+      otherTargetsSum += item.targetStock;
     }
+  });
+
+  const maxAllowed = getMaxStoreStorage();
+  if (otherTargetsSum + newTarget > maxAllowed) {
+    alert(`Exceeds maximum store storage space (${maxAllowed})! Lower other targets first.`);
+    return;
   }
+
+  p.pendingTargetStock = newTarget;
+  if (STATE.phase === 'night') {
+    p.targetStock = p.pendingTargetStock;
+  }
+  
+  // Re-render the UI so the total storage readout updates instantly
+  renderUI();
 }
 
 function toggleAutoProgress(val) {
@@ -4915,6 +4959,9 @@ function updateHUD() {
 function renderUI() {
   updateHUD();
   const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
+  const totalUsed = getTotalUsedStorage();
+  const totalTargetSum = getTotalTargetStorage();
+  const maxStorage = getMaxStoreStorage();
 
   document.getElementById('inventory-table').innerHTML = PRODUCTS.map(p => {
     const maxCap = p.baseMax + tierBonus;
@@ -4934,7 +4981,8 @@ function renderUI() {
           <input type="number" min="1" max="999" value="${p.pendingPrice}" onchange="updatePendingPrice('${p.id}', this.value)">
         </td>
         <td>
-          ${p.stock} / <input type="number" min="1" max="${maxCap}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
+          ${p.stock} / <input type="number" min="1" max="${maxStorage}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
+          <div style="font-size:9px; color:#7a819b; margin-top:2px;">(Total Pool: ${totalTargetSum} / ${maxStorage})</div>
         </td>
         <td><button class="btn-action" onclick="if (STATE.tutorialStep === 2) { STATE.tutorialStep = 3; updateTutorialBanner(); } buyStock('${p.id}')">Bulk +6 (${STATE.adminMode ? 'FREE' : `$${bulkCost}`})</button></td>
       </tr>`;
