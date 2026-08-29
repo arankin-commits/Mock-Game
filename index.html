@@ -721,6 +721,8 @@
 
     <div id="tab-game-guide" class="modal-content" style="display:none;">
       <h3 style="color:var(--accent-store); margin-bottom:10px;">Supermarket & Supervillain Operator Manual</h3>
+      <div id="dynamic-guide-container"></div>
+    </div>
 
       <div class="guide-box">
         <strong style="color:var(--accent-store);">1. Store Operations & Shelf Restocking</strong>
@@ -864,7 +866,8 @@ const STATE = {
   customersSpawnedToday: 0,
   customersServedToday: 0,
   spawnCooldown: 2, 
-  tutorialStep: 1,
+  tutorialStage: 1, // 1 through 13 for store, 14+ for lair
+  lairTutorialStage: 1,
   tutorialBannerDismissed: false,
   autoProgress: false,
   storeTier: 1,
@@ -955,9 +958,9 @@ const butler = {
 };
 
 const STORE_TIERS = [
-  { tier: 1, name: "Corner Mart", cost: 0, shelves: 4, registers: 1, maxStockBoost: 0 },
-  { tier: 2, name: "Supermarket Express", cost: 400, shelves: 7, registers: 2, maxStockBoost: 15 },
-  { tier: 3, name: "Mega Mart", cost: 950, shelves: 10, registers: 3, maxStockBoost: 30 }
+  { tier: 1, name: "Corner Mart", cost: 0, shelves: 4, registers: 1, maxStorage: 40 },
+  { tier: 2, name: "Supermarket Express", cost: 400, shelves: 7, registers: 2, maxStorage: 70 },
+  { tier: 3, name: "Mega Mart", cost: 950, shelves: 10, registers: 3, maxStorage: 100 }
 ];
 
 const ROBOT_UPGRADES = [
@@ -3303,16 +3306,102 @@ function updateTutorialBanner() {
   const banner = document.getElementById('notification-banner');
   const bannerText = document.getElementById('banner-text');
 
-  if (STATE.tutorialBannerDismissed || STATE.tutorialStep > 3 || STATE.dayNumber > 1) {
+  if (STATE.tutorialBannerDismissed) {
     banner.style.display = 'none';
     return;
   }
 
   banner.style.display = 'block';
-  if (STATE.tutorialStep === 1) bannerText.innerText = "TUTORIAL [1/3]: Walk up to any grocery shelf and press [E] or [SPACE] to restock!";
-  else if (STATE.tutorialStep === 2) bannerText.innerText = "TUTORIAL [2/3]: Wait for a shopper to enter the line, walk to the register, and press [E] to check them out!";
-  else if (STATE.tutorialStep === 3) bannerText.innerText = "TUTORIAL [3/3]: Head left into your Private Office. Step near the door to open it and interact with the Desk [E]!";
- }
+  
+  // Store Tutorial Stages (1 - 13)
+  if (STATE.tutorialStage === 1) {
+    bannerText.innerText = "TUTORIAL [1/13]: Press [TAB] or walk into the office (top left) and interact [E/SPACE] with the computer to open the menu.";
+  } else if (STATE.tutorialStage === 2) {
+    bannerText.innerText = "TUTORIAL [2/13]: [Stock & Pricing Tab] Set your prices and target stock levels here before opening.";
+  } else if (STATE.tutorialStage === 3) {
+    bannerText.innerText = "TUTORIAL [3/13]: [Layout & Staff Tab] Upgrade aisle shelving tiers, hire staff like cashiers, and boost marketing campaigns.";
+  } else if (STATE.tutorialStage === 4) {
+    bannerText.innerText = "TUTORIAL [4/13]: [Office & Automation Tab] View revenue stats, configure shift controls, and automate your workflow.";
+  } else if (STATE.tutorialStage === 5) {
+    bannerText.innerText = "TUTORIAL [5/13]: Close the menu using [TAB] or [X], then walk up to the shelves and press [E] or [SPACE] to restock items!";
+  } else if (STATE.tutorialStage === 6) {
+    bannerText.innerText = "TUTORIAL [6/13]: Open the menu again [TAB], go to Office & Automation, and click 'Start Next Day Shift' to open the shop!";
+  } else if (STATE.tutorialStage === 7) {
+    bannerText.innerText = "TUTORIAL [7/13]: Watch out! If customer traffic is too high, you might run out of items and need to restock to prevent walkouts.";
+  } else if (STATE.tutorialStage === 8) {
+    bannerText.innerText = "TUTORIAL [8/13]: Walk up to any shopper in the store and press [E] or [SPACE] to chat with them and hear their stories.";
+  } else if (STATE.tutorialStage === 9) {
+    bannerText.innerText = "TUTORIAL [9/13]: Hire a cashier or stand at the register (Tier 5 tile) and press [E] to check out waiting shoppers when they reach the front.";
+  } else if (STATE.tutorialStage === 10) {
+    bannerText.innerText = "TUTORIAL [10/13]: Serve all customers throughout the day. Avoid closing early, or upper management will raise suspicion by +15%!";
+  } else if (STATE.tutorialStage === 11) {
+    bannerText.innerText = "TUTORIAL [11/13]: When the day is done, open the menu [TAB], go to Office & Automation, and click 'Close Shop & End Day Shift'.";
+  } else if (STATE.tutorialStage === 12) {
+    bannerText.innerText = "TUTORIAL [12/13]: [End of Day Report] Review your financial audit, net daily profits, customer satisfaction ratings, and suspicion shifts.";
+  } else if (STATE.tutorialStage === 13 && STATE.hasEnteredLair) {
+    bannerText.innerText = "TUTORIAL [13/13]: [Secret Lair Unlocked] Step into the blue bookcase to enter your subterranean lair!";
+  }
+
+  // Lair Tutorial Stages (triggered once inside the lair)
+  if (STATE.currentMap === 'lair' && STATE.lairTutorialStage <= 3) {
+    if (STATE.lairTutorialStage === 1) {
+      bannerText.innerText = "LAIR TUTORIAL [1/3]: Walk up to Butler Jarvis and press [E] or [SPACE] to receive secret underworld intel and syndicate status.";
+    } else if (STATE.lairTutorialStage === 2) {
+      bannerText.innerText = "LAIR TUTORIAL [2/3]: Interact with the Supercomputer terminal (Nexus-9) to launch covert grid hacks, view global superhero radars, and fire orbital lasers!";
+    } else if (STATE.lairTutorialStage === 3) {
+      bannerText.innerText = "LAIR TUTORIAL [3/3]: Move back and forth between your secret lair and the front store anytime by interacting with the blue bookcase!";
+    }
+  }
+
+  updateGuideTabContent();
+}
+
+function updateGuideTabContent() {
+  const container = document.getElementById('dynamic-guide-container');
+  if (!container) return;
+
+  let html = `
+    <div class="guide-box">
+      <strong>1. Stock & Pricing</strong>
+      <p style="margin-top:4px;">Access via computer/menu. Set your prices and target stock levels before daybreak to maximize profit margins based on daily demand ratings.</p>
+    </div>
+    <div class="guide-box">
+      <strong>2. Layout & Staff</strong>
+      <p style="margin-top:4px;">Upgrade aisle shelving tiers, hire cashiers and stockers to automate tasks, and launch marketing campaigns to drive up customer traffic.</p>
+    </div>
+    <div class="guide-box">
+      <strong>3. Office & Automation</strong>
+      <p style="margin-top:4px;">Manage shift progression, view register revenues, handle manual shift controls, and siphon funds if you dare.</p>
+    </div>
+    <div class="guide-box">
+      <strong>4. Shelf Restocking & Inventory</strong>
+      <p style="margin-top:4px;">Close the menu and walk up to any grocery shelf, cooler, or produce rack. Press [E] or [SPACE] to restock items so you never run out during high traffic.</p>
+    </div>
+    <div class="guide-box">
+      <strong>5. Customer Interaction & Registers</strong>
+      <p style="margin-top:4px;">Talk to shoppers by pressing [E] to hear their stories. Check out customers at the active register to earn revenue and keep satisfaction high.</p>
+    </div>
+    <div class="guide-box">
+      <strong>6. Closing Shop & End-of-Day Audit</strong>
+      <p style="margin-top:4px;">Serve all shoppers before closing. Closing early spikes your suspicion by +15%. Review your financial audit and net daily profits in the end-of-day report.</p>
+    </div>
+  `;
+
+  if (STATE.hasEnteredLair) {
+    html += `
+      <div class="guide-box villain">
+        <strong style="color:var(--accent-evil);">7. The Secret Underground Lair & Butler Jarvis</strong>
+        <p style="margin-top:4px;">Accessed via the blue bookcase in your office. Speak with Butler Jarvis for global syndicate intel and criminal standing.</p>
+      </div>
+      <div class="guide-box villain">
+        <strong style="color:var(--accent-evil);">8. Nexus-9 Supercomputer & Orbital Operations</strong>
+        <p style="margin-top:4px;">Use the supercomputer terminal to hack grid networks, track 50 global superheroes, and target metropolitan districts with orbital death-rays.</p>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
 
 function init() {
   applyLayoutMap(1);
@@ -3832,6 +3921,8 @@ function startCheckout(cust, reg) {
 }
 
 function finishCheckout(cust, reg) {
+  if (STATE.tutorialStage === 9) { STATE.tutorialStage = 10; updateTutorialBanner(); }
+  
   const earnings = cust.basket.reduce((sum, item) => sum + item.price, 0);
   STATE.money += earnings;
   STATE.daySales += earnings;
@@ -4236,6 +4327,8 @@ function render() {
 }
 
 function handleInteraction() {
+  if (STATE.tutorialStage === 8) { STATE.tutorialStage = 9; updateTutorialBanner(); }
+  
   const nearbyCustomer = npcs.find(n => !n.isEmployee && Math.abs(player.x - n.x) < 36 && Math.abs(player.y - n.y) < 36);
   if (nearbyCustomer) {
     if (nearbyCustomer.isMourning) {
@@ -4338,6 +4431,13 @@ function isNearTile(tileID) {
 
 function toggleLairSecretEntrance() {
   if (STATE.currentMap === 'store') {
+  // entering lair
+    if (STATE.tutorialStage <= 12) { STATE.tutorialStage = 13; }
+    if (STATE.lairTutorialStage === 0 || STATE.lairTutorialStage === 3) { STATE.lairTutorialStage = 1; }
+    updateTutorialBanner();
+  }
+  
+  if (STATE.currentMap === 'store') {
     STATE.currentMap = 'lair'; player.x = 2 * TILE_SIZE; player.y = 3 * TILE_SIZE;
     
     if (!STATE.hasEnteredLair) {
@@ -4426,6 +4526,26 @@ function startMission(id) {
   updateHUD();
 }
 
+function getTotalUsedStorage() {
+  let totalStock = 0;
+  PRODUCTS.forEach(p => {
+    if (p.unlocked) totalStock += p.stock;
+  });
+  return totalStock;
+}
+
+function getTotalTargetStorage() {
+  let totalTarget = 0;
+  PRODUCTS.forEach(p => {
+    if (p.unlocked) totalTarget += p.targetStock;
+  });
+  return totalTarget;
+}
+
+function getMaxStoreStorage() {
+  return STORE_TIERS[STATE.storeTier - 1].maxStorage;
+}
+
 function triggerSpeechBubble(x, y, text, duration = 3000, map = STATE.currentMap) { 
   speechBubbles = speechBubbles.filter(b => b.map !== map || Math.hypot(b.x - x, b.y - y) > 10);
   speechBubbles.push({ x, y, text, created: Date.now(), duration, map }); 
@@ -4458,6 +4578,8 @@ function checkProximityPrompts() {
 }
 
 function closeShopForNight() {
+  if (STATE.tutorialStage === 11) { STATE.tutorialStage = 12; updateTutorialBanner(); }
+  
   const remainingShoppers = npcs.filter(n => !n.isEmployee).length;
   
   if (remainingShoppers > 0 && !STATE.autoProgress) {
@@ -4595,6 +4717,8 @@ function proceedDirectlyToNextDay() {
 }
 
 function startNextDayShift() {
+  if (STATE.tutorialStage === 6) { STATE.tutorialStage = 7; updateTutorialBanner(); }
+  
   if (STATE.dayNumber >= 50) {
     triggerDay50Ending();
     return;
@@ -4702,19 +4826,25 @@ function buyStock(prodId) {
   const cost = STATE.adminMode ? 0 : p.cost * 3;
   if (!STATE.adminMode && STATE.money < cost) return alert("Not enough money!");
 
-  const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
-  const maxShelf = Math.min(p.targetStock, p.baseMax + tierBonus);
-  const shelfSpace = Math.max(0, maxShelf - p.stock);
+  const currentTotalStock = getTotalUsedStorage();
+  const maxStorage = getMaxStoreStorage();
+  const availableStoreSpace = maxStorage - currentTotalStock;
 
-  if (shelfSpace <= 0) {
-    return alert("Shelf is already at maximum target stock!");
+  const itemSpaceNeeded = Math.max(0, p.targetStock - p.stock);
+  const restockAmount = Math.min(6, itemSpaceNeeded, availableStoreSpace);
+
+  if (restockAmount <= 0) {
+    if (currentTotalStock >= maxStorage) {
+      return alert("Total store aisle storage is completely full!");
+    }
+    return alert("Shelf is already at its target stock!");
   }
 
   if (!STATE.adminMode) {
     STATE.money -= cost;
     STATE.dayRestockCosts += cost;
   }
-  p.stock += Math.min(6, shelfSpace);
+  p.stock += restockAmount;
 
   renderUI();
 }
@@ -4767,13 +4897,31 @@ function updatePendingPrice(prodId, val) {
 
 function updatePendingTargetStock(prodId, val) {
   const p = PRODUCTS.find(x => x.id === prodId);
-  if (p) {
-    const tierBonus = STORE_TIERS[STATE.storeTier - 1].maxStockBoost;
-    p.pendingTargetStock = Math.max(1, Math.min(p.baseMax + tierBonus, parseInt(val) || 1));
-    if (STATE.phase === 'night') {
-      p.targetStock = p.pendingTargetStock;
+  if (!p) return;
+
+  const newTarget = Math.max(1, parseInt(val) || 1);
+  
+  // Calculate what total storage would be if this target change is applied
+  let otherTargetsSum = 0;
+  PRODUCTS.forEach(item => {
+    if (item.unlocked && item.id !== prodId) {
+      otherTargetsSum += item.targetStock;
     }
+  });
+
+  const maxAllowed = getMaxStoreStorage();
+  if (otherTargetsSum + newTarget > maxAllowed) {
+    alert(`Exceeds maximum store storage space (${maxAllowed})! Lower other targets first.`);
+    return;
   }
+
+  p.pendingTargetStock = newTarget;
+  if (STATE.phase === 'night') {
+    p.targetStock = p.pendingTargetStock;
+  }
+  
+  // Re-render the UI so the total storage readout updates instantly
+  renderUI();
 }
 
 function toggleAutoProgress(val) {
@@ -4806,6 +4954,10 @@ function breedExperiment() {
 }
 
 function toggleMenu(defaultTab, isDeskAccess = false) {
+  if (STATE.tutorialStage === 1) { STATE.tutorialStage = 2; updateTutorialBanner(); }
+  if (!STATE.menuOpen && STATE.tutorialStage === 5) { STATE.tutorialStage = 6; updateTutorialBanner(); }
+  if (STATE.menuOpen && STATE.tutorialStage === 10) { STATE.tutorialStage = 11; updateTutorialBanner(); }
+  
   STATE.menuOpen = !STATE.menuOpen;
   STATE.isAtDeskMenu = isDeskAccess;
 
@@ -4841,6 +4993,10 @@ function toggleMenu(defaultTab, isDeskAccess = false) {
 }
 
 function switchTab(tabId) {
+  if (tabId === 'store-inv' && STATE.tutorialStage === 2) { STATE.tutorialStage = 3; updateTutorialBanner(); }
+  else if (tabId === 'store-upgrades' && STATE.tutorialStage === 3) { STATE.tutorialStage = 4; updateTutorialBanner(); }
+  else if (tabId === 'store-finance' && STATE.tutorialStage === 4) { STATE.tutorialStage = 5; updateTutorialBanner(); }
+  
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.modal-content').forEach(c => c.style.display = 'none');
   const targetBtn = document.getElementById('tab-btn-' + tabId);
@@ -4874,6 +5030,9 @@ function renderUI() {
     const tagClassNext = p.nextPopularity === 'popular' ? 'tag-popular' : (p.nextPopularity === 'normal' ? 'tag-normal' : 'tag-unpopular');
     const bulkCost = STATE.adminMode ? 0 : p.cost * 3;
     const unlockCost = STATE.adminMode ? 0 : p.unlockCost;
+    const totalUsed = getTotalUsedStorage();
+    const totalTargetSum = getTotalTargetStorage();
+    const maxStorage = getMaxStoreStorage();
 
     if (p.unlocked) {
       return `<tr>
@@ -4886,7 +5045,8 @@ function renderUI() {
           <input type="number" min="1" max="999" value="${p.pendingPrice}" onchange="updatePendingPrice('${p.id}', this.value)">
         </td>
         <td>
-          ${p.stock} / <input type="number" min="1" max="${maxCap}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
+          ${p.stock} / <input type="number" min="1" max="${maxStorage}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
+          <div style="font-size:9px; color:#7a819b; margin-top:2px;">(Total Pool: ${totalUsed} / ${maxStorage})</div>
         </td>
         <td><button class="btn-action" onclick="buyStock('${p.id}')">Bulk +6 (${STATE.adminMode ? 'FREE' : `$${bulkCost}`})</button></td>
       </tr>`;
