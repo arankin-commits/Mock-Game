@@ -1238,13 +1238,22 @@ const titleScreen = document.getElementById('title-screen');
 function startGameFromTitle() {
   STATE.gameStarted = true;
   document.getElementById('title-screen').style.display = 'none';
+
+  STATE.phase = 'night';
+
+  PRODUCTS.forEach(p => {
+    p.stock = 0;
+  });
+
+  toggleMenu('store-inv', false);
   
-  const banner = document.getElementById('notification-banner');
-  if (banner && !STATE.tutorialBannerDismissed) {
-    banner.style.display = 'block';
-  }
+  // const banner = document.getElementById('notification-banner');
+  // if (banner && !STATE.tutorialBannerDismissed) {
+  //   banner.style.display = 'block';
+  // }
   
-  showNotification("TUTORIAL: Walk up to any grocery shelf and press [E] or [SPACE] to restock!");
+  // showNotification("TUTORIAL: Walk up to any grocery shelf and press [E] or [SPACE] to restock!");
+  showNotification("PRE-DAY PREPARATION: Welcome to Day 1. Your shelves are completely empty! Order stock and set your prices before opening the shop.");
 }
   
 function acceptApexInvite() {
