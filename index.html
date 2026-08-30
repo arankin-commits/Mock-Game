@@ -4570,7 +4570,7 @@ function handleInteraction() {
       STATE.heldBackstock.product = null;
       triggerSpeechBubble(player.x, player.y, `Restocked (${prod.stock}/${maxStock})`, 3000, 'store');
     } else {
-      triggerSpeechBubble(player.x, player.y, `Restocked (${prod.stock}/${maxStock}) need to put the extras back`, 3500, 'store');
+      triggerSpeechBubble(player.x, player.y, `Restocked (${prod.stock}/${maxStock}). Need to put the extras back`, 3500, 'store');
     }
 
     updateHUD();
