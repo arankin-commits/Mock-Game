@@ -4160,187 +4160,136 @@ function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const curMap = STATE.currentMap === 'store' ? storeMap : (STATE.currentMap === 'backroom' ? backroomMap : lairMap);
 
+  let unlockedList = PRODUCTS.filter(p => p.unlocked);
+  let shelfIndex = 0;
+
   for (let r = 0; r < curMap.length; r++) {
     for (let c = 0; c < MAP_COLS; c++) {
       let t = curMap[r][c];
-      let tx = c * TILE_SIZE; let ty = r * TILE_SIZE;
+      let tx = c * TILE_SIZE; 
+      let ty = r * TILE_SIZE;
 
+      // Background floor styling
       if (STATE.currentMap === 'store') {
         ctx.fillStyle = (r + c) % 2 === 0 ? '#f0f3f8' : '#e2e7ef';
         ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
         ctx.strokeStyle = 'rgba(180, 190, 205, 0.3)';
         ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
-      } else if (STATE.currentMap === 'backroom') {
-          let unlockedList = PRODUCTS.filter(p => p.unlocked);
-          let shelfIndex = 0;
-      
-          for (let r = 0; r < curMap.length; r++) {
-            for (let c = 0; c < MAP_COLS; c++) {
-              let t = curMap[r][c];
-              let tx = c * TILE_SIZE; 
-              let ty = r * TILE_SIZE;
-      
-              // Floor styling
-              ctx.fillStyle = (r + c) % 2 === 0 ? '#141824' : '#10141f';
-              ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-              ctx.strokeStyle = '#1e2638';
-              ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
-      
-              if (t === 1) {
-                // Check if this is the west wall entrance opening (col 0, rows 6 & 7)
-                if (c === 0 && (r === 6 || r === 7)) {
-                  ctx.fillStyle = '#deb887'; // Doorway opening color
-                  ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-                } else {
-                  ctx.fillStyle = '#1e293b';
-                  ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-                }
-              } else if (t === 2) {
-                  const prodIndex = Math.floor(shelfIndex / 2);
-                  const prod = unlockedList[prodIndex];
-        
-                  if (prod) {
-                    // Draw standard shelf look (same as store shelves up top)
-                    ctx.fillStyle = '#334155'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-                    ctx.fillStyle = '#cbd5e1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-        
-                    ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 3);
-                    ctx.fillStyle = '#f43f5e'; ctx.fillRect(tx + 2, ty + 7, TILE_SIZE - 4, 1);
-                    
-                    // Only show colored squares / product bars if backStock > 0
-                    if (prod.backStock > 0) {
-                      ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
-                      ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
-                      ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
-                      ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
-                    }
-        
-                    ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
-                    ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
-                    
-                    // Only show bottom colored squares if backStock > 0
-                    if (prod.backStock > 0) {
-                      ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
-                      ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
-                      ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
-                    }
-        
-                    // Small text overlay showing available quantity
-                    ctx.fillStyle = prod.backStock > 0 ? '#1e293b' : '#ef4444';
-                    ctx.font = 'bold 7px monospace';
-                    ctx.fillText(prod.backStock > 0 ? `${prod.backStock}` : 'EMPTY', tx + 3, ty + 14);
-        
-                    // Hover tooltip check
-                    if (STATE.mouseX >= tx && STATE.mouseX <= tx + TILE_SIZE && STATE.mouseY >= ty && STATE.mouseY <= ty + TILE_SIZE) {
-                      STATE.backroomHoverText = `Backstock Shelf: ${prod.name} (${prod.backStock} units available)`;
-                    }
-                  } else {
-                    // Locked product shelf: hidden/blank dark space
-                    ctx.fillStyle = '#0b0d14';
-                    ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-                  }
-                  shelfIndex++;
       } else {
-        ctx.fillStyle = '#10141f'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-        ctx.strokeStyle = '#1e2638'; ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        ctx.fillStyle = (r + c) % 2 === 0 ? '#141824' : '#10141f';
+        ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        ctx.strokeStyle = '#1e2638';
+        ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
       }
 
-      if (t === 1) {
-        ctx.fillStyle = STATE.currentMap === 'store' ? '#475569' : '#1e293b';
-        ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-        ctx.fillStyle = STATE.currentMap === 'store' ? '#334155' : '#0f172a';
-        ctx.fillRect(tx, ty + TILE_SIZE - 4, TILE_SIZE, 4);
-      } else if (t === 2) {
-        ctx.fillStyle = '#334155'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-        ctx.fillStyle = '#cbd5e1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+      if (STATE.currentMap === 'backroom') {
+        if (t === 1) {
+          if (c === 0 && (r === 6 || r === 7)) {
+            ctx.fillStyle = '#deb887'; // Doorway opening color
+            ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+          } else {
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+          }
+        } else if (t === 2) {
+          const prodIndex = Math.floor(shelfIndex / 2);
+          const prod = unlockedList[prodIndex];
 
-        ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 3);
-        ctx.fillStyle = '#f43f5e'; ctx.fillRect(tx + 2, ty + 7, TILE_SIZE - 4, 1);
-        ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
-        ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
-        ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
-        ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
+          if (prod) {
+            // Draw standard shelf look (same as store shelves up top)
+            ctx.fillStyle = '#334155'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = '#cbd5e1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
 
-        ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
-        ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
-        ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
-        ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
-        ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
-      } else if (t === 3) {
-        // Bookshelf Background
-        ctx.fillStyle = '#4a2e18'; 
-        ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-        
-        // Wood border outline
-        ctx.strokeStyle = '#2b1a0e';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 3);
+            ctx.fillStyle = '#f43f5e'; ctx.fillRect(tx + 2, ty + 7, TILE_SIZE - 4, 1);
+            
+            // Only show colored squares / product bars if backStock > 0
+            if (prod.backStock > 0) {
+              ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
+              ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
+              ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
+              ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
+            }
 
-        // Bookshelf Shelves (Horizontal lines)
-        ctx.fillStyle = '#2b1a0e';
-        ctx.fillRect(tx + 2, ty + 10, TILE_SIZE - 4, 2);
-        ctx.fillRect(tx + 2, ty + 21, TILE_SIZE - 4, 2);
+            ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
+            ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
+            
+            // Only show bottom colored squares if backStock > 0
+            if (prod.backStock > 0) {
+              ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
+              ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
+              ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
+            }
 
-        // Colorful Book Spines
-        ctx.fillStyle = '#7aa2f7'; ctx.fillRect(tx + 4, ty + 3, 4, 7);
-        ctx.fillStyle = '#f7768e'; ctx.fillRect(tx + 9, ty + 4, 3, 6);
-        ctx.fillStyle = '#9ece6a'; ctx.fillRect(tx + 13, ty + 3, 5, 7);
-        ctx.fillStyle = '#bb9af7'; ctx.fillRect(tx + 19, ty + 4, 4, 6);
-        ctx.fillStyle = '#e0af68'; ctx.fillRect(tx + 24, ty + 3, 3, 7);
+            // Small text overlay showing available quantity
+            ctx.fillStyle = prod.backStock > 0 ? '#1e293b' : '#ef4444';
+            ctx.font = 'bold 7px monospace';
+            ctx.fillText(prod.backStock > 0 ? `${prod.backStock}` : 'EMPTY', tx + 3, ty + 14);
 
-        ctx.fillStyle = '#e0af68'; ctx.fillRect(tx + 4, ty + 13, 5, 8);
-        ctx.fillStyle = '#7dcfff'; ctx.fillRect(tx + 10, ty + 14, 3, 7);
-        ctx.fillStyle = '#f7768e'; ctx.fillRect(tx + 15, ty + 13, 4, 8);
-        ctx.fillStyle = '#7aa2f7'; ctx.fillRect(tx + 21, ty + 14, 6, 7);
-      } else if (t === 10) {
-        ctx.fillStyle = '#854d0e'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-        ctx.fillStyle = '#a16207'; ctx.fillRect(tx + 3, ty + 3, TILE_SIZE - 6, TILE_SIZE - 6);
-        ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.arc(tx + 8, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(tx + 16, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.arc(tx + 24, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(tx + 11, ty + 20, 3.5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#eab308'; ctx.beginPath(); ctx.arc(tx + 20, ty + 20, 3.5, 0, Math.PI*2); ctx.fill();
-      } else if (t === 11) {
-        ctx.fillStyle = '#1e293b'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-        ctx.fillStyle = '#67e8f9'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fillRect(tx + 4, ty + 4, 3, TILE_SIZE - 8);
-        ctx.fillStyle = '#1e40af'; ctx.fillRect(tx + 10, ty + 6, 4, 18);
-        ctx.fillStyle = '#b91c1c'; ctx.fillRect(tx + 17, ty + 6, 4, 18);
-        ctx.fillStyle = '#047857'; ctx.fillRect(tx + 24, ty + 6, 4, 18);
-      } else if (t === 5) {
-        ctx.fillStyle = '#1e293b'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-        ctx.fillStyle = '#0f172a'; ctx.fillRect(tx + 3, ty + 3, 12, TILE_SIZE - 6);
-        ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 7, ty + 12, 4, 4);
-        ctx.fillStyle = '#38bdf8'; ctx.fillRect(tx + 16, ty + 4, 12, 10);
-        ctx.fillStyle = '#0284c7'; ctx.fillRect(tx + 18, ty + 6, 8, 6);
-        ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 17, ty + 16, 10, 10);
-      } else if (t === 3) {
-        ctx.fillStyle = '#5c3a21'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-        ctx.fillStyle = '#7aa2f7'; ctx.fillRect(tx + 8, ty + 8, TILE_SIZE - 16, 4);
-      } else if (t === 4) {
-        ctx.fillStyle = '#4a2e18'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, TILE_SIZE - 8);
-        ctx.fillStyle = '#2d5a27'; ctx.fillRect(tx + 6, ty + 8, TILE_SIZE - 12, TILE_SIZE - 16);
-        ctx.fillStyle = '#c0caf5'; ctx.fillRect(tx + 10, ty + 6, 12, 10);
-        ctx.fillStyle = '#9ece6a'; ctx.fillRect(tx + 12, ty + 8, 8, 6);
-        ctx.fillStyle = '#e0af68'; ctx.fillRect(tx + 4, ty + 6, 3, 5);
-      } else if (t === 6) {
-        ctx.fillStyle = '#0369a1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-        ctx.fillStyle = '#bb9af7'; ctx.fillRect(tx + 6, ty + 6, TILE_SIZE - 12, TILE_SIZE - 12);
-      } else if (t === 7) {
-        ctx.fillStyle = '#020617'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-        ctx.fillStyle = '#321d52'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-        const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
-        ctx.fillStyle = `rgba(187, 154, 247, ${0.4 + pulse * 0.4})`;
-        ctx.fillRect(tx + 3, ty + 3, TILE_SIZE - 6, TILE_SIZE - 6);
-      } else if (t === 9) {
-        ctx.fillStyle = STATE.officeDoorOpen ? '#deb887' : '#8c4320';
-        ctx.fillRect(tx + (STATE.officeDoorOpen ? 24 : 0), ty, STATE.officeDoorOpen ? 8 : TILE_SIZE, TILE_SIZE);
-      } else if (t === 8) {
-        ctx.fillStyle = 'rgba(122, 162, 247, 0.4)'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+            // Hover tooltip check
+            if (STATE.mouseX >= tx && STATE.mouseX <= tx + TILE_SIZE && STATE.mouseY >= ty && STATE.mouseY <= ty + TILE_SIZE) {
+              STATE.backroomHoverText = `Backstock Shelf: ${prod.name} (${prod.backStock} units available)`;
+            }
+          } else {
+            // Locked product shelf: hidden/blank dark space
+            ctx.fillStyle = '#0b0d14';
+            ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+          }
+          shelfIndex++;
+        }
+      } else {
+        // Standard Store & Lair tile rendering
+        if (t === 1) {
+          ctx.fillStyle = STATE.currentMap === 'store' ? '#475569' : '#1e293b';
+          ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = STATE.currentMap === 'store' ? '#334155' : '#0f172a';
+          ctx.fillRect(tx, ty + TILE_SIZE - 4, TILE_SIZE, 4);
+        } else if (t === 2) {
+          ctx.fillStyle = '#334155'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = '#cbd5e1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+
+          ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 3);
+          ctx.fillStyle = '#f43f5e'; ctx.fillRect(tx + 2, ty + 7, TILE_SIZE - 4, 1);
+          ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
+          ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
+          ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
+          ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
+
+          ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
+          ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
+          ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
+          ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
+          ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
+        } else if (t === 3) {
+          ctx.fillStyle = '#4a2e18'; 
+          ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+          ctx.strokeStyle = '#2b1a0e';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        } else if (t === 10) {
+          ctx.fillStyle = '#854d0e'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+        } else if (t === 11) {
+          ctx.fillStyle = '#1e293b'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        } else if (t === 5) {
+          ctx.fillStyle = '#1e293b'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+        } else if (t === 4) {
+          ctx.fillStyle = '#4a2e18'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, TILE_SIZE - 8);
+        } else if (t === 6) {
+          ctx.fillStyle = '#0369a1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        } else if (t === 7) {
+          ctx.fillStyle = '#020617'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = '#321d52'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+        } else if (t === 9) {
+          ctx.fillStyle = STATE.officeDoorOpen ? '#deb887' : '#8c4320';
+          ctx.fillRect(tx + (STATE.officeDoorOpen ? 24 : 0), ty, STATE.officeDoorOpen ? 8 : TILE_SIZE, TILE_SIZE);
+        } else if (t === 8) {
+          ctx.fillStyle = 'rgba(122, 162, 247, 0.4)'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        }
       }
     }
   }
 
+  // Draw entities and hover text
   if (STATE.robotTier > 0 && STATE.currentMap === 'store') {
     drawPerson(2 * TILE_SIZE, 2 * TILE_SIZE, 'down', false, 0, player.skinColor, player.shirtColor, player.pantsColor, player.hairColor, true);
   }
@@ -4424,6 +4373,20 @@ function render() {
       });
     }
   });
+
+  // Backroom hover tooltip display
+  if (STATE.currentMap === 'backroom' && STATE.backroomHoverText) {
+    ctx.fillStyle = 'rgba(15, 17, 26, 0.9)';
+    ctx.strokeStyle = '#7aa2f7';
+    ctx.lineWidth = 1;
+    ctx.fillRect(STATE.mouseX + 10, STATE.mouseY - 25, ctx.measureText(STATE.backroomHoverText).width + 16, 22);
+    ctx.strokeRect(STATE.mouseX + 10, STATE.mouseY - 25, ctx.measureText(STATE.backroomHoverText).width + 16, 22);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px monospace';
+    ctx.fillText(STATE.backroomHoverText, STATE.mouseX + 18, STATE.mouseY - 11);
+    STATE.backroomHoverText = null;
+  }
 }
 
 function handleInteraction() {
