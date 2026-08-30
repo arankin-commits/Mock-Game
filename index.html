@@ -4489,26 +4489,17 @@ function handleInteraction() {
     toggleLairTV(true);
     return;
   }
-  if (isNearTile(3) && STATE.currentMap === 'lair') {
+  // bookcaase
+  if (isNearTile(3) && (STATE.currentMap === 'lair'|| STATE.currentMap === 'store')) {
     toggleLairSecretEntrance();
     return;
   }
+  // office
   if (isNearTile(4) && STATE.currentMap === 'store') {
     toggleMenu('store-finance', true);
     return;
   }
-  // // Check if interacting with the backroom door (tile 12)
-  // const pCol = Math.floor((player.x + 8) / TILE_SIZE);
-  // const pRow = Math.floor((player.y + 8) / TILE_SIZE);
-  // if (STATE.currentMap === 'store' && pCol === 0 && (pRow === 6 || pRow === 7)) {
-  //     toggleBackroomEntrance();
-  //     return;
-  //   }
-  // if (STATE.currentMap === 'backroom' && pCol === 0 && (pRow === 6 || pRow === 7)) {
-  //     toggleBackroomEntrance();
-  //     return;
-  //   }
-  
+
   if (isNearTile(5) && STATE.currentMap === 'store') {
     const pCol = Math.floor((player.x + 8) / TILE_SIZE);
     const pRow = Math.floor((player.y + 8) / TILE_SIZE);
@@ -4664,7 +4655,7 @@ function checkProximityPrompts() {
     nearCustomer ||
     isNearButler() ||
     isNearTile(7) ||
-    isNearTile(3) ||
+    isNearTile(3) && (STATE.currentMap === 'store' || && STATE.currentMap === 'lair')||
     isNearTile(4) ||
     isNearTile(5) ||
     isNearTile(2) ||
