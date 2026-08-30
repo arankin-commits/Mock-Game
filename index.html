@@ -501,8 +501,10 @@
   </div>
   
   <div id="hud">
-    <div class="hud-stat hud-money">$<span id="val-money">250</span></div>
-    <div class="hud-stat hud-lair-money" id="hud-lair-money-container" style="display:none; color: var(--accent-evil);">$<span id="val-lair-money">0</span></div>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div class="hud-stat hud-money">$<span id="val-money">250</span></div>
+      <div class="hud-stat hud-lair-money" id="hud-lair-money-container" style="display:none; color: var(--accent-evil);">Lair: $<span id="val-lair-money">0</span></div>
+    </div>
 
     <div class="hud-stat hud-evil" id="hud-infamy-container" style="display:none;">Infamy: <span id="val-infamy">0</span></div>
     <div class="hud-stat hud-suspicion" id="hud-suspicion-container" style="display:none;">Suspicion: <span id="val-suspicion">5</span>%</div>
