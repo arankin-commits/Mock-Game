@@ -4481,19 +4481,19 @@ function handleInteraction() {
     return;
   }
   
-  if (isNearButler()) {
+  if (isNearButler() && STATE.currentMap === 'lair') {
     speakButler();
     return;
   }
-  if (isNearTile(7)) {
+  if (isNearTile(7) && STATE.currentMap === 'lair') {
     toggleLairTV(true);
     return;
   }
-  if (isNearTile(3)) {
+  if (isNearTile(3) && STATE.currentMap === 'lair') {
     toggleLairSecretEntrance();
     return;
   }
-  if (isNearTile(4)) {
+  if (isNearTile(4) && STATE.currentMap === 'store') {
     toggleMenu('store-finance', true);
     return;
   }
@@ -4509,7 +4509,7 @@ function handleInteraction() {
       return;
     }
   
-  if (isNearTile(5)) {
+  if (isNearTile(5) && STATE.currentMap === 'store') {
     const pCol = Math.floor((player.x + 8) / TILE_SIZE);
     const pRow = Math.floor((player.y + 8) / TILE_SIZE);
     const nearReg = REGISTERS.find(r => Math.abs(r.tile.col - pCol) <= 1 && Math.abs(r.tile.row - pRow) <= 1);
@@ -4521,7 +4521,7 @@ function handleInteraction() {
     }
     return;
   }
-  if (isNearTile(2) || isNearTile(10) || isNearTile(11)) {
+  if (isNearTile(2) || isNearTile(10) || isNearTile(11) && STATE.currentMap === 'store') {
     if (STATE.tutorialStep === 10) { STATE.tutorialStep = 11; updateTutorialBanner(); }
     
     const unlockedList = PRODUCTS.filter(p => p.unlocked);
