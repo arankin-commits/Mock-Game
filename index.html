@@ -965,28 +965,6 @@ let BROWSING_POINTS = [
   { col: 15, row: 5 }, { col: 18, row: 5 }, { col: 19, row: 3 }, { col: 22, row: 3 }
 ];
 
-// Exact tile in front of each aisle/shelf for each product
-const PRODUCT_SHELF_TILES = {
-  cereal:  { col: 11, row: 5 },
-  soda:    { col: 14, row: 5 },
-  meat:    { col: 18, row: 5 },
-  apples:  { col: 19, row: 3 },
-  milk:    { col: 22, row: 3 },
-  bread:   { col: 7,  row: 5 },
-  chips:   { col: 10, row: 5 },
-  soup:    { col: 15, row: 5 },
-  frozen:  { col: 19, row: 5 },
-  energy:  { col: 22, row: 5 },
-  coffee:  { col: 7,  row: 8 },
-  battery: { col: 11, row: 8 },
-  meds:    { col: 14, row: 8 },
-  spice:   { col: 18, row: 8 },
-  caviar:  { col: 22, row: 8 }
-};
-
-// The tile right in front of the backroom door on the store map (col 23, row 9)
-const BACKROOM_DOOR_TILE = { col: 23, row: 9 };
-
 let REGISTERS = [
   {
     id: 0,
@@ -3519,29 +3497,26 @@ function showNotification(msg) {
   bannerText.innerText = msg;
 }
 
-function findPath(startCol, startRow, targetCol, targetRow) {
-  const map = storeMap;
+function findPath(startCol, startRow, targetCol, targetRow, map = storeMap) {
   const rows = map.length;
   const cols = map[0].length;
   
-  // Allow walking on open floor (0), room doors (8, 9, 12), and treat aisle/shelf tiles (2, 10, 11) as reachable endpoints
   const isWalkable = (c, r) => {
     if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
     const tile = map[r][c];
+    // Tile 0 = floor, 8/9/12 = doors/exits
     return tile === 0 || tile === 8 || tile === 9 || tile === 12;
   };
 
   const isTargetValid = (c, r) => {
     if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
     const tile = map[r][c];
-    // Target can be open floor OR a shelf/aisle tile so workers can walk right up to it
     return tile === 0 || tile === 2 || tile === 10 || tile === 11 || tile === 8 || tile === 9 || tile === 12;
   };
 
   if (!isTargetValid(targetCol, targetRow)) return [];
   if (startCol === targetCol && startRow === targetRow) return [];
 
-  // If the target tile itself is a solid shelf, find an adjacent walkable floor tile to stop at
   let adjustedTargetCol = targetCol;
   let adjustedTargetRow = targetRow;
   if (!isWalkable(targetCol, targetRow)) {
@@ -3629,7 +3604,7 @@ function recalculateLinePositions() {
       const c = Math.floor((n.x + 8) / TILE_SIZE);
       const r = Math.floor((n.y + 8) / TILE_SIZE);
       if (c !== desiredSlot.col || r !== desiredSlot.row) {
-        n.path = findPath(c, r, desiredSlot.col, desiredSlot.row);
+        n.path = findPath(c, r, desiredSlot.col, desiredSlot.row, storeMap);
       }
     });
   });
@@ -3648,6 +3623,28 @@ function findBestRegister() {
   return best;
 }
 
+// Exact tile in front of each aisle/shelf for each product
+const PRODUCT_SHELF_TILES = {
+  cereal:  { col: 11, row: 5 },
+  soda:    { col: 14, row: 5 },
+  meat:    { col: 18, row: 5 },
+  apples:  { col: 19, row: 3 },
+  milk:    { col: 22, row: 3 },
+  bread:   { col: 7,  row: 5 },
+  chips:   { col: 10, row: 5 },
+  soup:    { col: 15, row: 5 },
+  frozen:  { col: 19, row: 5 },
+  energy:  { col: 22, row: 5 },
+  coffee:  { col: 7,  row: 8 },
+  battery: { col: 11, row: 8 },
+  meds:    { col: 14, row: 8 },
+  spice:   { col: 18, row: 8 },
+  caviar:  { col: 22, row: 8 }
+};
+
+// The tile right in front of the backroom door on the store map
+const BACKROOM_DOOR_TILE = { col: 23, row: 9 };
+
 class Employee {
   constructor(role) {
     this.x = 11.5 * TILE_SIZE;
@@ -3659,11 +3656,10 @@ class Employee {
     this.walkFrame = 0;
     this.isMoving = false;
     this.path = [];
-    this.timer = 0;
     this.assignedRegisterId = null;
 
     // Stocker state machine properties
-    this.stockerState = 'idle'; // 'idle' | 'walking_to_door' | 'grabbing_stock' | 'walking_to_shelf' | 'restocking'
+    this.stockerState = 'idle'; 
     this.heldProduct = null;
     this.heldCount = 0;
     this.stateTimer = 0;
@@ -3672,7 +3668,7 @@ class Employee {
     this.shirtColor = '#a3be8c';
     this.pantsColor = '#4c566a';
     this.hairColor = '#d08770';
-    
+
     this.initStation();
   }
 
@@ -3687,9 +3683,6 @@ class Employee {
           this.assignedRegisterId = availableReg.id;
           this.path = findPath(c, r, availableReg.cashierSlot.col, availableReg.cashierSlot.row);
         }
-      } else if (this.role === 'stocker') {
-        const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
-        this.path = findPath(c, r, targetShelf.col, targetShelf.row);
       }
     }
   }
@@ -3700,11 +3693,11 @@ class Employee {
     this.path = findPath(c, r, 11, 12);
   }
 
-  update() {    
+  update() {
     this.walkFrame += 0.08;
     checkVisionCone(this);
 
-    // If currently walking a path, follow it
+    // Follow Path
     if (this.path && this.path.length > 0) {
       this.isMoving = true;
       const target = this.path[0];
@@ -3723,7 +3716,7 @@ class Employee {
         this.y = tPy;
         this.path.shift();
       }
-      return; // Still moving along path, don't trigger arrived logic yet
+      return; 
     }
 
     // Path finished / stationary: execute role AI
@@ -3734,7 +3727,6 @@ class Employee {
   handleRoleAI() {
     if (STATE.phase === 'night') return;
 
-   // --- CASHIER AI ---
     if (this.role === 'cashier') {
       this.dir = 'right';
       const reg = REGISTERS.find(r => r.id === this.assignedRegisterId);
@@ -3751,50 +3743,50 @@ class Employee {
       }
       return;
     }
-    
-    // --- STOCKER STATE MACHINE ---
+
     if (this.role === 'stocker') {
       const c = Math.floor((this.x + 8) / TILE_SIZE);
       const r = Math.floor((this.y + 8) / TILE_SIZE);
 
-      // STATE 1: IDLE - Find which unlocked product is lowest on the aisle shelf
+      // STATE 1: Look for an empty shelf that has backstock available
       if (this.stockerState === 'idle') {
-        let lowestProd = null;
-        let lowestRatio = 1.0; // only pick items that are actually below 100% target
+        let targetProd = null;
+        let lowestRatio = 2.0;
 
-        PRODUCTS.forEach(p => {
+        for (let p of PRODUCTS) {
           if (p.unlocked && p.backStock > 0) {
             const maxCap = Math.min(p.targetStock, p.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
-            const ratio = p.stock / maxCap;
-            if (ratio < lowestRatio) {
-              lowestRatio = ratio;
-              lowestProd = p;
+            if (p.stock < maxCap) {
+              const ratio = p.stock / maxCap;
+              if (ratio < lowestRatio) {
+                lowestRatio = ratio;
+                targetProd = p;
+              }
             }
           }
-        });
+        }
 
-        if (lowestProd) {
-          this.heldProduct = lowestProd;
-          // Walk to the backroom door on the store floor
+        if (targetProd) {
+          this.heldProduct = targetProd;
           this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row);
           this.stockerState = 'walking_to_door';
         } else {
-          // If all shelves are full or no backstock exists, wander casually
-          if (Math.random() < 0.01) {
+          // Wander if all shelves are full
+          if (Math.random() < 0.02) {
             const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
             this.path = findPath(c, r, pt.col, pt.row);
           }
         }
       }
-
-      // STATE 2: ARRIVED AT BACKROOM DOOR - Simulate entering and grabbing stock
+      
+      // STATE 2: Arrived at backroom door
       else if (this.stockerState === 'walking_to_door') {
         this.stockerState = 'grabbing_stock';
-        this.stateTimer = 90; // Spend ~1.5s inside grabbing items
+        this.stateTimer = 60; // 1-second pause to "grab" stock
         this.dir = 'right';
       }
-
-      // STATE 3: GRABBING STOCK (inside storage)
+      
+      // STATE 3: Load items into stocker's hands
       else if (this.stockerState === 'grabbing_stock') {
         this.stateTimer--;
         if (this.stateTimer <= 0) {
@@ -3802,30 +3794,28 @@ class Employee {
             const maxCap = Math.min(this.heldProduct.targetStock, this.heldProduct.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
             const needed = maxCap - this.heldProduct.stock;
             const grabAmount = Math.min(5, this.heldProduct.backStock, Math.max(1, needed));
-
+            
             this.heldProduct.backStock -= grabAmount;
             this.heldCount = grabAmount;
 
-            // Find the shelf coordinate for this exact product
             const shelfTile = PRODUCT_SHELF_TILES[this.heldProduct.id] || BROWSING_POINTS[0];
             this.path = findPath(c, r, shelfTile.col, shelfTile.row);
             this.stockerState = 'walking_to_shelf';
           } else {
             this.heldProduct = null;
-            this.heldCount = 0;
             this.stockerState = 'idle';
           }
         }
       }
-
-      // STATE 4: ARRIVED AT SHELF - Speak and restock
+      
+      // STATE 4: Arrived at shelf
       else if (this.stockerState === 'walking_to_shelf') {
         this.stockerState = 'restocking';
-        this.stateTimer = 60; // 1 second restocking animation/pause
+        this.stateTimer = 45; 
         triggerSpeechBubble(this.x, this.y, "I need to stock this", 2000, 'store');
       }
-
-      // STATE 5: RESTOCKING - Apply the items to the shelf
+      
+      // STATE 5: Deposit items onto the shelf
       else if (this.stockerState === 'restocking') {
         this.stateTimer--;
         if (this.stateTimer <= 0) {
@@ -3837,15 +3827,14 @@ class Employee {
             this.heldProduct.stock += placed;
             this.heldCount -= placed;
 
-            // If extra items left over, return them to backStock
+            // Return extra unused items to backstock
             if (this.heldCount > 0) {
               this.heldProduct.backStock += this.heldCount;
             }
           }
-
           this.heldProduct = null;
           this.heldCount = 0;
-          this.stockerState = 'idle'; // Cycle complete, ready for next empty shelf
+          this.stockerState = 'idle';
         }
       }
     }
@@ -3955,7 +3944,7 @@ class Customer {
     const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
     const curCol = Math.floor((this.x + 8) / TILE_SIZE);
     const curRow = Math.floor((this.y + 8) / TILE_SIZE);
-    this.path = findPath(curCol, curRow, pt.col, pt.row);
+    this.path = findPath(curCol, curRow, pt.col, pt.row, storeMap);
     this.aisleVisitTimer = 2 + Math.floor(Math.random() * 3);
   }
 
