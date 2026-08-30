@@ -1347,7 +1347,7 @@ function acceptApexInvite() {
   // 3. Cannot ally with other villains (disable regular syndicate interactions)
 
   showNotification("☣ APEX PURGE PACT ACCEPTED: You have cut ties with standard syndicates. Your rival has abandoned you.");
-  triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
+  (butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
   renderMailList();
   renderUI();
 }
@@ -1413,11 +1413,11 @@ function respondApexInvite(accepted) {
     rivalVillains = rivalVillains.filter(v => !v.name.includes("Dr. Malevolent"));
 
     showNotification("☣ APEX PURGE PACT ACCEPTED: You have cut ties with standard syndicates. Your rival has abandoned you.");
-    triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
+    (butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
   } else {
     STATE.apexInviteDeclined = true;
     showNotification("❌ INVITATION DECLINED: You remain part of the standard syndicates. The Apex Purge watches in silence.");
-    triggerSpeechBubble(butler.x, butler.y, `Jarvis: "A bold refusal, master. We keep our standard syndicate connections for now."`, 5000, 'lair');
+    (butler.x, butler.y, `Jarvis: "A bold refusal, master. We keep our standard syndicate connections for now."`, 5000, 'lair');
   }
 
   renderMailList();
@@ -1586,7 +1586,7 @@ function checkCasualtyStatusEscalation() {
   if (STATE.totalCasualties >= 25 && !STATE.isSupervillain) {
     STATE.isSupervillain = true;
     showNotification("⚠️ WARNING: CASUALTIES EXCEEDED 25! Supervillain status unlocked.");
-    triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master, casualties have exceeded 25. You are now designated a SUPERVILLAIN. The Apex Purge Syndicate is watching."`, 5000, 'lair');
+    (butler.x, butler.y, `Jarvis: "Master, casualties have exceeded 25. You are now designated a SUPERVILLAIN. The Apex Purge Syndicate is watching."`, 5000, 'lair');
     
     // Stage Apex Purge invite for next morning
     stagingPendingMail('apexInvite');
@@ -1672,7 +1672,7 @@ function getSortedSyndicateLeaderboard() {
 function speakButler() {
   if (!STATE.jarvisWelcomed) {
     STATE.jarvisWelcomed = true;
-    triggerSpeechBubble(butler.x, butler.y, "Hello master, I'm glad you've decided to change your mind. I look forward to your villainous exploits", 6000, 'lair');
+    (butler.x, butler.y, "Hello master, I'm glad you've decided to change your mind. I look forward to your villainous exploits", 6000, 'lair');
     return; // Stop here so it doesn't trigger the random quotes on the first talk
   }
   
@@ -1696,7 +1696,7 @@ function speakButler() {
   ];
 
   const chosen = quotes[Math.floor(Math.random() * quotes.length)];
-  triggerSpeechBubble(butler.x, butler.y, `Jarvis: "${chosen}"`, 5000, 'lair');
+  (butler.x, butler.y, `Jarvis: "${chosen}"`, 5000, 'lair');
 }
 
 function openHeroDossier(heroId) {
@@ -3833,7 +3833,7 @@ class Customer {
           const unlockedProds = PRODUCTS.filter(p => p.unlocked);
 
           if (unlockedProds.length === 0) {
-            triggerSpeechBubble(this.x, this.y, "Nothing left on the shelves!", 1500, 'store');
+            (this.x, this.y, "Nothing left on the shelves!", 1500, 'store');
             this.rageQuit();
             return;
           }
@@ -4518,18 +4518,18 @@ function handleInteraction() {
 
     if (prod) {
       if (prod.backStock <= 0) {
-        triggerSpeechBubble(player.x, player.y, `This backstock shelf is empty!`, 2500, 'backroom');
+        triggerSpeechBubble(player.x, player.y, `This backstock shelf is empty`, 2500, 'backroom');
         return;
       }
 
       if (STATE.heldBackstock.product && STATE.heldBackstock.product !== prod) {
-        triggerSpeechBubble(player.x, player.y, `I'm already holding a different item!`, 2500, 'backroom');
+        triggerSpeechBubble(player.x, player.y, `I'm already holding a different item`, 2500, 'backroom');
         return;
       }
 
       const roomInHands = 5 - STATE.heldBackstock.count;
       if (roomInHands <= 0) {
-        triggerSpeechBubble(player.x, player.y, `My hands are full (5/5)!`, 2500, 'backroom');
+        triggerSpeechBubble(player.x, player.y, `My hands are full (5/5)`, 2500, 'backroom');
         return;
       }
 
@@ -4539,7 +4539,7 @@ function handleInteraction() {
       STATE.heldBackstock.count += grabAmount;
 
       if (STATE.tutorialStep === 9) { STATE.tutorialStep = 10; updateTutorialBanner(); }
-      triggerSpeechBubble(player.x, player.y, `Grabbed ${grabAmount}x ${prod.name}!`, 2500, 'backroom');
+      triggerSpeechBubble(player.x, player.y, `Grabbed ${grabAmount}x ${prod.name}`, 2500, 'backroom');
     }
     return;
   }
@@ -4576,6 +4576,7 @@ function handleInteraction() {
     updateHUD();
     return;
   }
+}
 
 function isNearButler() {
   if (STATE.currentMap !== 'lair') return false;
