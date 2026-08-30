@@ -4214,22 +4214,22 @@ function render() {
             ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
             
             // Only show colored squares / product bars if backStock > 0
-            if (prod.backStock > 0) {
-              ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
-              ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
-              ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
-              ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
-            }
+            // if (prod.backStock > 0) {
+            //   ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
+            //   ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
+            //   ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
+            //   ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
+            // }
 
-            ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
-            ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
+            // ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
+            // ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
             
-            // Only show bottom colored squares if backStock > 0
-            if (prod.backStock > 0) {
-              ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
-              ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
-              ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
-            }
+            // // Only show bottom colored squares if backStock > 0
+            // if (prod.backStock > 0) {
+            //   ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
+            //   ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
+            //   ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
+            // }
 
             // Small text overlay showing available quantity
             ctx.fillStyle = prod.backStock > 0 ? '#1e293b' : '#ef4444';
