@@ -3697,6 +3697,12 @@ class Employee {
 
         // If holding items, find the shelf that is least full
         if (this.heldProduct && this.heldCount > 0) {
+          // If the stocker wandered into the backroom, walk them back out to the store first
+          if (this.mapLocation === 'backroom') {
+            this.mapLocation = 'store';
+            this.x = 23 * TILE_SIZE;
+            this.y = 9.5 * TILE_SIZE;
+          }
           // Find the shelf needing stock the most (lowest percentage full)
           let worstShelfProduct = null;
           let lowestRatio = 1.1;
