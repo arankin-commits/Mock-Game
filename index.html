@@ -4192,7 +4192,7 @@ function render() {
             ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
           }
         } else if (t === 2) {
-          const prodIndex = Math.floor(shelfIndex);
+          const prodIndex = Math.floor(shelfIndex / 4);
           const prod = unlockedList[prodIndex];
 
           if (prod) {
