@@ -4312,7 +4312,7 @@ function render() {
         ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
         ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
         ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
-      } else if (t === 3) {
+      } else if (t === 3 && STATE.dayNumber >= 5) {
         // Bookshelf Background
         ctx.fillStyle = '#4a2e18'; 
         ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
@@ -4476,7 +4476,7 @@ function handleInteraction() {
     return;
   }
   // bookcaase
-  if (isNearTile(3) && (STATE.currentMap === 'lair'|| STATE.currentMap === 'store')) {
+  if (isNearTile(3) && STATE.dayNumber >= 5 && (STATE.currentMap === 'lair'|| STATE.currentMap === 'store')) {
     if (STATE.lairTutorialStage === 8) { STATE.lairTutorialStage = 9; updateTutorialBanner(); }
     
     toggleLairSecretEntrance();
@@ -4692,7 +4692,7 @@ function checkProximityPrompts() {
     nearCustomer ||
     isNearButler() ||
     isNearTile(7) ||
-    isNearTile(3) && (STATE.currentMap === 'store' || STATE.currentMap === 'lair')||
+    isNearTile(3) && STATE.dayNumber >= 5 && (STATE.currentMap === 'store' || STATE.currentMap === 'lair')||
     isNearTile(4) ||
     isNearTile(5) ||
     isNearTile(2) ||
