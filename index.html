@@ -502,6 +502,7 @@
   
   <div id="hud">
     <div class="hud-stat hud-money">$<span id="val-money">250</span></div>
+    <div class="hud-stat hud-lair-money" id="hud-lair-money-container" style="display:none; color: var(--accent-evil);">$<span id="val-lair-money">0</span></div>
 
     <div class="hud-stat hud-evil" id="hud-infamy-container" style="display:none;">Infamy: <span id="val-infamy">0</span></div>
     <div class="hud-stat hud-suspicion" id="hud-suspicion-container" style="display:none;">Suspicion: <span id="val-suspicion">5</span>%</div>
@@ -840,6 +841,7 @@ const STATE = {
   phase: 'day',
   dayNumber: 1,
   money: 250,
+  lairMoney: 0,
   infamy: 0,
   suspicion: 5,
   suspicionReached100: false,
@@ -3419,13 +3421,25 @@ function updateTutorialBanner() {
   }
 
   if (STATE.currentMap === 'lair' && STATE.tutorialStep <= 3) {
-    if (STATE.tutorialStep === 1) {
-      bannerText.innerText = "LAIR TUTORIAL [1/3]: Walk up to Butler Jarvis and press [E] or [SPACE] for intel.";
-    } else if (STATE.tutorialStep === 2) {
-      bannerText.innerText = "LAIR TUTORIAL [2/3]: Interact with the Supercomputer terminal to run supervillain missions.";
-    } else if (STATE.tutorialStep === 3) {
-      bannerText.innerText = "LAIR TUTORIAL [3/3]: Move back and forth between your secret lair and store via the blue bookcase.";
-    }
+    // Lair Tutorial Stages (triggered once inside the lair)
+    if (STATE.currentMap === 'lair' && STATE.lairTutorialStage <= 3) {
+      if (STATE.lairTutorialStage === 1) {
+        bannerText.innerText = "LAIR TUTORIAL [1/3]: Walk up to Butler Jarvis and press [E] or [SPACE] to receive secret underworld intel and syndicate status. Then interact with the Supercomputer terminal (blinking) on the right";
+      } else if (STATE.lairTutorialStage === 2) {
+        bannerText.innerText = "LAIR TUTORIAL [2/3]: Do supervillain missions (can be done after shop is closed), and look at the active heroes and supervillain leaderboard. Click Close Feed in the top right.";
+      } else if (STATE.lairTutorialStage === 3) {
+        bannerText.innerText = "LAIR TUTORIAL [3/3]: Open the menu [TAB], and click Office and Automation. Here you can siphon funds to use for villainy. Click on Tutorial and Guide";
+      } else if (STATE.lairTutorialStage === 3) {
+        bannerText.innerText = "LAIR TUTORIAL [3/3]: The villain tutorial will also now show up here for reference for the rest of the game. Click on Villain Leaderboard to view the villain leaderboard and look at the active heroes";
+      } else if (STATE.lairTutorialStage === 3) {
+        bannerText.innerText = "LAIR TUTORIAL [3/3]: See heroes patrol sectors, nemesis' and threat level. Click on a hero to see their superpowers. Supervillains are villains who have 25+ casualties. Click on Lair Upgrades";
+      } else if (STATE.lairTutorialStage === 3) {
+        bannerText.innerText = "LAIR TUTORIAL [3/3]: Upgrade your supercomputer, deploy a robotic doppelganger to run the store, and synthesize mutants. Click on Inbox";
+      } else if (STATE.lairTutorialStage === 3) {
+        bannerText.innerText = "LAIR TUTORIAL [3/3]: See any messages you receive. Close the menu [TAB]";
+      } else if (STATE.lairTutorialStage === 3) {
+        bannerText.innerText = "LAIR TUTORIAL [3/3]: Move back and forth between your secret lair and the front store anytime by interacting [E/SPACE] with the bookcase";
+      }
   }
 }
 
@@ -4569,6 +4583,7 @@ function toggleLairSecretEntrance() {
       STATE.hasEnteredLair = true;
       document.getElementById('hud-infamy-container').style.display = 'flex';
       document.getElementById('hud-suspicion-container').style.display = 'flex';
+      document.getElementById('hud-lair-money-container').style.display = 'flex';
     }
   } else {
     STATE.currentMap = 'store'; player.x = 5 * TILE_SIZE; player.y = 2 * TILE_SIZE;
@@ -5035,8 +5050,9 @@ function toggleAutoProgress(val) {
 }
 
 function siphonMoney(amount) {
-  if (STATE.money < amount) return;
-  STATE.money -= amount; 
+  if (STATE.money < amount) return alert("Not enough store funds to siphon!");
+  STATE.money -= amount;
+  STATE.lairMoney += amount;
   STATE.infamy += Math.floor(amount / 5); 
   STATE.suspicion = Math.min(100, STATE.suspicion + Math.floor(amount / 10));
   if (STATE.suspicion >= 100) {
@@ -5123,6 +5139,7 @@ function switchTab(tabId) {
 
 function updateHUD() {
   document.getElementById('val-money').innerText = STATE.money;
+  document.getElementById('val-lair-money').innerText = STATE.lairMoney;
   document.getElementById('val-infamy').innerText = STATE.infamy;
   document.getElementById('val-suspicion').innerText = STATE.suspicion;
   document.getElementById('val-phase').innerText = `Day ${STATE.dayNumber} (${STATE.phase === 'day' ? 'Store Open' : 'Night'})`;
