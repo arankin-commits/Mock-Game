@@ -519,6 +519,8 @@
     <button id="banner-close-btn" onclick="dismissTutorialBanner()">✕</button>
   </div>
 
+  <div id="speech-bubble-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200;"></div>
+
   <canvas id="gameCanvas" width="800" height="600"></canvas>
   <div id="action-prompt">[E / SPACE] Interact</div>
 
@@ -4065,6 +4067,7 @@ function isEntityNearShelf(entity) {
 function gameLoop() {
   update();
   render();
+  renderDOMSpeechBubbles(); // Updates HTML speech bubble positions above the notification banner
   if (STATE.minigameActive) updateAndRenderMinigame();
   requestAnimationFrame(gameLoop);
 }
@@ -4422,54 +4425,6 @@ function render() {
 
   drawPerson(player.x, player.y, player.dir, player.isMoving, player.walkFrame, player.skinColor, player.shirtColor, player.pantsColor, player.hairColor);
 
-  speechBubbles.forEach(b => {
-    if (b.map === STATE.currentMap) {
-      ctx.font = 'bold 11px monospace';
-      const maxBoxWidth = 260;
-      const words = b.text.split(' ');
-      const lines = [];
-      let currentLine = '';
-
-      words.forEach(w => {
-        const testLine = currentLine ? `${currentLine} ${w}` : w;
-        if (ctx.measureText(testLine).width > maxBoxWidth - 24) {
-          lines.push(currentLine);
-          currentLine = w;
-        } else {
-          currentLine = testLine;
-        }
-      });
-      if (currentLine) lines.push(currentLine);
-
-      let maxLineWidth = 0;
-      lines.forEach(l => {
-        const lw = ctx.measureText(l).width;
-        if (lw > maxLineWidth) maxLineWidth = lw;
-      });
-
-      const bubbleW = Math.max(90, maxLineWidth + 20);
-      const lineHeight = 15;
-      const bubbleH = lines.length * lineHeight + 10;
-
-      let drawX = b.x - bubbleW / 2;
-      let drawY = b.y - bubbleH - 12;
-
-      drawX = Math.max(10, Math.min(800 - bubbleW - 10, drawX));
-      drawY = Math.max(50, Math.min(600 - bubbleH - 10, drawY));
-
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#1a1b26';
-      ctx.lineWidth = 1.5;
-      ctx.fillRect(drawX, drawY, bubbleW, bubbleH);
-      ctx.strokeRect(drawX, drawY, bubbleW, bubbleH);
-
-      ctx.fillStyle = '#1a1b26';
-      lines.forEach((lineText, idx) => {
-        ctx.fillText(lineText, drawX + 10, drawY + 14 + (idx * lineHeight));
-      });
-    }
-  });
-
   // Backroom hover tooltip display
   if (STATE.currentMap === 'backroom' && STATE.backroomHoverText) {
     ctx.fillStyle = 'rgba(15, 17, 26, 0.9)';
@@ -4680,8 +4635,54 @@ function startMission(id) {
 }
 
 function triggerSpeechBubble(x, y, text, duration = 3000, map = STATE.currentMap) { 
+  // Remove existing bubble for this entity/map if any
   speechBubbles = speechBubbles.filter(b => b.map !== map || Math.hypot(b.x - x, b.y - y) > 10);
-  speechBubbles.push({ x, y, text, created: Date.now(), duration, map }); 
+  
+  const bubble = { x, y, text, created: Date.now(), duration, map };
+  speechBubbles.push(bubble);
+  
+  // Render immediately to DOM overlay
+  renderDOMSpeechBubbles();
+}
+
+function renderDOMSpeechBubbles() {
+  const container = document.getElementById('speech-bubble-container');
+  if (!container) return;
+
+  const now = Date.now();
+  speechBubbles = speechBubbles.filter(b => now - b.created < b.duration);
+
+  container.innerHTML = speechBubbles.map(b => {
+    if (b.map !== STATE.currentMap) return '';
+    
+    // Convert canvas coordinates to percentages or pixel positions relative to container
+    // Assuming canvas is 800x600 inside the container
+    const leftPx = (b.x / 800) * 100;
+    const topPx = ((b.y - 24) / 600) * 100;
+
+    return `
+      <div style="
+        position: absolute;
+        left: ${leftPx}%;
+        top: ${topPx}%;
+        transform: translateX(-50%);
+        background: #ffffff;
+        color: #1a1b26;
+        border: 1.5px solid #1a1b26;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-family: 'Courier New', Courier, monospace;
+        font-weight: bold;
+        font-size: 11px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        white-space: nowrap;
+        pointer-events: auto;
+        z-index: 200;
+      ">
+        ${b.text}
+      </div>
+    `;
+  }).join('');
 }
 
 function checkProximityPrompts() {
