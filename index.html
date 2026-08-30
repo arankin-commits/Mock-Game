@@ -5046,8 +5046,7 @@ function updatePendingTargetStock(prodId, val) {
 
   const maxAllowed = getMaxStoreStorage();
   if (otherTargetsSum + newTarget > maxAllowed) {
-    // Show on-screen notification instead of an alert box
-    showNotification(`Exceeds maximum store storage space (${maxAllowed})! Lower other targets first.`);
+    alert(`Exceeds maximum store storage space (${maxAllowed})! Lower other targets first.`);
     
     // Re-render UI to snap the input field back to its previous valid target number
     renderUI();
