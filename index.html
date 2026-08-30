@@ -506,6 +506,9 @@
       <div class="hud-stat hud-lair-money" id="hud-lair-money-container" style="display:none; color: var(--accent-evil);">$<span id="val-lair-money">0</span></div>
     </div>
 
+    <!-- Holding Hands Readout -->
+    <div class="hud-stat" id="hud-hands-container" style="color: var(--accent-gold);">Hands: <span id="val-held-items">Empty</span></div>
+
     <div class="hud-stat hud-evil" id="hud-infamy-container" style="display:none;">Infamy: <span id="val-infamy">0</span></div>
     <div class="hud-stat hud-suspicion" id="hud-suspicion-container" style="display:none;">Suspicion: <span id="val-suspicion">5</span>%</div>
     <div class="hud-stat">Shoppers: <span id="val-cust-count">0/5</span></div>
@@ -889,6 +892,7 @@ const STATE = {
   backroomHoverText: null,
   mouseX: 0,
   mouseY: 0,
+  heldBackstock: { product: null, count: 0 },
 
   // Supervillain & Casualty Tracking
   totalCasualties: 0,
@@ -4500,22 +4504,76 @@ function handleInteraction() {
     }
     return;
   }
-  if (isNearTile(2) || isNearTile(10) || isNearTile(11) && STATE.currentMap === 'store') {
-    if (STATE.tutorialStep === 10) { STATE.tutorialStep = 11; updateTutorialBanner(); }
+  // --- BACKROOM SHELF GRABBING LOGIC ---
+  if (STATE.currentMap === 'backroom' && isNearTile(2)) {
+    const pCol = Math.floor((player.x + 8) / TILE_SIZE);
+    const pRow = Math.floor((player.y + 8) / TILE_SIZE);
+    
+    // Determine which shelf cluster the player is interacting with
+    const clusterCol = Math.floor((pCol - 5) / 3);
+    const clusterRow = Math.floor((pRow - 1) / 3);
+    const shelfClusterId = (clusterRow * 6) + Math.max(0, clusterCol);
     
     const unlockedList = PRODUCTS.filter(p => p.unlocked);
-    const prod = unlockedList[0];
-    const maxStock = Math.min(prod.targetStock, prod.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
+    const prod = unlockedList[shelfClusterId];
 
-    if (prod.stock < maxStock && (STATE.adminMode || STATE.money >= prod.cost)) {
-      if (!STATE.adminMode) {
-        STATE.money -= prod.cost; 
-        STATE.dayRestockCosts += prod.cost;
+    if (prod) {
+      if (prod.backStock <= 0) {
+        showNotification(`${prod.name} backstock shelf is completely empty!`);
+        return;
       }
-      prod.stock += 2;
-      triggerSpeechBubble(player.x, player.y, `Restocked ${prod.name}!`, 4000, 'store');
-      updateHUD();
+
+      // Check if holding a different item
+      if (STATE.heldBackstock.product && STATE.heldBackstock.product !== prod) {
+        showNotification(`You are already holding ${STATE.heldBackstock.count}x ${STATE.heldBackstock.product.name}! Restock them on the store aisles first.`);
+        return;
+      }
+
+      const roomInHands = 5 - STATE.heldBackstock.count;
+      if (roomInHands <= 0) {
+        showNotification("You are already holding the maximum of 5 items! Go restock them in the store.");
+        return;
+      }
+
+      const grabAmount = Math.min(roomInHands, prod.backStock);
+      prod.backStock -= grabAmount;
+      STATE.heldBackstock.product = prod;
+      STATE.heldBackstock.count += grabAmount;
+
+      if (STATE.tutorialStep === 9) { STATE.tutorialStep = 10; updateTutorialBanner(); }
+      showNotification(`Grabbed ${grabAmount}x ${prod.name} (Holding: ${STATE.heldBackstock.count}/5).`);
     }
+    return;
+  }
+
+  // --- STORE AISLE RESTOCKING LOGIC ---
+  if (STATE.currentMap === 'store' && (isNearTile(2) || isNearTile(10) || isNearTile(11))) {
+    if (STATE.tutorialStep === 10) { STATE.tutorialStep = 11; updateTutorialBanner(); }
+
+    if (!STATE.heldBackstock.product || STATE.heldBackstock.count <= 0) {
+      showNotification("Your hands are empty! Go to the backroom storage to grab items first.");
+      return;
+    }
+
+    const prod = STATE.heldBackstock.product;
+    const maxStock = Math.min(prod.targetStock, prod.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
+    const spaceOnShelf = maxStock - prod.stock;
+
+    if (spaceOnShelf <= 0) {
+      showNotification("This aisle shelf is already at full target capacity!");
+      return;
+    }
+
+    const restockCount = Math.min(STATE.heldBackstock.count, spaceOnShelf);
+    prod.stock += restockCount;
+    STATE.heldBackstock.count -= restockCount;
+
+    if (STATE.heldBackstock.count === 0) {
+      STATE.heldBackstock.product = null;
+    }
+
+    showNotification(`Restocked ${restockCount}x ${prod.name} onto the store aisle! (Remaining in hands: ${STATE.heldBackstock.count}/5)`);
+    updateHUD();
     return;
   }
 }
@@ -5165,6 +5223,14 @@ function updateHUD() {
   document.getElementById('val-lair-money').innerText = STATE.lairMoney;
   document.getElementById('val-infamy').innerText = STATE.infamy;
   document.getElementById('val-suspicion').innerText = STATE.suspicion;
+  
+  const heldEl = document.getElementById('val-held-items');
+  if (STATE.heldBackstock.product && STATE.heldBackstock.count > 0) {
+    heldEl.innerText = `${STATE.heldBackstock.count}x ${STATE.heldBackstock.product.name}`;
+  } else {
+    heldEl.innerText = 'Empty';
+  }
+  
   document.getElementById('val-phase').innerText = `Day ${STATE.dayNumber} (${STATE.phase === 'day' ? 'Store Open' : 'Night'})`;
   const totalCompleted = STATE.customersServedToday + STATE.dayWalkouts;
   document.getElementById('val-cust-count').innerText = `${totalCompleted}/${STATE.dayTotalCustomers}`;
