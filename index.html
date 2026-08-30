@@ -1231,6 +1231,8 @@ function getMaxStoreStorage() {
 }
 
 function toggleBackroomEntrance() {
+if (STATE.tutorialStep === 8) { STATE.tutorialStep = 9; updateTutorialBanner(); }
+  
   if (STATE.currentMap === 'store') {
     STATE.currentMap = 'backroom';
     player.x = 2 * TILE_SIZE; // Spawn near west side of backroom
@@ -5056,7 +5058,6 @@ function breedExperiment() {
 
 function toggleMenu(defaultTab, isDeskAccess = false) {
   if (STATE.tutorialStep === 7) { STATE.tutorialStep = 8; updateTutorialBanner(); }
-  if (STATE.tutorialStep === 8) { STATE.tutorialStep = 9; updateTutorialBanner(); }
 
   
   STATE.menuOpen = !STATE.menuOpen;
