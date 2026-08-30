@@ -5046,7 +5046,11 @@ function updatePendingTargetStock(prodId, val) {
 
   const maxAllowed = getMaxStoreStorage();
   if (otherTargetsSum + newTarget > maxAllowed) {
-    alert(`Exceeds maximum store storage space (${maxAllowed})! Lower other targets first.`);
+    // Show on-screen notification instead of an alert box
+    showNotification(`Exceeds maximum store storage space (${maxAllowed})! Lower other targets first.`);
+    
+    // Re-render UI to snap the input field back to its previous valid target number
+    renderUI();
     return;
   }
 
@@ -5225,7 +5229,7 @@ function renderUI() {
       <div style="display:flex; justify-content:space-between; align-items:center; background:#16161e; padding:8px; margin-bottom:6px; border:1px solid var(--border);">
         <div>
           <strong>${t.name} (Tier ${t.tier})</strong><br>
-          <span style="font-size:11px; color:#a9b1d6;">${t.shelves} Aisles | ${t.registers} Cashiers | +${t.maxStockBoost} Capacity</span>
+          <span style="font-size:11px; color:#a9b1d6;">${t.shelves} Aisles | ${t.registers} Cashiers | +${t.maxStockBoost} | +${t.backroomStorage}Capacity</span>
         </div>
         <div>
           ${(isCurrent || isPending) ? btnLabel : 
