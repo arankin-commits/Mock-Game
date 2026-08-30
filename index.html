@@ -5134,10 +5134,10 @@ function switchTab(tabId) {
   else if (tabId === 'admin-debug' && STATE.tutorialStep === 6) { STATE.tutorialStep = 7; updateTutorialBanner(); }
 
   if (tabId === 'store-finance' && STATE.lairTutorialStage === 3) { STATE.lairTutorialStage = 4; updateTutorialBanner(); }
-  else if (tabId === 'game-guide' && STATE.tutorialStep === 4) { STATE.tutorialStep = 5; updateTutorialBanner(); }
-  else if (tabId === 'lair-intel' && STATE.tutorialStep === 5) { STATE.tutorialStep = 6; updateTutorialBanner(); }
-  else if (tabId === 'lair-ops' && STATE.tutorialStep === 6) { STATE.tutorialStep = 7; updateTutorialBanner(); }
-  else if (tabId === 'rival-mail' && STATE.tutorialStep === 7) { STATE.tutorialStep = 8; updateTutorialBanner(); }
+  else if (tabId === 'game-guide' && STATE.lairTutorialStage === 4) { STATE.lairTutorialStage = 5; updateTutorialBanner(); }
+  else if (tabId === 'lair-intel' && STATE.lairTutorialStage === 5) { STATE.lairTutorialStage = 6; updateTutorialBanner(); }
+  else if (tabId === 'lair-ops' && STATE.lairTutorialStage === 6) { STATE.lairTutorialStage = 7; updateTutorialBanner(); }
+  else if (tabId === 'rival-mail' && STATE.lairTutorialStage === 7) { STATE.lairTutorialStage = 8; updateTutorialBanner(); }
 
 
 
