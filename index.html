@@ -4051,6 +4051,7 @@ function update() {
     toggleBackroomEntrance();
     return;
   }
+  // When stepping on col 0, rows 6 or 7 in the backroom, exit back to the store!
   if (STATE.currentMap === 'backroom' && pCol === 0 && (pRow === 6 || pRow === 7)) {
     toggleBackroomEntrance();
     return;
