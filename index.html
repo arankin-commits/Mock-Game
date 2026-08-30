@@ -4655,10 +4655,8 @@ function renderDOMSpeechBubbles() {
   container.innerHTML = speechBubbles.map(b => {
     if (b.map !== STATE.currentMap) return '';
     
-    // Convert canvas coordinates to percentages or pixel positions relative to container
-    // Assuming canvas is 800x600 inside the container
     const leftPx = (b.x / 800) * 100;
-    const topPx = ((b.y - 24) / 600) * 100;
+    const topPx = ((b.y - 30) / 600) * 100;
 
     return `
       <div style="
@@ -4669,13 +4667,15 @@ function renderDOMSpeechBubbles() {
         background: #ffffff;
         color: #1a1b26;
         border: 1.5px solid #1a1b26;
-        padding: 4px 10px;
+        padding: 6px 10px;
         border-radius: 4px;
         font-family: 'Courier New', Courier, monospace;
         font-weight: bold;
         font-size: 11px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        white-space: nowrap;
+        max-width: 260px;
+        word-wrap: break-word;
+        white-space: normal;
         pointer-events: auto;
         z-index: 200;
       ">
