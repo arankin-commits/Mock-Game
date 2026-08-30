@@ -5196,7 +5196,7 @@ function renderUI() {
         </td>
         <td>
           ${p.stock} / <input type="number" min="1" max="${maxStorage}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
-          <div style="font-size:9px; color:#7a819b; margin-top:2px;">(Total Pool: ${totalTargetSum} / ${maxStorage})</div>
+          <div style="font-size:9px; color:#7a819b; margin-top:2px;">(Aisle Pool: ${totalTargetSum} / ${maxStorage})</div>
         </td>
         <td><button class="btn-action" onclick="if (STATE.tutorialStep === 2) { STATE.tutorialStep = 3; updateTutorialBanner(); } buyStock('${p.id}')">Bulk +6 (${STATE.adminMode ? 'FREE' : `$${bulkCost}`})</button></td>
       </tr>`;
@@ -5228,7 +5228,7 @@ function renderUI() {
       <div style="display:flex; justify-content:space-between; align-items:center; background:#16161e; padding:8px; margin-bottom:6px; border:1px solid var(--border);">
         <div>
           <strong>${t.name} (Tier ${t.tier})</strong><br>
-          <span style="font-size:11px; color:#a9b1d6;">${t.shelves} Aisles | ${t.registers} Cashiers | +${t.maxStockBoost} | +${t.backroomStorage}Capacity</span>
+          <span style="font-size:11px; color:#a9b1d6;">${t.shelves} Aisles | ${t.registers} Cashiers | +${t.maxStockBoost} aisle pool | +${t.backroomStorage} Capacity</span>
         </div>
         <div>
           ${(isCurrent || isPending) ? btnLabel : 
