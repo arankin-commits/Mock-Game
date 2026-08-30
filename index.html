@@ -31,7 +31,7 @@
   #game-container {
     position: relative;
     width: 800px;
-    height: 600px;
+    height: 646px;
     border: 4px solid var(--border);
     box-shadow: 0 0 40px rgba(0,0,0,0.95);
     background: #000;
@@ -39,8 +39,11 @@
   canvas {
     image-rendering: pixelated;
     width: 100%;
-    height: 100%;
+    height: 554px; /* Adjust height so canvas doesn't stretch past container */
     display: block;
+    position: absolute;
+    top: 46px; /* Pushes the canvas down below the 46px HUD */
+    left: 0;
   }
   #hud {
     position: absolute;
