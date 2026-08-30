@@ -3424,7 +3424,6 @@ function updateTutorialBanner() {
 
   if (STATE.currentMap === 'lair' && STATE.tutorialStep <= 3) {
     // Lair Tutorial Stages (triggered once inside the lair)
-    if (STATE.currentMap === 'lair' && STATE.lairTutorialStage <= 3) {
       if (STATE.lairTutorialStage === 1) {
         bannerText.innerText = "LAIR TUTORIAL [1/3]: Walk up to Butler Jarvis and press [E] or [SPACE] to receive secret underworld intel and syndicate status. Then interact with the Supercomputer terminal (blinking) on the right";
       } else if (STATE.lairTutorialStage === 2) {
