@@ -3688,13 +3688,45 @@ class Employee {
         }
       }
     } else if (this.role === 'stocker') {
-      // Stocker AI: checks backstock, travels to backroom if needed, holds up to 6 items
+      // Stocker AI: Finds empty/low store aisles, goes to backroom storage, grabs stock, and restocks.
       if (this.timer <= 0) {
-        const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
         const c = Math.floor((this.x + 8) / TILE_SIZE);
         const r = Math.floor((this.y + 8) / TILE_SIZE);
-        this.path = findPath(c, r, targetShelf.col, targetShelf.row);
-        this.timer = 120 + Math.random() * 100;
+
+        // If holding items, find a store shelf that needs restocking
+        if (this.heldProduct && this.heldCount > 0) {
+          const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
+          this.path = findPath(c, r, targetShelf.col, targetShelf.row);
+          
+          // Restock the product
+          const maxStock = Math.min(this.heldProduct.targetStock, this.heldProduct.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
+          if (this.heldProduct.stock < maxStock) {
+            const add = Math.min(this.heldCount, maxStock - this.heldProduct.stock);
+            this.heldProduct.stock += add;
+            this.heldCount -= add;
+            if (this.heldCount <= 0) this.heldProduct = null;
+          }
+          this.timer = 90;
+        } else {
+          // If empty-handed, find an unlocked product with backstock available and go to the backroom
+          const validProducts = PRODUCTS.filter(p => p.unlocked && p.backStock > 0);
+          if (validProducts.length > 0) {
+            const prod = validProducts[Math.floor(Math.random() * validProducts.length)];
+            const grabCount = Math.min(5, prod.backStock);
+            prod.backStock -= grabCount;
+            this.heldProduct = prod;
+            this.heldCount = grabCount;
+
+            // Route to backroom coordinate (e.g., col 5, row 2 inside backroom, or near backroom entrance)
+            // Send stocker to backroom shelf area
+            this.path = findPath(c, r, 6, 2);
+          } else {
+            // Fallback browsing if no backstock left
+            const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
+            this.path = findPath(c, r, targetShelf.col, targetShelf.row);
+          }
+        }
+        this.timer = 140;
       } else {
         this.timer--;
       }
