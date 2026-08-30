@@ -1676,7 +1676,7 @@ function getSortedSyndicateLeaderboard() {
 function speakButler() {
   if (!STATE.jarvisWelcomed) {
     STATE.jarvisWelcomed = true;
-    (butler.x, butler.y, "Hello master, I'm glad you've decided to change your mind. I look forward to your villainous exploits", 6000, 'lair');
+    triggerSpeechBubble(butler.x, butler.y, "Hello master, I'm glad you've decided to change your mind. I look forward to your villainous exploits", 6000, 'lair');
     return; // Stop here so it doesn't trigger the random quotes on the first talk
   }
   
@@ -3691,17 +3691,15 @@ class Employee {
         }
       }
     } else if (this.role === 'stocker') {
-      // Stocker AI: Finds empty/low store aisles, goes to backroom storage, grabs stock, and restocks.
       if (this.timer <= 0) {
         const c = Math.floor((this.x + 8) / TILE_SIZE);
         const r = Math.floor((this.y + 8) / TILE_SIZE);
 
-        // If holding items, find a store shelf that needs restocking
+        // If holding items, find a store shelf to restock
         if (this.heldProduct && this.heldCount > 0) {
           const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
           this.path = findPath(c, r, targetShelf.col, targetShelf.row);
           
-          // Restock the product
           const maxStock = Math.min(this.heldProduct.targetStock, this.heldProduct.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
           if (this.heldProduct.stock < maxStock) {
             const add = Math.min(this.heldCount, maxStock - this.heldProduct.stock);
@@ -3711,7 +3709,7 @@ class Employee {
           }
           this.timer = 90;
         } else {
-          // If empty-handed, find an unlocked product with backstock available and go to the backroom
+          // If empty-handed, go to the backroom storage to grab stock
           const validProducts = PRODUCTS.filter(p => p.unlocked && p.backStock > 0);
           if (validProducts.length > 0) {
             const prod = validProducts[Math.floor(Math.random() * validProducts.length)];
@@ -3720,11 +3718,9 @@ class Employee {
             this.heldProduct = prod;
             this.heldCount = grabCount;
 
-            // Route to backroom coordinate (e.g., col 5, row 2 inside backroom, or near backroom entrance)
-            // Send stocker to backroom shelf area
+            // Path to backroom storage area
             this.path = findPath(c, r, 6, 2);
           } else {
-            // Fallback browsing if no backstock left
             const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
             this.path = findPath(c, r, targetShelf.col, targetShelf.row);
           }
@@ -3885,7 +3881,7 @@ class Customer {
           const unlockedProds = PRODUCTS.filter(p => p.unlocked);
 
           if (unlockedProds.length === 0) {
-            (this.x, this.y, "Nothing left on the shelves!", 1500, 'store');
+            triggerSpeechBubble(this.x, this.y, "Nothing left on the shelves!", 1500, 'store');
             this.rageQuit();
             return;
           }
