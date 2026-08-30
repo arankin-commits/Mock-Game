@@ -3695,17 +3695,38 @@ class Employee {
         const c = Math.floor((this.x + 8) / TILE_SIZE);
         const r = Math.floor((this.y + 8) / TILE_SIZE);
 
-        // If holding items, find a store shelf to restock
+        // If holding items, find the shelf that is least full
         if (this.heldProduct && this.heldCount > 0) {
+          // Find the shelf needing stock the most (lowest percentage full)
+          let worstShelfProduct = null;
+          let lowestRatio = 1.1;
+
+          PRODUCTS.forEach(p => {
+            if (p.unlocked) {
+              const maxStock = Math.min(p.targetStock, p.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
+              const ratio = p.stock / maxStock;
+              if (ratio < lowestRatio && p.stock < maxStock) {
+                lowestRatio = ratio;
+                worstShelfProduct = p;
+              }
+            }
+          });
+
+          // Pick a browsing destination near the store shelving area
           const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
           this.path = findPath(c, r, targetShelf.col, targetShelf.row);
           
-          const maxStock = Math.min(this.heldProduct.targetStock, this.heldProduct.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
-          if (this.heldProduct.stock < maxStock) {
-            const add = Math.min(this.heldCount, maxStock - this.heldProduct.stock);
-            this.heldProduct.stock += add;
-            this.heldCount -= add;
-            if (this.heldCount <= 0) this.heldProduct = null;
+          if (worstShelfProduct) {
+            const maxStock = Math.min(worstShelfProduct.targetStock, worstShelfProduct.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
+            if (worstShelfProduct.stock < maxStock) {
+              // Stocker announces they need to stock this shelf
+              triggerSpeechBubble(this.x, this.y, "I need to stock this", 2500, 'store');
+
+              const add = Math.min(this.heldCount, maxStock - worstShelfProduct.stock);
+              worstShelfProduct.stock += add;
+              this.heldCount -= add;
+              if (this.heldCount <= 0) this.heldProduct = null;
+            }
           }
           this.timer = 90;
         } else {
