@@ -815,7 +815,8 @@
         <div style="color:#9ece6a; font-weight:bold; margin-bottom:8px;">ADMIN MODE ACTIVE: Testing Override Enabled</div>
         <p style="font-size:11px; margin-bottom:8px; color:#c0caf5;">All purchases are $0. Missions have no prerequisite or cost restrictions.</p>
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-          <button class="btn-action" style="background:#9ece6a; color:#120d1c;" onclick="adminSkipToDay50()">⚡ Skip to Day 50</button>
+          <button class="btn-action" style="background:#9ece6a; color:#120d1c;" onclick="adminSkipToDay5()">Skip to Day 5</button>
+          <button class="btn-action" style="background:#9ece6a; color:#120d1c;" onclick="adminSkipToDay50()">Skip to Day 50</button>
           <label style="font-size:11px;">Set Casualties:</label>
           <input type="number" id="admin-casualty-input" value="0" min="0" max="999" onchange="adminSetCasualties(this.value)" style="width:60px;">
         </div>
@@ -3274,6 +3275,13 @@ function toggleAdminMode(enable) {
   document.getElementById('admin-suspicion-input').value = STATE.suspicion;
   showNotification(enable ? "ADMIN MODE ENABLED: All upgrades free, missions unlocked!" : "Admin Mode Disabled.");
   renderUI();
+}
+
+function adminSkipToDay5() {
+  STATE.dayNumber = 5;
+  toggleMenu();
+  showNotification("ADMIN OVERRIDE: Jumped straight to Day 5! The bookshelf secret entrance is now unlocked.");
+  updateHUD();
 }
 
 function adminSkipToDay50() {
