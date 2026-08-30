@@ -5090,6 +5090,7 @@ function breedExperiment() {
 
 function toggleMenu(defaultTab, isDeskAccess = false) {
   if (STATE.tutorialStep === 7) { STATE.tutorialStep = 8; updateTutorialBanner(); }
+  if (STATE.lairTutorialStage === 7) { STATE.lairTutorialStage = 8; updateTutorialBanner(); }
 
   
   STATE.menuOpen = !STATE.menuOpen;
