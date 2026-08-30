@@ -965,6 +965,28 @@ let BROWSING_POINTS = [
   { col: 15, row: 5 }, { col: 18, row: 5 }, { col: 19, row: 3 }, { col: 22, row: 3 }
 ];
 
+// Exact tile in front of each aisle/shelf for each product
+const PRODUCT_SHELF_TILES = {
+  cereal:  { col: 11, row: 5 },
+  soda:    { col: 14, row: 5 },
+  meat:    { col: 18, row: 5 },
+  apples:  { col: 19, row: 3 },
+  milk:    { col: 22, row: 3 },
+  bread:   { col: 7,  row: 5 },
+  chips:   { col: 10, row: 5 },
+  soup:    { col: 15, row: 5 },
+  frozen:  { col: 19, row: 5 },
+  energy:  { col: 22, row: 5 },
+  coffee:  { col: 7,  row: 8 },
+  battery: { col: 11, row: 8 },
+  meds:    { col: 14, row: 8 },
+  spice:   { col: 18, row: 8 },
+  caviar:  { col: 22, row: 8 }
+};
+
+// The tile right in front of the backroom door on the store map (col 23, row 9)
+const BACKROOM_DOOR_TILE = { col: 23, row: 9 };
+
 let REGISTERS = [
   {
     id: 0,
@@ -3610,14 +3632,17 @@ class Employee {
     this.timer = 0;
     this.assignedRegisterId = null;
 
+    // Stocker state machine properties
+    this.stockerState = 'idle'; // 'idle' | 'walking_to_door' | 'grabbing_stock' | 'walking_to_shelf' | 'restocking'
+    this.heldProduct = null;
+    this.heldCount = 0;
+    this.stateTimer = 0;
+
     this.skinColor = '#fcd0a1';
     this.shirtColor = '#a3be8c';
     this.pantsColor = '#4c566a';
     this.hairColor = '#d08770';
-
-    this.heldProduct = null;
-    this.heldCount = 0;
-
+    
     this.initStation();
   }
 
@@ -3649,6 +3674,7 @@ class Employee {
     this.walkFrame += 0.08;
     checkVisionCone(this);
 
+    // If currently walking a path, follow it
     if (this.path && this.path.length > 0) {
       this.isMoving = true;
       const target = this.path[0];
@@ -3663,18 +3689,22 @@ class Employee {
         this.y += (dy / dist) * this.speed;
         this.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
       } else {
-        this.x = tPx; this.y = tPy;
+        this.x = tPx;
+        this.y = tPy;
         this.path.shift();
       }
-    } else {
-      this.isMoving = false;
-      this.handleRoleAI();
+      return; // Still moving along path, don't trigger arrived logic yet
     }
+
+    // Path finished / stationary: execute role AI
+    this.isMoving = false;
+    this.handleRoleAI();
   }
 
   handleRoleAI() {
     if (STATE.phase === 'night') return;
 
+   // --- CASHIER AI ---
     if (this.role === 'cashier') {
       this.dir = 'right';
       const reg = REGISTERS.find(r => r.id === this.assignedRegisterId);
@@ -3684,77 +3714,109 @@ class Employee {
         if (c !== reg.cashierSlot.col || r !== reg.cashierSlot.row) {
           this.path = findPath(c, r, reg.cashierSlot.col, reg.cashierSlot.row);
         }
-
         const line = getActiveQueue(reg.id);
         if (line.length > 0 && line[0].state === 'at_register' && !reg.activeCustomer) {
           startCheckout(line[0], reg);
         }
       }
-    } else if (this.role === 'stocker') {
-      if (this.timer <= 0) {
-        const c = Math.floor((this.x + 8) / TILE_SIZE);
-        const r = Math.floor((this.y + 8) / TILE_SIZE);
+      return;
+    }
+    
+    // --- STOCKER STATE MACHINE ---
+    if (this.role === 'stocker') {
+      const c = Math.floor((this.x + 8) / TILE_SIZE);
+      const r = Math.floor((this.y + 8) / TILE_SIZE);
 
-        // If holding items, find the shelf that is least full
-        if (this.heldProduct && this.heldCount > 0) {
-          // If the stocker wandered into the backroom, walk them back out to the store first
-          if (this.mapLocation === 'backroom') {
-            this.mapLocation = 'store';
-            this.x = 23 * TILE_SIZE;
-            this.y = 9.5 * TILE_SIZE;
-          }
-          // Find the shelf needing stock the most (lowest percentage full)
-          let worstShelfProduct = null;
-          let lowestRatio = 1.1;
+      // STATE 1: IDLE - Find which unlocked product is lowest on the aisle shelf
+      if (this.stockerState === 'idle') {
+        let lowestProd = null;
+        let lowestRatio = 1.0; // only pick items that are actually below 100% target
 
-          PRODUCTS.forEach(p => {
-            if (p.unlocked) {
-              const maxStock = Math.min(p.targetStock, p.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
-              const ratio = p.stock / maxStock;
-              if (ratio < lowestRatio && p.stock < maxStock) {
-                lowestRatio = ratio;
-                worstShelfProduct = p;
-              }
-            }
-          });
-
-          // Pick a browsing destination near the store shelving area
-          const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
-          this.path = findPath(c, r, targetShelf.col, targetShelf.row);
-          
-          if (worstShelfProduct) {
-            const maxStock = Math.min(worstShelfProduct.targetStock, worstShelfProduct.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
-            if (worstShelfProduct.stock < maxStock) {
-              // Stocker announces they need to stock this shelf
-              triggerSpeechBubble(this.x, this.y, "I need to stock this", 2500, 'store');
-
-              const add = Math.min(this.heldCount, maxStock - worstShelfProduct.stock);
-              worstShelfProduct.stock += add;
-              this.heldCount -= add;
-              if (this.heldCount <= 0) this.heldProduct = null;
+        PRODUCTS.forEach(p => {
+          if (p.unlocked && p.backStock > 0) {
+            const maxCap = Math.min(p.targetStock, p.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
+            const ratio = p.stock / maxCap;
+            if (ratio < lowestRatio) {
+              lowestRatio = ratio;
+              lowestProd = p;
             }
           }
-          this.timer = 90;
+        });
+
+        if (lowestProd) {
+          this.heldProduct = lowestProd;
+          // Walk to the backroom door on the store floor
+          this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row);
+          this.stockerState = 'walking_to_door';
         } else {
-          // If empty-handed, go to the backroom storage to grab stock
-          const validProducts = PRODUCTS.filter(p => p.unlocked && p.backStock > 0);
-          if (validProducts.length > 0) {
-            const prod = validProducts[Math.floor(Math.random() * validProducts.length)];
-            const grabCount = Math.min(5, prod.backStock);
-            prod.backStock -= grabCount;
-            this.heldProduct = prod;
-            this.heldCount = grabCount;
-
-            // Path to backroom storage area
-            this.path = findPath(c, r, 6, 2);
-          } else {
-            const targetShelf = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
-            this.path = findPath(c, r, targetShelf.col, targetShelf.row);
+          // If all shelves are full or no backstock exists, wander casually
+          if (Math.random() < 0.01) {
+            const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
+            this.path = findPath(c, r, pt.col, pt.row);
           }
         }
-        this.timer = 140;
-      } else {
-        this.timer--;
+      }
+
+      // STATE 2: ARRIVED AT BACKROOM DOOR - Simulate entering and grabbing stock
+      else if (this.stockerState === 'walking_to_door') {
+        this.stockerState = 'grabbing_stock';
+        this.stateTimer = 90; // Spend ~1.5s inside grabbing items
+        this.dir = 'right';
+      }
+
+      // STATE 3: GRABBING STOCK (inside storage)
+      else if (this.stockerState === 'grabbing_stock') {
+        this.stateTimer--;
+        if (this.stateTimer <= 0) {
+          if (this.heldProduct && this.heldProduct.backStock > 0) {
+            const maxCap = Math.min(this.heldProduct.targetStock, this.heldProduct.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
+            const needed = maxCap - this.heldProduct.stock;
+            const grabAmount = Math.min(5, this.heldProduct.backStock, Math.max(1, needed));
+
+            this.heldProduct.backStock -= grabAmount;
+            this.heldCount = grabAmount;
+
+            // Find the shelf coordinate for this exact product
+            const shelfTile = PRODUCT_SHELF_TILES[this.heldProduct.id] || BROWSING_POINTS[0];
+            this.path = findPath(c, r, shelfTile.col, shelfTile.row);
+            this.stockerState = 'walking_to_shelf';
+          } else {
+            this.heldProduct = null;
+            this.heldCount = 0;
+            this.stockerState = 'idle';
+          }
+        }
+      }
+
+      // STATE 4: ARRIVED AT SHELF - Speak and restock
+      else if (this.stockerState === 'walking_to_shelf') {
+        this.stockerState = 'restocking';
+        this.stateTimer = 60; // 1 second restocking animation/pause
+        triggerSpeechBubble(this.x, this.y, "I need to stock this", 2000, 'store');
+      }
+
+      // STATE 5: RESTOCKING - Apply the items to the shelf
+      else if (this.stockerState === 'restocking') {
+        this.stateTimer--;
+        if (this.stateTimer <= 0) {
+          if (this.heldProduct) {
+            const maxCap = Math.min(this.heldProduct.targetStock, this.heldProduct.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
+            const space = maxCap - this.heldProduct.stock;
+            const placed = Math.min(this.heldCount, Math.max(0, space));
+
+            this.heldProduct.stock += placed;
+            this.heldCount -= placed;
+
+            // If extra items left over, return them to backStock
+            if (this.heldCount > 0) {
+              this.heldProduct.backStock += this.heldCount;
+            }
+          }
+
+          this.heldProduct = null;
+          this.heldCount = 0;
+          this.stockerState = 'idle'; // Cycle complete, ready for next empty shelf
+        }
       }
     }
   }
