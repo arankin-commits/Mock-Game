@@ -3523,14 +3523,37 @@ function findPath(startCol, startRow, targetCol, targetRow) {
   const map = storeMap;
   const rows = map.length;
   const cols = map[0].length;
+  
+  // Allow walking on open floor (0), room doors (8, 9, 12), and treat aisle/shelf tiles (2, 10, 11) as reachable endpoints
   const isWalkable = (c, r) => {
     if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
     const tile = map[r][c];
-    return tile === 0 || tile === 8 || tile === 9;
+    return tile === 0 || tile === 8 || tile === 9 || tile === 12;
   };
 
-  if (!isWalkable(targetCol, targetRow)) return [];
+  const isTargetValid = (c, r) => {
+    if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
+    const tile = map[r][c];
+    // Target can be open floor OR a shelf/aisle tile so workers can walk right up to it
+    return tile === 0 || tile === 2 || tile === 10 || tile === 11 || tile === 8 || tile === 9 || tile === 12;
+  };
+
+  if (!isTargetValid(targetCol, targetRow)) return [];
   if (startCol === targetCol && startRow === targetRow) return [];
+
+  // If the target tile itself is a solid shelf, find an adjacent walkable floor tile to stop at
+  let adjustedTargetCol = targetCol;
+  let adjustedTargetRow = targetRow;
+  if (!isWalkable(targetCol, targetRow)) {
+    const neighbors = [{c:targetCol, r:targetRow-1}, {c:targetCol, r:targetRow+1}, {c:targetCol-1, r:targetRow}, {c:targetCol+1, r:targetRow}];
+    const validNeighbor = neighbors.find(n => isWalkable(n.c, n.r));
+    if (validNeighbor) {
+      adjustedTargetCol = validNeighbor.c;
+      adjustedTargetRow = validNeighbor.r;
+    } else {
+      return [];
+    }
+  }
 
   const openList = [];
   const closedSet = new Set();
@@ -3543,29 +3566,36 @@ function findPath(startCol, startRow, targetCol, targetRow) {
 
   const startNode = getNode(startCol, startRow);
   startNode.g = 0;
-  startNode.h = Math.abs(targetCol - startCol) + Math.abs(targetRow - startRow);
+  startNode.h = Math.abs(adjustedTargetCol - startCol) + Math.abs(adjustedTargetRow - startRow);
   startNode.f = startNode.h;
   openList.push(startNode);
 
   while (openList.length > 0) {
     openList.sort((a, b) => a.f - b.f);
     const current = openList.shift();
-    if (current.c === targetCol && current.r === targetRow) {
+    
+    if (current.c === adjustedTargetCol && current.r === adjustedTargetRow) {
       const path = [];
       let temp = current;
-      while (temp.parent) { path.unshift({ col: temp.c, row: temp.r }); temp = temp.parent; }
+      while (temp.parent) { 
+        path.unshift({ col: temp.c, row: temp.r }); 
+        temp = temp.parent; 
+      }
       return path;
     }
+    
     closedSet.add(`${current.c},${current.r}`);
     const neighbors = [{c:current.c, r:current.r-1}, {c:current.c, r:current.r+1}, {c:current.c-1, r:current.r}, {c:current.c+1, r:current.r}];
+    
     for (let nb of neighbors) {
       if (!isWalkable(nb.c, nb.r) || closedSet.has(`${nb.c},${nb.r}`)) continue;
       const nbNode = getNode(nb.c, nb.r);
       const tentativeG = current.g + 1;
+      
       if (tentativeG < nbNode.g) {
         nbNode.parent = current;
         nbNode.g = tentativeG;
-        nbNode.h = Math.abs(targetCol - nb.c) + Math.abs(targetRow - nb.r);
+        nbNode.h = Math.abs(adjustedTargetCol - nb.c) + Math.abs(adjustedTargetRow - nb.r);
         nbNode.f = nbNode.g + nbNode.h;
         if (!openList.some(n => n.c === nb.c && n.r === nb.r)) openList.push(nbNode);
       }
