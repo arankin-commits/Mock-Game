@@ -5054,7 +5054,7 @@ function siphonMoney(amount) {
   if (STATE.money < amount) return alert("Not enough store funds to siphon!");
   STATE.money -= amount;
   STATE.lairMoney += amount;
-  STATE.infamy += Math.floor(amount / 5); 
+  STATE.infamy += Math.floor(amount / 10); 
   STATE.suspicion = Math.min(100, STATE.suspicion + Math.floor(amount / 10));
   if (STATE.suspicion >= 100) {
     STATE.suspicionReached100 = true;
