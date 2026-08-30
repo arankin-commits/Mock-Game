@@ -3384,7 +3384,12 @@ function updateTutorialBanner() {
   const banner = document.getElementById('notification-banner');
   const bannerText = document.getElementById('banner-text');
 
-  if (STATE.tutorialBannerDismissed || STATE.tutorialStep > 15 || STATE.lairTutorialStage > 8) {
+  if (STATE.currentMap === 'store' && (STATE.tutorialBannerDismissed || STATE.tutorialStep > 15)) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  if (STATE.currentMap === 'lair' && STATE.lairTutorialStage > 8) {
     banner.style.display = 'none';
     return;
   }
