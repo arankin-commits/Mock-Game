@@ -3384,7 +3384,7 @@ function updateTutorialBanner() {
   const banner = document.getElementById('notification-banner');
   const bannerText = document.getElementById('banner-text');
 
-  if (STATE.tutorialBannerDismissed || STATE.tutorialStep > 15) {
+  if (STATE.tutorialBannerDismissed || STATE.tutorialStep > 15 || STATE.lairTutorialStage > 8) {
     banner.style.display = 'none';
     return;
   }
@@ -3425,23 +3425,23 @@ function updateTutorialBanner() {
 
   if (STATE.currentMap === 'lair') {
     // Lair Tutorial Stages (triggered once inside the lair)
-      if (STATE.lairTutorialStage === 1) {
-        bannerText.innerText = "LAIR TUTORIAL [1/3]: Walk up to Butler Jarvis and press [E] or [SPACE] to receive secret underworld intel and syndicate status. Then interact with the Supercomputer terminal (blinking) on the right";
-      } else if (STATE.lairTutorialStage === 2) {
-        bannerText.innerText = "LAIR TUTORIAL [2/3]: Do supervillain missions (can be done after shop is closed), and look at the active heroes and supervillain leaderboard. Click Close Feed in the top right.";
-      } else if (STATE.lairTutorialStage === 3) {
-        bannerText.innerText = "LAIR TUTORIAL [3/3]: Open the menu [TAB], and click Office and Automation. Here you can siphon funds to use for villainy. Click on Tutorial and Guide";
-      } else if (STATE.lairTutorialStage === 3) {
-        bannerText.innerText = "LAIR TUTORIAL [3/3]: The villain tutorial will also now show up here for reference for the rest of the game. Click on Villain Leaderboard to view the villain leaderboard and look at the active heroes";
-      } else if (STATE.lairTutorialStage === 3) {
-        bannerText.innerText = "LAIR TUTORIAL [3/3]: See heroes patrol sectors, nemesis' and threat level. Click on a hero to see their superpowers. Supervillains are villains who have 25+ casualties. Click on Lair Upgrades";
-      } else if (STATE.lairTutorialStage === 3) {
-        bannerText.innerText = "LAIR TUTORIAL [3/3]: Upgrade your supercomputer, deploy a robotic doppelganger to run the store, and synthesize mutants. Click on Inbox";
-      } else if (STATE.lairTutorialStage === 3) {
-        bannerText.innerText = "LAIR TUTORIAL [3/3]: See any messages you receive. Close the menu [TAB]";
-      } else if (STATE.lairTutorialStage === 3) {
-        bannerText.innerText = "LAIR TUTORIAL [3/3]: Move back and forth between your secret lair and the front store anytime by interacting [E/SPACE] with the bookcase";
-      }
+    if (STATE.lairTutorialStage === 1) {
+      bannerText.innerText = "LAIR TUTORIAL [1/8]: Walk up to Butler Jarvis and press [E] or [SPACE] to receive secret underworld intel and syndicate status. Then interact with the Supercomputer terminal (blinking) on the right";
+    } else if (STATE.lairTutorialStage === 2) {
+      bannerText.innerText = "LAIR TUTORIAL [2/8]: Do supervillain missions (can be done after shop is closed), and look at the active heroes and supervillain leaderboard. Click Close Feed in the top right.";
+    } else if (STATE.lairTutorialStage === 3) {
+      bannerText.innerText = "LAIR TUTORIAL [3/8]: Open the menu [TAB], and click Office and Automation. Here you can siphon funds to use for villainy. Click on Tutorial and Guide";
+    } else if (STATE.lairTutorialStage === 4) {
+      bannerText.innerText = "LAIR TUTORIAL [4/8]: The villain tutorial will also now show up here for reference for the rest of the game. Click on Villain Leaderboard to view the villain leaderboard and look at the active heroes";
+    } else if (STATE.lairTutorialStage === 5) {
+      bannerText.innerText = "LAIR TUTORIAL [5/8]: See heroes patrol sectors, nemesis' and threat level. Click on a hero to see their superpowers. Supervillains are villains who have 25+ casualties. Click on Lair Upgrades";
+    } else if (STATE.lairTutorialStage === 6) {
+      bannerText.innerText = "LAIR TUTORIAL [6/8]: Upgrade your supercomputer, deploy a robotic doppelganger to run the store, and synthesize mutants. Click on Inbox";
+    } else if (STATE.lairTutorialStage === 7) {
+      bannerText.innerText = "LAIR TUTORIAL [7/8]: See any messages you receive. Close the menu [TAB]";
+    } else if (STATE.lairTutorialStage === 8) {
+      bannerText.innerText = "LAIR TUTORIAL [8/8]: Move back and forth between your secret lair and the front store anytime by interacting [E/SPACE] with the bookcase";
+    }
   }
 }
 
@@ -4587,10 +4587,12 @@ function toggleLairSecretEntrance() {
     
     if (!STATE.hasEnteredLair) {
       STATE.hasEnteredLair = true;
+      STATE.lairTutorialStage = 1;
       document.getElementById('hud-infamy-container').style.display = 'flex';
       document.getElementById('hud-suspicion-container').style.display = 'flex';
       document.getElementById('hud-lair-money-container').style.display = 'flex';
     }
+    updateTutorialBanner();
   } else {
     STATE.currentMap = 'store'; player.x = 5 * TILE_SIZE; player.y = 2 * TILE_SIZE;
   }
