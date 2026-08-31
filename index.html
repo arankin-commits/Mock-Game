@@ -4681,18 +4681,18 @@ function render() {
         const empty = isTileEmpty(c, r, 2);
         ctx.fillStyle = '#334155'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
         ctx.fillStyle = '#cbd5e1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 3);
+        ctx.fillStyle = '#f43f5e'; ctx.fillRect(tx + 2, ty + 7, TILE_SIZE - 4, 1);
+        ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
+        ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
 
         // Only draw colorful boxes if not empty
         if (!empty) {
-          ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 3);
-          ctx.fillStyle = '#f43f5e'; ctx.fillRect(tx + 2, ty + 7, TILE_SIZE - 4, 1);
           ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
           ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
           ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
           ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
 
-          ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
-          ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
           ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
           ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
           ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
