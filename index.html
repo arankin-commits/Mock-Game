@@ -4320,9 +4320,7 @@ function update() {
     if (!checkCollision(player.x, nextY)) player.y = nextY;
   }
 
-  if (STATE.currentMap === 'store') {
-    npcs.forEach(n => n.update());
-  }
+  npcs.forEach(n => n.update());
 
   const now = Date.now();
   speechBubbles = speechBubbles.filter(b => now - b.created < b.duration);
