@@ -496,7 +496,7 @@
     <button class="btn-action" style="padding: 12px 32px; font-size: 14px; margin-bottom: 30px;" onclick="startGameFromTitle()">Play Game</button>
   </div>
   
-  <div id="hud">
+  <div id="hud" style="display: none;">
     <div style="display: flex; flex-direction: column; gap: 2px;">
       <div class="hud-stat hud-money">$<span id="val-money">250</span></div>
       <div class="hud-stat hud-lair-money" id="hud-lair-money-container" style="display:none; color: var(--accent-evil);">$<span id="val-lair-money">0</span></div>
@@ -1429,6 +1429,7 @@ function restartGame() {
 const titleScreen = document.getElementById('title-screen');
   if (titleScreen) {
     titleScreen.style.display = 'flex';
+    document.getElementById('hud').style.display = 'none';
   } else {
     STATE.gameStarted = true; // Fallback if title screen isn't used
   }
@@ -1439,6 +1440,7 @@ const titleScreen = document.getElementById('title-screen');
 function startGameFromTitle() {
   STATE.gameStarted = true;
   document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
 
   STATE.dayNumber = 0;
   STATE.phase = 'night';
