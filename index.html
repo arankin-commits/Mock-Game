@@ -934,17 +934,17 @@ let storeMap = [
 
 const backroomMap = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
-  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
-  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
-  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 1],
+  [1, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 1],
   [12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [12, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
-  [1, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 1],
+  [12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];
@@ -1034,21 +1034,21 @@ function rollDemand() {
 }
 
 let PRODUCTS = [
-  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 14, targetStock: 14, pendingTargetStock: 14, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68', backStock: 60 },
-  { id: 'soda', name: 'Toxic-Cola', popularity: 'popular', nextPopularity: 'popular', cost: 3, marketPrice: 8, price: 8, pendingPrice: 8, stock: 18, targetStock: 18, pendingTargetStock: 18, baseMax: 30, unlocked: true, unlockCost: 0, color: '#7aa2f7', backStock: 60 },
-  { id: 'meat', name: 'Mystery Meat', popularity: 'normal', nextPopularity: 'normal', cost: 10, marketPrice: 24, price: 24, pendingPrice: 24, stock: 8, targetStock: 8, pendingTargetStock: 8, baseMax: 15, unlocked: true, unlockCost: 0, color: '#f7768e', backStock: 60 },
-  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a', backStock: 60 },
-  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5', backStock: 60 },
-  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887', backStock: 60 },
-  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64', backStock: 60 },
-  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca', backStock: 60 },
-  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de', backStock: 60 },
-  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7', backStock: 60 },
-  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89', backStock: 60 },
-  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68', backStock: 60},
-  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e', backStock: 60 },
-  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8', backStock: 60 },
-  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e', backStock: 60 }
+  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 14, targetStock: 14, pendingTargetStock: 14, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68', backStock: 0 },
+  { id: 'soda', name: 'Toxic-Cola', popularity: 'popular', nextPopularity: 'popular', cost: 3, marketPrice: 8, price: 8, pendingPrice: 8, stock: 18, targetStock: 18, pendingTargetStock: 18, baseMax: 30, unlocked: true, unlockCost: 0, color: '#7aa2f7', backStock: 0 },
+  { id: 'meat', name: 'Mystery Meat', popularity: 'normal', nextPopularity: 'normal', cost: 10, marketPrice: 24, price: 24, pendingPrice: 24, stock: 8, targetStock: 8, pendingTargetStock: 8, baseMax: 15, unlocked: true, unlockCost: 0, color: '#f7768e', backStock: 0 },
+  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a', backStock: 0 },
+  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5', backStock: 0 },
+  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887', backStock: 0 },
+  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64', backStock: 0 },
+  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca', backStock: 0 },
+  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de', backStock: 0 },
+  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7', backStock: 0 },
+  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89', backStock: 0 },
+  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68', backStock: 0},
+  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e', backStock: 0 },
+  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8', backStock: 0 },
+  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e', backStock: 0 }
 ];
 
 const MISSIONS = [
@@ -1299,6 +1299,7 @@ function restartGame() {
   // Reset products stock and unlock states
   PRODUCTS.forEach((p, idx) => {
     p.stock = idx < 3 ? 15 : 0;
+    p.backStock = 0;
     p.price = p.marketPrice;
     p.pendingPrice = p.marketPrice;
     p.unlocked = idx < 3;
@@ -1329,6 +1330,7 @@ function startGameFromTitle() {
 
   PRODUCTS.forEach(p => {
     p.stock = 0;
+    p.backStock = 0;
   });  
   // const banner = document.getElementById('notification-banner');
   // if (banner && !STATE.tutorialBannerDismissed) {
@@ -3644,21 +3646,21 @@ const PRODUCT_SHELF_TILES = {
 
 // Exact floor tile in the backroom mapping to the correct inventory cluster
 const PRODUCT_BACKROOM_TILES = {
-  cereal:  { col: 5,  row: 3 },
+  cereal:  { col: 4,  row: 3 },
   soda:    { col: 8,  row: 3 },
-  meat:    { col: 11, row: 3 },
-  apples:  { col: 14, row: 3 },
-  milk:    { col: 17, row: 3 },
-  bread:   { col: 20, row: 3 },
-  chips:   { col: 5,  row: 6 },
-  soup:    { col: 8,  row: 6 },
-  frozen:  { col: 11, row: 6 },
-  energy:  { col: 14, row: 6 },
-  coffee:  { col: 17, row: 6 },
-  battery: { col: 20, row: 6 },
-  meds:    { col: 5,  row: 9 },
-  spice:   { col: 8,  row: 9 },
-  caviar:  { col: 11, row: 9 }
+  meat:    { col: 12, row: 3 },
+  apples:  { col: 16, row: 3 },
+  milk:    { col: 20, row: 3 },
+  bread:   { col: 4,  row: 6 },
+  chips:   { col: 8,  row: 6 },
+  soup:    { col: 12, row: 6 },
+  frozen:  { col: 16, row: 6 },
+  energy:  { col: 20, row: 6 },
+  coffee:  { col: 4,  row: 9 },
+  battery: { col: 8,  row: 9 },
+  meds:    { col: 12, row: 9 },
+  spice:   { col: 16, row: 9 },
+  caviar:  { col: 20, row: 9 }
 };
 
 // The tile right in front of the backroom door on the store map
@@ -4431,9 +4433,9 @@ function render() {
             ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
           }
         } else if (t === 2) {
-          const clusterCol = Math.floor((c - 5) / 3); // 3 columns apart per shelf cluster
-          const clusterRow = Math.floor((r - 1) / 3); // 3 rows apart per shelf cluster
-          const shelfClusterId = (clusterRow * 6) + Math.max(0, clusterCol); 
+          const clusterCol = Math.floor((c - 4) / 4); 
+          const clusterRow = Math.floor((r - 1) / 3); 
+          const shelfClusterId = (clusterRow * 5) + Math.max(0, clusterCol);
 
           const prod = unlockedList[shelfClusterId];
 
@@ -4725,15 +4727,27 @@ function handleInteraction() {
       }
     }
     
-    // Calculate the product id based on the shelf's location, not the player's
-    const clusterCol = Math.floor((targetShelfCol - 5) / 3);
+    // Calculate the product id based on the shelf's location
+    const clusterCol = Math.floor((targetShelfCol - 4) / 4);
     const clusterRow = Math.floor((targetShelfRow - 1) / 3);
-    const shelfClusterId = (clusterRow * 6) + Math.max(0, clusterCol);
+    const shelfClusterId = (clusterRow * 5) + Math.max(0, clusterCol);
     
     const unlockedList = PRODUCTS.filter(p => p.unlocked);
     const prod = unlockedList[shelfClusterId];
 
     if (prod) {
+      // FIX: If holding this exact product, empty hands back into the backstock shelf
+      if (STATE.heldBackstock.product && STATE.heldBackstock.product === prod) {
+        if (STATE.heldBackstock.count > 0) {
+          prod.backStock += STATE.heldBackstock.count;
+          triggerSpeechBubble(player.x, player.y, `Returned ${STATE.heldBackstock.count}x ${prod.name}`, 2500, 'backroom');
+          STATE.heldBackstock.product = null;
+          STATE.heldBackstock.count = 0;
+          updateHUD();
+        }
+        return;
+      }
+
       if (prod.backStock <= 0) {
         triggerSpeechBubble(player.x, player.y, `This backstock shelf is empty`, 2500, 'backroom');
         return;
@@ -4775,7 +4789,8 @@ function handleInteraction() {
     const spaceOnShelf = maxStock - prod.stock;
 
     if (spaceOnShelf <= 0) {
-      triggerSpeechBubble(player.x, player.y, "This aisle shelf is already full", 3000, 'store');
+      // FIX: Changed full shelf dialogue
+      triggerSpeechBubble(player.x, player.y, `I've fully stocked ${prod.name}`, 3000, 'store');
       return;
     }
 
@@ -5235,25 +5250,24 @@ function buyStock(prodId) {
   const cost = STATE.adminMode ? 0 : p.cost * 3;
   if (!STATE.adminMode && STATE.money < cost) return alert("Not enough money!");
 
-  const currentTotalStock = getTotalUsedStorage();
-  const maxStorage = getMaxStoreStorage();
-  const availableStoreSpace = maxStorage - currentTotalStock;
+  const currentTotalBackStock = getTotalBackStock();
+  const maxBackroomStorage = getMaxBackroomStorage();
+  const availableBackroomSpace = maxBackroomStorage - currentTotalBackStock;
 
-  const itemSpaceNeeded = Math.max(0, p.targetStock - p.stock);
-  const restockAmount = Math.min(6, itemSpaceNeeded, availableStoreSpace);
+  // Ensure we don't over-order past the backroom's max capacity limit
+  const restockAmount = Math.min(6, availableBackroomSpace);
 
   if (restockAmount <= 0) {
-    if (currentTotalStock >= maxStorage) {
-      return alert("Total store aisle storage is completely full!");
-    }
-    return alert("Shelf is already at its target stock!");
+    return alert("Backroom storage is completely full! Upgrade your store layout for more capacity.");
   }
 
   if (!STATE.adminMode) {
     STATE.money -= cost;
     STATE.dayRestockCosts += cost;
   }
-  p.stock += restockAmount;
+  
+  // Deposit directly into backroom storage
+  p.backStock += restockAmount;
 
   renderUI();
 }
@@ -5480,7 +5494,10 @@ function renderUI() {
           ${p.stock} / <input type="number" min="1" max="${maxStorage}" value="${p.pendingTargetStock}" onchange="updatePendingTargetStock('${p.id}', this.value)">
           <div style="font-size:9px; color:#7a819b; margin-top:2px;">(Aisle Pool: ${totalTargetSum} / ${maxStorage})</div>
         </td>
-        <td><button class="btn-action" onclick="if (STATE.tutorialStep === 2) { STATE.tutorialStep = 3; updateTutorialBanner(); } buyStock('${p.id}')">Bulk +6 (${STATE.adminMode ? 'FREE' : `$${bulkCost}`})</button></td>
+        <td>
+          <button class="btn-action" onclick="if (STATE.tutorialStep === 2) { STATE.tutorialStep = 3; updateTutorialBanner(); } buyStock('${p.id}')">Bulk +6 (${STATE.adminMode ? 'FREE' : `$${bulkCost}`})</button>
+          <div style="font-size:9px; color:#ff9e64; margin-top:4px;">(In Backroom: ${p.backStock})</div>
+        </td>
       </tr>`;
     } else {
       return `<tr>
@@ -5569,13 +5586,14 @@ function renderUI() {
     const isCashier = s.role === 'cashier';
     const limitReached = !STATE.adminMode && isCashier && s.count >= maxCashiersAllowed;
     const cost = STATE.adminMode ? 0 : 50;
-    const btnText = limitReached ? `Limit (${maxCashiersAllowed} Reg)` : `Hire (${STATE.adminMode ? 'FREE' : `$${cost}`})`;
+    const hireBtn = `<button class="btn-action" ${limitReached || (!STATE.adminMode && STATE.money < cost) ? 'disabled' : ''} onclick="hireStaff('${s.role}')">Hire (${STATE.adminMode ? 'FREE' : `$${cost}`})</button>`;
+    const fireBtn = `<button class="btn-action btn-danger" ${s.count <= 0 ? 'disabled' : ''} onclick="fireStaff('${s.role}')">Fire</button>`;
 
     return `<tr>
       <td>${s.name}</td>
       <td>${s.count} ${isCashier ? `(Max: ${maxCashiersAllowed})` : ''}</td>
       <td>$${s.wage}/day</td>
-      <td><button class="btn-action" ${limitReached || (!STATE.adminMode && STATE.money < cost) ? 'disabled' : ''} onclick="hireStaff('${s.role}')">${btnText}</button></td>
+      <td><div style="display:flex; gap:6px;">${hireBtn} ${fireBtn}</div></td>
     </tr>`;
   }).join('');
 
@@ -5635,6 +5653,32 @@ function hireStaff(role) {
   if (STATE.phase === 'day') {
     npcs.push(new Employee(role));
   }
+  renderUI();
+}
+
+function fireStaff(role) {
+  const s = STAFF.find(x => x.role === role);
+  if (!s || s.count <= 0) return;
+  
+  // Reduce the count
+  s.count--;
+
+  // Find and remove one physical NPC from the map that matches this role
+  for (let i = npcs.length - 1; i >= 0; i--) {
+    if (npcs[i].isEmployee && npcs[i].role === role) {
+      // If we are firing a cashier, unassign them from their register so a new one can take over later
+      if (role === 'cashier') {
+        const reg = REGISTERS.find(r => r.assignedCashier === npcs[i]);
+        if (reg) reg.assignedCashier = null;
+      }
+      
+      // Remove them from the array
+      npcs.splice(i, 1);
+      break; 
+    }
+  }
+
+  showNotification(`Fired one ${s.name}.`);
   renderUI();
 }
 
