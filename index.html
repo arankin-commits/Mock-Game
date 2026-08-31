@@ -5353,9 +5353,15 @@ function upgradeMarketing() {
 }
 
 function unlockProduct(prodId) {
+  // Prevent unlocking during the day (unless in Admin mode)
+  if (STATE.phase === 'day' && !STATE.adminMode) {
+    return alert("New products can only be unlocked at night!");
+  }
+
   const p = PRODUCTS.find(x => x.id === prodId);
   const cost = STATE.adminMode ? 0 : p.unlockCost;
   if (!p || (!STATE.adminMode && STATE.money < cost)) return alert("Insufficient funds to unlock!");
+  
   if (!STATE.adminMode) STATE.money -= cost;
   p.unlocked = true;
   p.stock = Math.min(p.targetStock, 10);
@@ -5625,7 +5631,11 @@ function renderUI() {
           <div style="font-size:9px; color:#ff9e64; margin-top:4px;">(In Backroom: ${p.backStock})</div>
         </td>
       </tr>`;
-    } else {
+    }} else {
+      const isDay = STATE.phase === 'day';
+      const unlockBtnState = (!STATE.adminMode && (STATE.money < unlockCost || isDay)) ? 'disabled' : '';
+      const dayWarningUnlock = isDay ? `<div style="font-size:9px; color:#f7768e; margin-top:2px;">(Night Only)</div>` : '';
+
       return `<tr>
         <td style="color:#7a819b;">Locked: ${p.name}</td>
         <td><span class="tag-pop ${tagClassToday}">${p.popularity.toUpperCase()}</span></td>
@@ -5634,7 +5644,10 @@ function renderUI() {
         <td style="color:#7a819b;">--</td>
         <td style="color:#7a819b;">--</td>
         <td style="color:#7a819b;">--</td>
-        <td><button class="btn-action" ${!STATE.adminMode && STATE.money < unlockCost ? 'disabled' : ''} onclick="unlockProduct('${p.id}')">Unlock (${STATE.adminMode ? 'FREE' : `$${unlockCost}`})</button></td>
+        <td>
+          <button class="btn-action" ${unlockBtnState} onclick="unlockProduct('${p.id}')">Unlock (${STATE.adminMode ? 'FREE' : `$${unlockCost}`})</button>
+          ${dayWarningUnlock}
+        </td>
       </tr>`;
     }
   }).join('');
