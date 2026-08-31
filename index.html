@@ -3510,9 +3510,11 @@ function updateTutorialBanner() {
   } else if (STATE.tutorialStep === 2) {
     bannerText.innerText = "TUTORIAL [2/15]: [Stock & Pricing Tab] Set your prices and target stock levels here before opening. You may want to raise prices or lower prices based on tomorrow's demand. Click the Bulk button";
   } else if (STATE.tutorialStep === 3) {
-    bannerText.innerText = "TUTORIAL [3/15]: [Stock & Pricing Tab] The bulk button orders stock of an item. Shelf stock is the current item count on the aisles; target is the maximum. You can change the max. Click on Layout & Staff";
+    bannerText.innerText = "TUTORIAL [3/15]: [Stock & Pricing Tab] The bulk button orders stock of an item. Shelf stock is the current item count on the aisles; target is the maximum. Click on Layout & Staff";
   } else if (STATE.tutorialStep === 4) {
-    bannerText.innerText = "TUTORIAL [4/15]: [Layout & Staff Tab] Upgrade aisle shelving tiers, hire staff, and boost marketing campaigns to increase the number of shoppers. Click on Office & Automation";
+    bannerText.innerText = "TUTORIAL [4/15]: [Layout & Staff Tab] Upgrade aisle shelving tiers, hire staff, and boost marketing campaigns to increase the number of shoppers. Hire a Stock Clerk";
+  } else if (STATE.tutorialStep === 4.5) {
+    bannerText.innerText = "TUTORIAL [5.5/15]: A stocker will automatically stock items for you. Set stocker controls to control how much product they will order for the next day. Click on Office & Automation";
   } else if (STATE.tutorialStep === 5) {
     bannerText.innerText = "TUTORIAL [5/15]: [Office & Automation Tab] View revenue stats, open and close shop, and automate your workflow. Click on Tutorial & Guide";
   } else if (STATE.tutorialStep === 6) {
@@ -3520,7 +3522,7 @@ function updateTutorialBanner() {
   } else if (STATE.tutorialStep === 7) {
     bannerText.innerText = "TUTORIAL [7/15]: [Admin Mode] You can unlock Admin Mode with the passcode. Close the menu using [E/SPACE] near the computer, [TAB], or by clicking the red x in the top right";
   } else if (STATE.tutorialStep === 8) {
-    bannerText.innerText = "TUTORIAL [8/15]: Open up the menu and order stock of an item. Walk over to the door in the bottom right of the store to enter the storage room where you can grab items to put on the aisles";
+    bannerText.innerText = "TUTORIAL [8/15]: The aisles are empty right now. Open up the menu and order stock of an item by clicking bulk. Walk over to the door in the bottom right of the store to enter the storage room where you can grab items to put on the aisles";
   } else if (STATE.tutorialStep === 9) {
     bannerText.innerText = "TUTORIAL [9/15]: Hover over a shelf with your mouse to see what is on it. Walk up to a shelf and grab some items. You can only hold 5 items at a time. Leave the storage room";
   } else if (STATE.tutorialStep === 10) {
@@ -5586,7 +5588,7 @@ function toggleMenu(defaultTab, isDeskAccess = false) {
 function switchTab(tabId) {
   if (tabId === 'store-inv' && STATE.tutorialStep === 1) { STATE.tutorialStep = 2; updateTutorialBanner(); }
   else if (tabId === 'store-upgrades' && STATE.tutorialStep === 3) { STATE.tutorialStep = 4; updateTutorialBanner(); }
-  else if (tabId === 'store-finance' && STATE.tutorialStep === 4) { STATE.tutorialStep = 5; updateTutorialBanner(); }
+  else if (tabId === 'store-finance' && STATE.tutorialStep === 4) { STATE.tutorialStep = 4.5; updateTutorialBanner(); }
   else if (tabId === 'game-guide' && STATE.tutorialStep === 5) { STATE.tutorialStep = 6; updateTutorialBanner(); }
   else if (tabId === 'admin-debug' && STATE.tutorialStep === 6) { STATE.tutorialStep = 7; updateTutorialBanner(); }
 
@@ -5764,7 +5766,7 @@ function renderUI() {
     const cost = STATE.adminMode ? 0 : 50;
     const hireBtn = `<button class="btn-action" ${limitReached || (!STATE.adminMode && STATE.money < cost) ? 'disabled' : ''} onclick="hireStaff('${s.role}')">Hire (${STATE.adminMode ? 'FREE' : `$${cost}`})</button>`;
     const fireBtn = `<button class="btn-action btn-danger" ${s.count <= 0 ? 'disabled' : ''} onclick="fireStaff('${s.role}')">Fire</button>`;
-    const controlsBtn = (s.role === 'stocker' && s.count > 0) ? `<button class="btn-action" style="margin-left: 30px; background:var(--accent-store); color:#120d1c;" onclick="openStockerControls()">Stocker Controls</button>` : '';
+    const controlsBtn = (s.role === 'stocker' && s.count > 0) ? `<button class="btn-action" style="margin-left: 30px; background:var(--accent-store); color:#120d1c;" onclick="if (STATE.tutorialStep === 4.5) { STATE.tutorialStep = 5; updateTutorialBanner(); } openStockerControls()">Stocker Controls</button>` : '';
 
     return `<tr>
       <td>${s.name}</td>
