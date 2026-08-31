@@ -3428,7 +3428,7 @@ function applyLayoutMap(tier) {
   storeMap[5][16] = 2; storeMap[5][17] = 2; storeMap[6][16] = 2; storeMap[6][17] = 2; // Aisle 4
 
   let bPoints = [
-    {col: 8, row: 2}, {col: 9, row: 2}, {col: 10, row: 2}, {col: 7, row: 2}, // Coolers
+    {col: 7, row: 2}, {col: 8, row: 2}, {col: 9, row: 2}, {col: 10, row: 2}, // Coolers
     {col: 19, row: 9}, {col: 22, row: 9}, // Produce
     {col: 11, row: 3}, {col: 14, row: 3}, {col: 15, row: 3}, {col: 18, row: 3},
     {col: 11, row: 6}, {col: 14, row: 6}, {col: 15, row: 6}, {col: 18, row: 6}
@@ -3457,12 +3457,14 @@ function applyLayoutMap(tier) {
 
     storeMap[8][8] = 2; storeMap[8][9] = 2; storeMap[9][8] = 2; storeMap[9][9] = 2; // Aisle 8
     storeMap[8][16] = 2; storeMap[8][17] = 2; storeMap[9][16] = 2; storeMap[9][17] = 2; // Aisle 9
-    storeMap[5][20] = 2; storeMap[5][21] = 2; storeMap[6][20] = 2; storeMap[6][21] = 2; // Aisle 10
+    
+    // Moved Aisle 10 to top right
+    storeMap[2][20] = 2; storeMap[2][21] = 2; storeMap[3][20] = 2; storeMap[3][21] = 2; 
 
     bPoints.push(
       {col: 7, row: 9}, {col: 10, row: 9}, 
       {col: 15, row: 9}, {col: 18, row: 9}, 
-      {col: 19, row: 6}, {col: 22, row: 6}
+      {col: 19, row: 3}, {col: 22, row: 3} // Updated browsing points for top right
     );
   }
 
@@ -4492,6 +4494,27 @@ function render() {
   let unlockedList = PRODUCTS.filter(p => p.unlocked);
   let shelfIndex = 0;
 
+  // Helper to dynamically check if the rendered tile is fully out of stock
+  const isTileEmpty = (c, r, tileType) => {
+    let totalStock = 0;
+    let assigned = false;
+    for (let p of PRODUCTS) {
+      const pt = PRODUCT_SHELF_TILES[p.id];
+      if (pt && p.unlocked) {
+        if (tileType === 11) {
+          if (pt.col === c) { totalStock += p.stock; assigned = true; }
+        } else if (tileType === 2 || tileType === 10) {
+          const baseCol = Math.floor(c / 4) * 4;
+          const baseRow = Math.floor((r - 2) / 3) * 3 + 2;
+          if ((pt.col === baseCol - 1 || pt.col === baseCol + 2) && pt.row === baseRow + 1) {
+            totalStock += p.stock; assigned = true;
+          }
+        }
+      }
+    }
+    return !assigned || totalStock <= 0;
+  };
+
   for (let r = 0; r < curMap.length; r++) {
     for (let c = 0; c < MAP_COLS; c++) {
       let t = curMap[r][c];
@@ -4591,21 +4614,25 @@ function render() {
         ctx.fillStyle = STATE.currentMap === 'store' ? '#334155' : '#0f172a';
         ctx.fillRect(tx, ty + TILE_SIZE - 4, TILE_SIZE, 4);
       } else if (t === 2 && STATE.currentMap !== 'backroom') {
+        const empty = isTileEmpty(c, r, 2);
         ctx.fillStyle = '#334155'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
         ctx.fillStyle = '#cbd5e1'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
 
-        ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 3);
-        ctx.fillStyle = '#f43f5e'; ctx.fillRect(tx + 2, ty + 7, TILE_SIZE - 4, 1);
-        ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
-        ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
-        ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
-        ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
+        // Only draw colorful boxes if not empty
+        if (!empty) {
+          ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 4, TILE_SIZE - 4, 3);
+          ctx.fillStyle = '#f43f5e'; ctx.fillRect(tx + 2, ty + 7, TILE_SIZE - 4, 1);
+          ctx.fillStyle = '#ef4444'; ctx.fillRect(tx + 4, ty + 8, 4, 6);
+          ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 10, ty + 8, 4, 6);
+          ctx.fillStyle = '#10b981'; ctx.fillRect(tx + 16, ty + 8, 4, 6);
+          ctx.fillStyle = '#f59e0b'; ctx.fillRect(tx + 22, ty + 8, 4, 6);
 
-        ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
-        ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
-        ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
-        ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
-        ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
+          ctx.fillStyle = '#94a3b8'; ctx.fillRect(tx + 2, ty + 16, TILE_SIZE - 4, 3);
+          ctx.fillStyle = '#3b82f6'; ctx.fillRect(tx + 2, ty + 19, TILE_SIZE - 4, 1);
+          ctx.fillStyle = '#8b5cf6'; ctx.fillRect(tx + 5, ty + 20, 5, 8);
+          ctx.fillStyle = '#06b6d4'; ctx.fillRect(tx + 12, ty + 20, 5, 8);
+          ctx.fillStyle = '#ec4899'; ctx.fillRect(tx + 19, ty + 20, 5, 8);
+        }
       } else if (t === 3 && STATE.dayNumber >= 5) {
         // Bookshelf Background
         ctx.fillStyle = '#4a2e18'; 
@@ -4633,22 +4660,32 @@ function render() {
         ctx.fillStyle = '#f7768e'; ctx.fillRect(tx + 15, ty + 13, 4, 8);
         ctx.fillStyle = '#7aa2f7'; ctx.fillRect(tx + 21, ty + 14, 6, 7);
       } else if (t === 10) {
-        // Vending machine / Produce stand items
+        const empty = isTileEmpty(c, r, 10);
+        // Vending machine / Produce stand base
         ctx.fillStyle = '#854d0e'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
         ctx.fillStyle = '#a16207'; ctx.fillRect(tx + 3, ty + 3, TILE_SIZE - 6, TILE_SIZE - 6);
-        ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.arc(tx + 8, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(tx + 16, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.arc(tx + 24, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(tx + 11, ty + 20, 3.5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#eab308'; ctx.beginPath(); ctx.arc(tx + 20, ty + 20, 3.5, 0, Math.PI*2); ctx.fill();
+        
+        // Only draw fruit if not empty
+        if (!empty) {
+          ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.arc(tx + 8, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(tx + 16, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.arc(tx + 24, ty + 10, 3.5, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(tx + 11, ty + 20, 3.5, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#eab308'; ctx.beginPath(); ctx.arc(tx + 20, ty + 20, 3.5, 0, Math.PI*2); ctx.fill();
+        }
       } else if (t === 11) {
-        // Vending cooler glasses
+        const empty = isTileEmpty(c, r, 11);
+        // Vending cooler glasses base
         ctx.fillStyle = '#1e293b'; ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
         ctx.fillStyle = '#67e8f9'; ctx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fillRect(tx + 4, ty + 4, 3, TILE_SIZE - 8);
-        ctx.fillStyle = '#1e40af'; ctx.fillRect(tx + 10, ty + 6, 4, 18);
-        ctx.fillStyle = '#b91c1c'; ctx.fillRect(tx + 17, ty + 6, 4, 18);
-        ctx.fillStyle = '#047857'; ctx.fillRect(tx + 24, ty + 6, 4, 18);
+        
+        // Only draw bottles if not empty
+        if (!empty) {
+          ctx.fillStyle = '#1e40af'; ctx.fillRect(tx + 10, ty + 6, 4, 18);
+          ctx.fillStyle = '#b91c1c'; ctx.fillRect(tx + 17, ty + 6, 4, 18);
+          ctx.fillStyle = '#047857'; ctx.fillRect(tx + 24, ty + 6, 4, 18);
+        }
       } else if (t === 5) {
         // Cash Register
         ctx.fillStyle = '#1e293b'; ctx.fillRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
