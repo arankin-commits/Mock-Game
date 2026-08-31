@@ -669,6 +669,34 @@
       <button class="tab-btn admin-tab" id="tab-btn-admin-debug" onclick="switchTab('admin-debug')">Admin Mode</button>
     </div>
 
+    <!-- Stocker Controls Modal -->
+  <div id="modal-stocker-controls" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; max-height: 400px; background: #16192b; border: 2px solid var(--accent-store); border-radius: 8px; padding: 18px; z-index: 70; display: none; flex-direction: column; box-shadow: 0 0 35px rgba(0,0,0,0.95);">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px; margin-bottom: 10px;">
+      <h3 style="color:var(--accent-store); font-size:15px; margin:0;">Stocker Auto-Order</h3>
+      <button class="close-btn" onclick="closeStockerControls()" style="font-size:16px;">✕</button>
+    </div>
+    <p style="font-size:11px; color:#a9b1d6; line-height: 1.4; margin-bottom: 10px;">
+      Set the amount of bulk cases (+6 items per case) your stockers will automatically purchase at the end of each day.
+    </p>
+    <div style="overflow-y: auto; flex: 1; background: #121624; border: 1px solid var(--border); padding: 5px;">
+      <table style="width:100%; font-size: 11px; text-align: left; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="padding-bottom:4px; border-bottom:1px solid #3b4261;">Product</th>
+            <th style="padding-bottom:4px; border-bottom:1px solid #3b4261;">Case Cost</th>
+            <th style="padding-bottom:4px; border-bottom:1px solid #3b4261;">Auto-Order Cases</th>
+            <th style="padding-bottom:4px; border-bottom:1px solid #3b4261;">Total</th>
+          </tr>
+        </thead>
+        <tbody id="stocker-controls-table"></tbody>
+      </table>
+    </div>
+    <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 10px;">
+      <strong style="color: #f7768e; font-size: 12px;">Est. Nightly Cost: $<span id="stocker-total-cost">0</span></strong>
+      <button class="btn-action" onclick="closeStockerControls()">Save & Close</button>
+    </div>
+  </div>
+
     <div id="tab-store-inv" class="modal-content">
       <table>
         <thead>
@@ -759,27 +787,6 @@
         </div>
       </div>
     </div>
-
-  <div id="modal-stocker-controls" class="modal" style="width: 480px; z-index: 60; background: #16192b; border: 2px solid var(--accent-store);">
-    <h2 style="color: var(--accent-store); font-size: 15px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
-      Stocker Auto-Order Controls <button class="close-btn" onclick="closeStockerControls()">✕</button>
-    </h2>
-    <p style="font-size:11px; color:#a9b1d6; line-height: 1.4; margin-bottom: 10px;">
-      Set the amount of bulk cases (+6 items per case) your stockers will automatically purchase at the end of each day. Orders use store funds.
-    </p>
-    <div style="max-height: 280px; overflow-y: auto; margin-top: 10px; background: #121624; border: 1px solid var(--border); padding: 5px;">
-      <table style="width:100%; font-size: 11px; text-align: left;">
-        <thead>
-          <tr><th>Product</th><th>Case Cost</th><th>Auto-Order Cases</th><th>Total</th></tr>
-        </thead>
-        <tbody id="stocker-controls-table"></tbody>
-      </table>
-    </div>
-    <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 10px;">
-      <strong style="color: #f7768e; font-size: 12px;">Estimated Nightly Cost: $<span id="stocker-total-cost">0</span></strong>
-      <button class="btn-action" onclick="closeStockerControls()">Save & Close</button>
-    </div>
-  </div>
 
     <div id="tab-lair-intel" class="modal-content villain-feature" style="display:none;">
       <h4 style="color:var(--accent-evil);">Global Supervillain Syndicate Top 25</h4>
@@ -3400,44 +3407,66 @@ function applyLayoutMap(tier) {
     { id: 0, tile: { col: 2, row: 9 }, cashierSlot: { col: 1, row: 9 }, queueSlot: { col: 3, row: 9 }, assignedCashier: null, activeCustomer: null, checkoutProgress: 0, checkoutDuration: 0 }
   ];
 
-  if (tier === 1) {
-    storeMap[9][2] = 5; storeMap[10][2] = 0; storeMap[11][2] = 0;
-    storeMap[2][20] = 10; storeMap[2][21] = 10; storeMap[3][20] = 10; storeMap[3][21] = 10;
-    storeMap[5][16] = 2; storeMap[5][17] = 2; storeMap[6][16] = 2; storeMap[6][17] = 2;
-    BROWSING_POINTS = [
-      { col: 7, row: 5 }, { col: 10, row: 5 }, { col: 11, row: 5 }, { col: 14, row: 5 },
-      { col: 15, row: 5 }, { col: 18, row: 5 }, { col: 19, row: 3 }, { col: 22, row: 3 }
-    ];
-  } else if (tier === 2) {
-    storeMap[9][2] = 5; storeMap[10][2] = 5; storeMap[11][2] = 0;
-    storeMap[2][20] = 10; storeMap[2][21] = 10; storeMap[3][20] = 10; storeMap[3][21] = 10;
-    storeMap[5][16] = 2; storeMap[5][17] = 2; storeMap[6][16] = 2; storeMap[6][17] = 2;
-    storeMap[5][20] = 2; storeMap[5][21] = 2; storeMap[6][20] = 2; storeMap[6][21] = 2;
-    REGISTERS.push(
-      { id: 1, tile: { col: 2, row: 10 }, cashierSlot: { col: 1, row: 10 }, queueSlot: { col: 3, row: 10 }, assignedCashier: null, activeCustomer: null, checkoutProgress: 0, checkoutDuration: 0 }
-    );
-    BROWSING_POINTS = [
-      { col: 7, row: 5 }, { col: 10, row: 5 }, { col: 11, row: 5 }, { col: 14, row: 5 },
-      { col: 15, row: 5 }, { col: 18, row: 5 }, { col: 19, row: 5 }, { col: 22, row: 5 },
-      { col: 19, row: 3 }, { col: 22, row: 3 }
-    ];
-  } else if (tier === 3) {
-    storeMap[9][2] = 5; storeMap[10][2] = 5; storeMap[11][2] = 5;
-    storeMap[2][20] = 10; storeMap[2][21] = 10; storeMap[3][20] = 10; storeMap[3][21] = 10;
-    storeMap[5][8] = 2; storeMap[5][9] = 2; storeMap[6][8] = 2; storeMap[6][9] = 2;
-    storeMap[5][12] = 2; storeMap[5][13] = 2; storeMap[6][12] = 2; storeMap[6][13] = 2;
-    storeMap[5][16] = 2; storeMap[5][17] = 2; storeMap[6][16] = 2; storeMap[6][17] = 2;
-    storeMap[5][20] = 2; storeMap[5][21] = 2; storeMap[6][20] = 2; storeMap[6][21] = 2;
-    REGISTERS.push(
-      { id: 1, tile: { col: 2, row: 10 }, cashierSlot: { col: 1, row: 10 }, queueSlot: { col: 3, row: 10 }, assignedCashier: null, activeCustomer: null, checkoutProgress: 0, checkoutDuration: 0 },
-      { id: 2, tile: { col: 2, row: 11 }, cashierSlot: { col: 1, row: 11 }, queueSlot: { col: 3, row: 11 }, assignedCashier: null, activeCustomer: null, checkoutProgress: 0, checkoutDuration: 0 }
-    );
-    BROWSING_POINTS = [
-      { col: 7, row: 5 }, { col: 10, row: 5 }, { col: 11, row: 5 }, { col: 14, row: 5 },
-      { col: 15, row: 5 }, { col: 18, row: 5 }, { col: 19, row: 5 }, { col: 22, row: 5 },
-      { col: 19, row: 3 }, { col: 22, row: 3 }, { col: 7, row: 8 }, { col: 11, row: 8 }
-    ];
+  // 1. Clear out all potential store aisles & produce to reset the map to floor tiles
+  for (let r = 2; r <= 11; r++) {
+    for (let c = 7; c <= 22; c++) {
+      if (storeMap[r][c] === 2 || storeMap[r][c] === 10) storeMap[r][c] = 0;
+    }
   }
+
+  // 2. Base Coolers (always present)
+  storeMap[1][7] = 11; storeMap[1][8] = 11; storeMap[1][9] = 11; storeMap[1][10] = 11;
+
+  // 3. Base Produce (moved down 6 blocks to rows 8 & 9)
+  storeMap[8][20] = 10; storeMap[8][21] = 10; 
+  storeMap[9][20] = 10; storeMap[9][21] = 10;
+
+  // 4. Tier 1 (Exactly 4 Aisles)
+  storeMap[2][12] = 2; storeMap[2][13] = 2; storeMap[3][12] = 2; storeMap[3][13] = 2; // Aisle 1
+  storeMap[2][16] = 2; storeMap[2][17] = 2; storeMap[3][16] = 2; storeMap[3][17] = 2; // Aisle 2
+  storeMap[5][12] = 2; storeMap[5][13] = 2; storeMap[6][12] = 2; storeMap[6][13] = 2; // Aisle 3
+  storeMap[5][16] = 2; storeMap[5][17] = 2; storeMap[6][16] = 2; storeMap[6][17] = 2; // Aisle 4
+
+  let bPoints = [
+    {col: 8, row: 2}, {col: 9, row: 2}, {col: 10, row: 2}, {col: 7, row: 2}, // Coolers
+    {col: 19, row: 9}, {col: 22, row: 9}, // Produce
+    {col: 11, row: 3}, {col: 14, row: 3}, {col: 15, row: 3}, {col: 18, row: 3},
+    {col: 11, row: 6}, {col: 14, row: 6}, {col: 15, row: 6}, {col: 18, row: 6}
+  ];
+
+  // Tier 2 (7 Aisles)
+  if (tier >= 2) {
+    storeMap[9][2] = 5; storeMap[10][2] = 5; // registers
+    REGISTERS.push({ id: 1, tile: { col: 2, row: 10 }, cashierSlot: { col: 1, row: 10 }, queueSlot: { col: 3, row: 10 }, assignedCashier: null, activeCustomer: null, checkoutProgress: 0, checkoutDuration: 0 });
+
+    storeMap[2][8] = 2; storeMap[2][9] = 2; storeMap[3][8] = 2; storeMap[3][9] = 2; // Aisle 5
+    storeMap[5][8] = 2; storeMap[5][9] = 2; storeMap[6][8] = 2; storeMap[6][9] = 2; // Aisle 6
+    storeMap[8][12] = 2; storeMap[8][13] = 2; storeMap[9][12] = 2; storeMap[9][13] = 2; // Aisle 7
+
+    bPoints.push(
+      {col: 7, row: 3}, {col: 10, row: 3}, 
+      {col: 7, row: 6}, {col: 10, row: 6}, 
+      {col: 11, row: 9}, {col: 14, row: 9}
+    );
+  }
+
+  // Tier 3 (10 Aisles)
+  if (tier >= 3) {
+    storeMap[11][2] = 5; // register 3
+    REGISTERS.push({ id: 2, tile: { col: 2, row: 11 }, cashierSlot: { col: 1, row: 11 }, queueSlot: { col: 3, row: 11 }, assignedCashier: null, activeCustomer: null, checkoutProgress: 0, checkoutDuration: 0 });
+
+    storeMap[8][8] = 2; storeMap[8][9] = 2; storeMap[9][8] = 2; storeMap[9][9] = 2; // Aisle 8
+    storeMap[8][16] = 2; storeMap[8][17] = 2; storeMap[9][16] = 2; storeMap[9][17] = 2; // Aisle 9
+    storeMap[5][20] = 2; storeMap[5][21] = 2; storeMap[6][20] = 2; storeMap[6][21] = 2; // Aisle 10
+
+    bPoints.push(
+      {col: 7, row: 9}, {col: 10, row: 9}, 
+      {col: 15, row: 9}, {col: 18, row: 9}, 
+      {col: 19, row: 6}, {col: 22, row: 6}
+    );
+  }
+
+  BROWSING_POINTS = bPoints;
 }
 
 function calculateDailyCustomers() {
@@ -3680,21 +3709,21 @@ function findBestRegister() {
 
 // Exact tile in front of each aisle/shelf for each product
 const PRODUCT_SHELF_TILES = {
-  cereal:  { col: 11, row: 5 },
-  soda:    { col: 14, row: 5 },
-  meat:    { col: 18, row: 5 },
-  apples:  { col: 19, row: 3 },
-  milk:    { col: 22, row: 3 },
-  bread:   { col: 7,  row: 5 },
-  chips:   { col: 10, row: 5 },
-  soup:    { col: 15, row: 5 },
-  frozen:  { col: 19, row: 5 },
-  energy:  { col: 22, row: 5 },
-  coffee:  { col: 7,  row: 8 },
-  battery: { col: 11, row: 8 },
-  meds:    { col: 14, row: 8 },
-  spice:   { col: 18, row: 8 },
-  caviar:  { col: 22, row: 8 }
+  cereal:  { col: 11, row: 3 }, // Aisle 1
+  soda:    { col: 8,  row: 2 }, // Cooler
+  meat:    { col: 15, row: 3 }, // Aisle 2
+  apples:  { col: 19, row: 9 }, // Produce
+  milk:    { col: 10, row: 2 }, // Cooler
+  bread:   { col: 11, row: 6 }, // Aisle 3
+  chips:   { col: 15, row: 6 }, // Aisle 4
+  soup:    { col: 18, row: 6 }, // Aisle 4
+  frozen:  { col: 9,  row: 2 }, // Cooler
+  energy:  { col: 7,  row: 2 }, // Cooler
+  coffee:  { col: 7,  row: 3 }, // Aisle 5
+  battery: { col: 7,  row: 6 }, // Aisle 6
+  meds:    { col: 11, row: 9 }, // Aisle 7
+  spice:   { col: 7,  row: 9 }, // Aisle 8
+  caviar:  { col: 15, row: 9 }  // Aisle 9
 };
 
 // Exact floor tile in the backroom mapping to the correct inventory cluster
