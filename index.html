@@ -3537,6 +3537,11 @@ function updateTutorialBanner() {
   const banner = document.getElementById('notification-banner');
   const bannerText = document.getElementById('banner-text');
 
+  if (!STATE.gameStarted) {
+    banner.style.display = 'none';
+    return;
+  }
+
   if (STATE.currentMap === 'store' && (STATE.tutorialBannerDismissed || STATE.tutorialStep > 15)) {
     banner.style.display = 'none';
     return;
@@ -4911,6 +4916,8 @@ function render() {
     }
   });
 
+  drawPerson(player.x, player.y, player.dir, player.isMoving, player.walkFrame, player.skinColor, player.shirtColor, player.pantsColor, player.hairColor);
+  
   // --- NIGHT PHASE DIMMING OVERLAY ---
   if (STATE.phase === 'night' && STATE.currentMap !== 'lair' && STATE.gameStarted) {
     ctx.fillStyle = 'rgba(10, 15, 30, 0.65)'; 
