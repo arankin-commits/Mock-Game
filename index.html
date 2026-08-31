@@ -5168,6 +5168,7 @@ function closeShopForNight() {
   }
 
   updateTutorialBanner(); 
+  renderUI();
   updateHUD();
 }
 
@@ -5309,6 +5310,7 @@ function startNextDayShift() {
 
   showNotification(`Day ${STATE.dayNumber} Open! New prices, layouts, and demand ratings in effect.`);
   updateTutorialBanner(); 
+  renderUI();
   updateHUD();
 }
 
@@ -5332,6 +5334,10 @@ function unlockProduct(prodId) {
 }
 
 function buyStock(prodId) {
+  if (STATE.phase === 'day' && !STATE.adminMode) {
+    return alert("Bulk orders can only be placed at night!");
+  }
+  
   const p = PRODUCTS.find(x => x.id === prodId);
   const cost = STATE.adminMode ? 0 : p.cost * 3;
   if (!STATE.adminMode && STATE.money < cost) return alert("Not enough money!");
