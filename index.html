@@ -4542,30 +4542,34 @@ function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // --- START SCREEN: Outside Storefront / Empty Building View ---
   if (!STATE.gameStarted) {
-    // Changed to 30 seconds (30000ms), showing the flicker for 0.5s (500ms)
     const isFlicker = (Date.now() % 30000 < 500);
 
     // Draw Sky
-    ctx.fillStyle = isFlicker ? '#1a1b26' : '#7aa2f7'; // Dark sky vs Bright sky
+    ctx.fillStyle = isFlicker ? '#1a1b26' : '#7aa2f7'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw Sun / Moon
     ctx.fillStyle = isFlicker ? '#c0caf5' : '#e0af68';
     ctx.beginPath(); ctx.arc(100, 80, 40, 0, Math.PI * 2); ctx.fill();
 
-    // Draw Ground (Grass & Parking Lot)
-    ctx.fillStyle = isFlicker ? '#2d3f2d' : '#9ece6a'; // Dead grass vs fresh grass
+    // Draw Ground (Grass)
+    ctx.fillStyle = isFlicker ? '#2d3f2d' : '#9ece6a'; 
     ctx.fillRect(0, 350, canvas.width, 250);
     
-    ctx.fillStyle = isFlicker ? '#1f2335' : '#3b4252'; // Asphalt color
-    ctx.fillRect(0, 420, canvas.width, 180);
+    // Draw Sidewalk (Right in front of the doors)
+    ctx.fillStyle = isFlicker ? '#3b4252' : '#cbd5e1'; 
+    ctx.fillRect(0, 420, canvas.width, 40);
 
-    // Draw Parking Lines
-    ctx.strokeStyle = isFlicker ? '#4c566a' : '#e2e7ef'; // Faded lines vs fresh white lines
+    // Draw Parking Lot Asphalt
+    ctx.fillStyle = isFlicker ? '#16192b' : '#1f2335'; 
+    ctx.fillRect(0, 460, canvas.width, 140);
+
+    // Draw Parking Lines (Expanded from x: 50 to x: 750 to add an extra spot on both sides)
+    ctx.strokeStyle = isFlicker ? '#3b4261' : '#e2e7ef'; 
     ctx.lineWidth = 4;
-    for (let px = 150; px <= 650; px += 100) {
+    for (let px = 50; px <= 750; px += 100) {
       ctx.beginPath();
-      ctx.moveTo(px, 440);
+      ctx.moveTo(px, 470);
       ctx.lineTo(px, 600);
       ctx.stroke();
     }
@@ -4573,82 +4577,70 @@ function render() {
     if (isFlicker) {
       // --- EMPTY BUILDING (Pre-Renovation) ---
       ctx.fillStyle = '#4c566a';
-      ctx.fillRect(150, 150, 400, 270); // Main building 
+      ctx.fillRect(150, 150, 400, 270); 
       
-      // Attached Storage Room
       ctx.fillStyle = '#3b4252'; 
       ctx.fillRect(550, 180, 150, 240); 
 
-      // Dilapidated Roof (Main)
       ctx.fillStyle = '#24283b';
       ctx.beginPath(); ctx.moveTo(100, 150); ctx.lineTo(350, 50); ctx.lineTo(600, 150); ctx.fill();
-      // Dilapidated Roof (Storage)
       ctx.beginPath(); ctx.moveTo(550, 180); ctx.lineTo(625, 120); ctx.lineTo(720, 180); ctx.fill();
 
-      // Boarded Windows
       ctx.fillStyle = '#1a1b26';
       ctx.fillRect(200, 220, 100, 100);
       ctx.fillRect(400, 220, 100, 100);
       
-      // Wood Boards
       ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 6;
       ctx.beginPath(); ctx.moveTo(190, 210); ctx.lineTo(310, 330); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(310, 210); ctx.lineTo(190, 330); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(390, 210); ctx.lineTo(510, 330); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(510, 210); ctx.lineTo(390, 330); ctx.stroke();
 
-      // Old Door
       ctx.fillStyle = '#2c1e16';
       ctx.fillRect(300, 270, 70, 150);
       
-      // Storage Bay Door
       ctx.fillStyle = '#1a1b26';
       ctx.fillRect(570, 250, 110, 170);
 
-      // Real Estate "For Sale" Sign (Moved to the right side of the storage room)
-      const signX = 640; 
-      ctx.fillStyle = '#4a2e18'; ctx.fillRect(signX + 70, 400, 10, 80); // Post
-      ctx.fillStyle = '#e0af68'; ctx.fillRect(signX, 310, 150, 110); // Sign Board
-      ctx.strokeStyle = '#2c1e16'; ctx.lineWidth = 2; ctx.strokeRect(signX, 310, 150, 110);
+      // Real Estate "For Sale" Sign (Moved to the left side in the grass)
+      const signX = 10; 
+      ctx.fillStyle = '#4a2e18'; ctx.fillRect(signX + 60, 400, 10, 80); // Post
+      ctx.fillStyle = '#e0af68'; ctx.fillRect(signX, 310, 130, 110); // Sign Board (Shrunk slightly to fit left grass perfectly)
+      ctx.strokeStyle = '#2c1e16'; ctx.lineWidth = 2; ctx.strokeRect(signX, 310, 130, 110);
       
-      // Sign Text (Explicitly centered and spaced to prevent cutoff)
+      // Sign Text
       ctx.fillStyle = '#1a1b26';
-      ctx.textAlign = 'center';
+      ctx.textAlign = 'center'; // Aligned to the center of the sign
       
       ctx.font = 'bold 18px monospace'; 
-      ctx.fillText("FOR SALE", signX + 75, 335);
+      ctx.fillText("FOR SALE", signX + 65, 335);
       
       ctx.font = '11px monospace'; 
-      ctx.fillText("Dimensions:", signX + 75, 360);
-      ctx.fillText("800x600 sq ft", signX + 75, 375);
+      ctx.fillText("Dimensions:", signX + 65, 360);
+      ctx.fillText("800x600 sq ft", signX + 65, 375);
       
       ctx.fillStyle = '#f7768e';
       ctx.font = 'bold 10px monospace'; 
-      ctx.fillText("+ COMES WITH", signX + 75, 395);
-      ctx.fillText("  BASEMENT!", signX + 75, 410);
+      ctx.fillText("+ COMES WITH", signX + 65, 395);
+      ctx.fillText("  BASEMENT!", signX + 65, 410);
       
-      ctx.textAlign = 'start'; // Reset for rest of rendering
+      ctx.textAlign = 'start'; 
 
     } else {
       // --- RENOVATED STOREFRONT ---
-      // Clean Building Base
       ctx.fillStyle = '#f0f3f8';
       ctx.fillRect(150, 150, 400, 270);
       
-      // Attached Storage Room
       ctx.fillStyle = '#e2e7ef';
       ctx.fillRect(550, 180, 150, 240);
 
-      // Blue Awning / Roof (Main)
       ctx.fillStyle = '#3b82f6';
       ctx.fillRect(130, 130, 440, 40);
       ctx.fillRect(130, 170, 440, 10);
       
-      // Blue Awning (Storage)
-      ctx.fillStyle = '#1d4ed8'; // Darker blue
+      ctx.fillStyle = '#1d4ed8'; 
       ctx.fillRect(540, 160, 170, 30);
 
-      // Store Sign
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(200, 60, 300, 60);
       ctx.strokeStyle = '#7aa2f7'; ctx.lineWidth = 3; ctx.strokeRect(200, 60, 300, 60);
@@ -4659,41 +4651,35 @@ function render() {
       ctx.fillText("A BIZARRE SUPERMARKET", 350, 100);
       ctx.textAlign = 'start';
 
-      // Clean Glass Windows
       ctx.fillStyle = '#7dcfff';
       ctx.fillRect(180, 220, 90, 100);
       ctx.fillRect(430, 220, 90, 100);
-      ctx.fillStyle = 'rgba(255,255,255,0.4)'; // Window Glare
+      ctx.fillStyle = 'rgba(255,255,255,0.4)'; 
       ctx.beginPath(); ctx.moveTo(190, 310); ctx.lineTo(260, 230); ctx.lineTo(240, 230); ctx.lineTo(180, 300); ctx.fill();
       ctx.beginPath(); ctx.moveTo(440, 310); ctx.lineTo(510, 230); ctx.lineTo(490, 230); ctx.lineTo(430, 300); ctx.fill();
       
-      // Window frames
       ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 4;
       ctx.strokeRect(180, 220, 90, 100);
       ctx.strokeRect(430, 220, 90, 100);
 
-      // Glass Automatic Doors
       ctx.fillStyle = '#e2e7ef';
       ctx.fillRect(300, 250, 100, 170);
       ctx.fillStyle = '#7dcfff';
       ctx.fillRect(305, 255, 40, 160);
       ctx.fillRect(355, 255, 40, 160);
       
-      // Storage Room Loading Door
       ctx.fillStyle = '#94a3b8';
       ctx.fillRect(570, 250, 110, 170);
-      // Loading door horizontal lines
       ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2;
       for (let ly = 260; ly < 420; ly += 15) {
         ctx.beginPath(); ctx.moveTo(570, ly); ctx.lineTo(680, ly); ctx.stroke();
       }
 
-      // Small decoration outside (Potted Plants)
       ctx.fillStyle = '#8c4320'; ctx.fillRect(270, 390, 30, 30); ctx.fillRect(400, 390, 30, 30);
       ctx.fillStyle = '#9ece6a'; ctx.beginPath(); ctx.arc(285, 380, 20, 0, Math.PI*2); ctx.arc(415, 380, 20, 0, Math.PI*2); ctx.fill();
     }
 
-    return; // Exit render function early so the interior game map isn't drawn!
+    return; 
   }
 
   const curMap = STATE.currentMap === 'store' ? storeMap : (STATE.currentMap === 'backroom' ? backroomMap : lairMap);
