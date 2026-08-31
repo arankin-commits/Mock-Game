@@ -3642,8 +3642,27 @@ const PRODUCT_SHELF_TILES = {
   caviar:  { col: 22, row: 8 }
 };
 
+// Exact floor tile in the backroom mapping to the correct inventory cluster
+const PRODUCT_BACKROOM_TILES = {
+  cereal:  { col: 5,  row: 3 },
+  soda:    { col: 8,  row: 3 },
+  meat:    { col: 11, row: 3 },
+  apples:  { col: 14, row: 3 },
+  milk:    { col: 17, row: 3 },
+  bread:   { col: 20, row: 3 },
+  chips:   { col: 5,  row: 6 },
+  soup:    { col: 8,  row: 6 },
+  frozen:  { col: 11, row: 6 },
+  energy:  { col: 14, row: 6 },
+  coffee:  { col: 17, row: 6 },
+  battery: { col: 20, row: 6 },
+  meds:    { col: 5,  row: 9 },
+  spice:   { col: 8,  row: 9 },
+  caviar:  { col: 11, row: 9 }
+};
+
 // The tile right in front of the backroom door on the store map
-const BACKROOM_DOOR_TILE = { col: 23, row: 9 };
+const BACKROOM_DOOR_TILE = { col: 24, row: 9 };
 
 class Employee {
   constructor(role) {
@@ -3657,6 +3676,7 @@ class Employee {
     this.isMoving = false;
     this.path = [];
     this.assignedRegisterId = null;
+    this.map = 'store'; // Track which room the employee is in
 
     // Stocker state machine properties
     this.stockerState = 'idle'; 
@@ -3681,8 +3701,10 @@ class Employee {
         if (availableReg) {
           availableReg.assignedCashier = this;
           this.assignedRegisterId = availableReg.id;
-          this.path = findPath(c, r, availableReg.cashierSlot.col, availableReg.cashierSlot.row);
+          this.path = findPath(c, r, availableReg.cashierSlot.col, availableReg.cashierSlot.row, storeMap);
         }
+      } else if (this.role === 'stocker') {
+        this.stockerState = 'idle';
       }
     }
   }
@@ -3690,14 +3712,13 @@ class Employee {
   sendHome() {
     const c = Math.floor((this.x + 8) / TILE_SIZE);
     const r = Math.floor((this.y + 8) / TILE_SIZE);
-    this.path = findPath(c, r, 11, 12);
+    this.path = findPath(c, r, 11, 12, storeMap);
   }
 
-  update() {
+  update() {    
     this.walkFrame += 0.08;
     checkVisionCone(this);
 
-    // Follow Path
     if (this.path && this.path.length > 0) {
       this.isMoving = true;
       const target = this.path[0];
@@ -3719,7 +3740,6 @@ class Employee {
       return; 
     }
 
-    // Path finished / stationary: execute role AI
     this.isMoving = false;
     this.handleRoleAI();
   }
@@ -3734,7 +3754,7 @@ class Employee {
         const c = Math.floor((this.x + 8) / TILE_SIZE);
         const r = Math.floor((this.y + 8) / TILE_SIZE);
         if (c !== reg.cashierSlot.col || r !== reg.cashierSlot.row) {
-          this.path = findPath(c, r, reg.cashierSlot.col, reg.cashierSlot.row);
+          this.path = findPath(c, r, reg.cashierSlot.col, reg.cashierSlot.row, storeMap);
         }
         const line = getActiveQueue(reg.id);
         if (line.length > 0 && line[0].state === 'at_register' && !reg.activeCustomer) {
@@ -3751,7 +3771,7 @@ class Employee {
       // STATE 1: Look for an empty shelf that has backstock available
       if (this.stockerState === 'idle') {
         let targetProd = null;
-        let lowestRatio = 2.0;
+        let lowestRatio = 1.0;
 
         for (let p of PRODUCTS) {
           if (p.unlocked && p.backStock > 0) {
@@ -3768,25 +3788,36 @@ class Employee {
 
         if (targetProd) {
           this.heldProduct = targetProd;
-          this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row);
-          this.stockerState = 'walking_to_door';
+          this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, storeMap);
+          this.stockerState = 'walking_to_door_in';
         } else {
-          // Wander if all shelves are full
+          // Wander casually if all shelves are full
           if (Math.random() < 0.02) {
             const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
-            this.path = findPath(c, r, pt.col, pt.row);
+            this.path = findPath(c, r, pt.col, pt.row, storeMap);
           }
         }
       }
       
-      // STATE 2: Arrived at backroom door
-      else if (this.stockerState === 'walking_to_door') {
+      // STATE 2: Arrived at door, teleport inside and walk to specific backstock shelf
+      else if (this.stockerState === 'walking_to_door_in') {
+        this.map = 'backroom';
+        this.x = 1 * TILE_SIZE; // Placed right inside the backroom door
+        this.y = 9 * TILE_SIZE;
+        
+        const backTarget = PRODUCT_BACKROOM_TILES[this.heldProduct.id] || { col: 5, row: 3 };
+        this.path = findPath(1, 9, backTarget.col, backTarget.row, backroomMap);
+        this.stockerState = 'walking_to_backstock';
+      }
+
+      // STATE 3: Arrived at backstock shelf
+      else if (this.stockerState === 'walking_to_backstock') {
         this.stockerState = 'grabbing_stock';
-        this.stateTimer = 60; // 1-second pause to "grab" stock
-        this.dir = 'right';
+        this.stateTimer = 45; // Pause to visually grab stock
+        this.dir = 'up';
       }
       
-      // STATE 3: Load items into stocker's hands
+      // STATE 4: Stock is collected, walk back to the exit door
       else if (this.stockerState === 'grabbing_stock') {
         this.stateTimer--;
         if (this.stateTimer <= 0) {
@@ -3797,25 +3828,40 @@ class Employee {
             
             this.heldProduct.backStock -= grabAmount;
             this.heldCount = grabAmount;
-
-            const shelfTile = PRODUCT_SHELF_TILES[this.heldProduct.id] || BROWSING_POINTS[0];
-            this.path = findPath(c, r, shelfTile.col, shelfTile.row);
-            this.stockerState = 'walking_to_shelf';
           } else {
             this.heldProduct = null;
-            this.stockerState = 'idle';
           }
+
+          const curC = Math.floor((this.x + 8) / TILE_SIZE);
+          const curR = Math.floor((this.y + 8) / TILE_SIZE);
+          this.path = findPath(curC, curR, 1, 9, backroomMap); // Walk back to backroom door
+          this.stockerState = 'walking_to_door_out';
+        }
+      }
+
+      // STATE 5: Arrived at backroom door, transition to Store Map and target real shelf
+      else if (this.stockerState === 'walking_to_door_out') {
+        this.map = 'store';
+        this.x = BACKROOM_DOOR_TILE.col * TILE_SIZE;
+        this.y = BACKROOM_DOOR_TILE.row * TILE_SIZE;
+
+        if (this.heldProduct) {
+          const shelfTile = PRODUCT_SHELF_TILES[this.heldProduct.id] || BROWSING_POINTS[0];
+          this.path = findPath(BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, shelfTile.col, shelfTile.row, storeMap);
+          this.stockerState = 'walking_to_shelf';
+        } else {
+          this.stockerState = 'idle'; // Backup fail-safe
         }
       }
       
-      // STATE 4: Arrived at shelf
+      // STATE 6: Arrived at main store aisle
       else if (this.stockerState === 'walking_to_shelf') {
         this.stockerState = 'restocking';
         this.stateTimer = 45; 
         triggerSpeechBubble(this.x, this.y, "I need to stock this", 2000, 'store');
       }
       
-      // STATE 5: Deposit items onto the shelf
+      // STATE 7: Finish the restock and reset
       else if (this.stockerState === 'restocking') {
         this.stateTimer--;
         if (this.stateTimer <= 0) {
@@ -4569,10 +4615,13 @@ function render() {
     }
   });
 
-  if (STATE.currentMap === 'store') {
-    npcs.forEach(n => {
-      drawVisionCone(n.x, n.y, n.dir);
+  // Draw NPCs based on the map they are currently in
+  npcs.forEach(n => {
+    const npcMap = n.map || 'store';
+    if (npcMap === STATE.currentMap) {
+      if (STATE.currentMap === 'store') drawVisionCone(n.x, n.y, n.dir);
       drawPerson(n.x, n.y, n.dir, n.isMoving, n.walkFrame, n.skinColor, n.shirtColor, n.pantsColor, n.hairColor);
+      
       if (!n.isEmployee && (n.state === 'in_line' || n.state === 'at_register')) {
         const qIdx = getCustomerQueueIndex(n);
         if (qIdx !== -1) {
@@ -4580,8 +4629,8 @@ function render() {
           ctx.fillText(`#${qIdx + 1} (${n.basket.length})`, n.x - 4, n.y - 4);
         }
       }
-    });
-  }
+    }
+  });
 
   drawPerson(player.x, player.y, player.dir, player.isMoving, player.walkFrame, player.skinColor, player.shirtColor, player.pantsColor, player.hairColor);
 
