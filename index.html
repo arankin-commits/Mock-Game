@@ -3546,7 +3546,7 @@ function updateTutorialBanner() {
     } else if (STATE.lairTutorialStage === 2) {
       bannerText.innerText = "LAIR TUTORIAL [2/8]: Do supervillain missions (can be done after shop is closed), and look at the active heroes and supervillain leaderboard. Click Close Feed in the top right.";
     } else if (STATE.lairTutorialStage === 3) {
-      bannerText.innerText = "LAIR TUTORIAL [3/8]: Open the menu [TAB], and click Office and Automation. Here you can siphon funds to use for villainy. Click on Tutorial and Guide";
+      bannerText.innerText = "LAIR TUTORIAL [3/8]: Open the menu [TAB], and click Office & Automation. Here you can siphon funds to use for villainy. Click on Tutorial & Guide";
     } else if (STATE.lairTutorialStage === 4) {
       bannerText.innerText = "LAIR TUTORIAL [4/8]: The villain tutorial will also now show up here for reference for the rest of the game. Click on Villain Leaderboard to view the villain leaderboard and look at the active heroes";
     } else if (STATE.lairTutorialStage === 5) {
@@ -5588,7 +5588,7 @@ function toggleMenu(defaultTab, isDeskAccess = false) {
 function switchTab(tabId) {
   if (tabId === 'store-inv' && STATE.tutorialStep === 1) { STATE.tutorialStep = 2; updateTutorialBanner(); }
   else if (tabId === 'store-upgrades' && STATE.tutorialStep === 3) { STATE.tutorialStep = 4; updateTutorialBanner(); }
-  else if (tabId === 'store-finance' && STATE.tutorialStep === 4) { STATE.tutorialStep = 4.5; updateTutorialBanner(); }
+  else if (tabId === 'store-finance' && STATE.tutorialStep === 4.5) { STATE.tutorialStep = 5; updateTutorialBanner(); }
   else if (tabId === 'game-guide' && STATE.tutorialStep === 5) { STATE.tutorialStep = 6; updateTutorialBanner(); }
   else if (tabId === 'admin-debug' && STATE.tutorialStep === 6) { STATE.tutorialStep = 7; updateTutorialBanner(); }
 
@@ -5766,7 +5766,7 @@ function renderUI() {
     const cost = STATE.adminMode ? 0 : 50;
     
     // Check if this is the stocker to attach the tutorial logic
-    const tutorialLogic = s.role === 'stocker' ? "if (STATE.tutorialStep === 4.5) { STATE.tutorialStep = 5; updateTutorialBanner(); } " : "";
+    const tutorialLogic = s.role === 'stocker' ? "if (STATE.tutorialStep === 4) { STATE.tutorialStep = 4.5; updateTutorialBanner(); } " : "";
     
     const hireBtn = `<button class="btn-action" ${limitReached || (!STATE.adminMode && STATE.money < cost) ? 'disabled' : ''} onclick="${tutorialLogic}hireStaff('${s.role}')">Hire (${STATE.adminMode ? 'FREE' : `$${cost}`})</button>`;
     const fireBtn = `<button class="btn-action btn-danger" ${s.count <= 0 ? 'disabled' : ''} onclick="fireStaff('${s.role}')">Fire</button>`;
