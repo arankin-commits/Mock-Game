@@ -998,6 +998,116 @@ const STATE = {
   rivalMilestonesSent: { top15: false, top10: false, top5: false, top3: false, top1: false, supervillain: false, vigilanteWarning: false }
 };
 
+// --- MUSIC & AUDIO ENGINE ---
+const AUDIO_TRACKS = {
+  title: new Audio('audio/title_theme.mp3'),
+  lair: new Audio('audio/lair_theme.mp3'),
+  store: [
+    new Audio('audio/store_song1.mp3'),
+    new Audio('audio/store_song2.mp3'),
+    new Audio('audio/store_song3.mp3')
+  ]
+};
+
+// Loop title and lair themes
+AUDIO_TRACKS.title.loop = true;
+AUDIO_TRACKS.lair.loop = true;
+
+const MUSIC_STATE = {
+  currentTrack: null,
+  currentMode: null, // 'title', 'lair', 'store', 'silence'
+  storeQueue: [],
+  bufferSecondsLeft: 0,
+  audioUnlocked: false
+};
+
+// Fisher-Yates shuffle helper
+function shuffleList(list) {
+  const shuffled = [...list];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function stopCurrentTrack() {
+  if (MUSIC_STATE.currentTrack) {
+    MUSIC_STATE.currentTrack.pause();
+    MUSIC_STATE.currentTrack.currentTime = 0;
+    MUSIC_STATE.currentTrack.onended = null;
+    MUSIC_STATE.currentTrack = null;
+  }
+}
+
+function playTrack(audioObj) {
+  stopCurrentTrack();
+  MUSIC_STATE.currentTrack = audioObj;
+  
+  if (MUSIC_STATE.audioUnlocked && audioObj) {
+    audioObj.play().catch(() => {
+      // Handled if browser blocks autoplay before first user interaction
+    });
+  }
+}
+
+function playNextStoreTrack() {
+  if (MUSIC_STATE.currentMode !== 'store') return;
+
+  // Refill and shuffle in sets of 3 once all 3 have played
+  if (MUSIC_STATE.storeQueue.length === 0) {
+    MUSIC_STATE.storeQueue = shuffleList([0, 1, 2]);
+  }
+
+  const nextTrackIndex = MUSIC_STATE.storeQueue.shift();
+  const nextTrack = AUDIO_TRACKS.store[nextTrackIndex];
+
+  // Set up 60-second buffer on track finish
+  nextTrack.onended = () => {
+    stopCurrentTrack();
+    MUSIC_STATE.bufferSecondsLeft = 60; // 1-minute buffer
+  };
+
+  playTrack(nextTrack);
+}
+
+function syncMusicState() {
+  let targetMode = 'store';
+
+  if (!STATE.gameStarted) {
+    targetMode = 'title';
+  } else if (STATE.currentMap === 'lair') {
+    targetMode = 'lair';
+  } else {
+    targetMode = 'store'; // Store and Backroom share the store playlist
+  }
+
+  // If entering a new scene/mode
+  if (MUSIC_STATE.currentMode !== targetMode) {
+    MUSIC_STATE.currentMode = targetMode;
+    MUSIC_STATE.bufferSecondsLeft = 0;
+
+    if (targetMode === 'title') {
+      playTrack(AUDIO_TRACKS.title);
+    } else if (targetMode === 'lair') {
+      playTrack(AUDIO_TRACKS.lair);
+    } else if (targetMode === 'store') {
+      playNextStoreTrack();
+    }
+  }
+}
+
+// Browser Autoplay Policy Unlocker
+function unlockAudioContext() {
+  if (!MUSIC_STATE.audioUnlocked) {
+    MUSIC_STATE.audioUnlocked = true;
+    syncMusicState();
+  }
+}
+
+window.addEventListener('click', unlockAudioContext, { once: true });
+window.addEventListener('keydown', unlockAudioContext, { once: true });
+  
 let storeMap = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   [1, 0, 0, 0, 0, 3, 1,11,11,11,11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -1434,6 +1544,7 @@ const titleScreen = document.getElementById('title-screen');
     STATE.gameStarted = true; // Fallback if title screen isn't used
   }
 
+  syncMusicState();
   showNotification("Game restarted successfully!");
 }
 
@@ -1449,12 +1560,8 @@ function startGameFromTitle() {
     p.stock = 0;
     p.backStock = 0;
   });  
-  // const banner = document.getElementById('notification-banner');
-  // if (banner && !STATE.tutorialBannerDismissed) {
-  //   banner.style.display = 'block';
-  // }
   
-  // showNotification("TUTORIAL: Walk up to any grocery shelf and press [E] or [SPACE] to restock!");
+  syncMusicState();
   showNotification("TUTORIAL [1/15]: Press [TAB] or walk into the office (top left) and interact [E/SPACE] with the computer to open the menu. Once in the menu, click on the Stock & Pricing");
 }
   
@@ -3625,6 +3732,7 @@ function init() {
   });
   renderUI();
   updateTutorialBanner();
+  syncMusicState();
   requestAnimationFrame(gameLoop);
   setInterval(secTimer, 1000);
 }
@@ -4347,6 +4455,14 @@ function finishCheckout(cust, reg) {
 
 let secTick = 0;
 function secTimer() {
+  // --- STORE MUSIC BUFFER TICK ---
+  if (MUSIC_STATE.currentMode === 'store' && !MUSIC_STATE.currentTrack && MUSIC_STATE.bufferSecondsLeft > 0) {
+    MUSIC_STATE.bufferSecondsLeft--;
+    if (MUSIC_STATE.bufferSecondsLeft <= 0) {
+      playNextStoreTrack();
+    }
+  }
+  
   if (!STATE.gameStarted) return;
   
   secTick++;
@@ -5173,6 +5289,8 @@ function toggleLairSecretEntrance() {
   } else {
     STATE.currentMap = 'store'; player.x = 5 * TILE_SIZE; player.y = 2 * TILE_SIZE;
   }
+  
+  syncMusicState();
 }
 
 function toggleLairTV(show) {
