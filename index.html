@@ -3718,7 +3718,7 @@ const PRODUCT_SHELF_TILES = {
   milk:    { col: 10, row: 2 }, // Cooler
   bread:   { col: 11, row: 6 }, // Aisle 3
   chips:   { col: 15, row: 6 }, // Aisle 4
-  soup:    { col: 18, row: 6 }, // Aisle 4
+  soup:    { col: 19, row: 3 }, // Aisle 4
   frozen:  { col: 9,  row: 2 }, // Cooler
   energy:  { col: 7,  row: 2 }, // Cooler
   coffee:  { col: 7,  row: 3 }, // Aisle 5
@@ -5668,7 +5668,7 @@ function renderUI() {
           <div style="font-size:9px; color:#ff9e64; margin-top:4px;">(In Backroom: ${p.backStock})</div>
         </td>
       </tr>`;
-    }} else {
+    } else {
       const isDay = STATE.phase === 'day';
       const unlockBtnState = (!STATE.adminMode && (STATE.money < unlockCost || isDay)) ? 'disabled' : '';
       const dayWarningUnlock = isDay ? `<div style="font-size:9px; color:#f7768e; margin-top:2px;">(Night Only)</div>` : '';
