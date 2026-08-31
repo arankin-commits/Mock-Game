@@ -760,6 +760,27 @@
       </div>
     </div>
 
+  <div id="modal-stocker-controls" class="modal" style="width: 480px; z-index: 60; background: #16192b; border: 2px solid var(--accent-store);">
+    <h2 style="color: var(--accent-store); font-size: 15px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+      Stocker Auto-Order Controls <button class="close-btn" onclick="closeStockerControls()">✕</button>
+    </h2>
+    <p style="font-size:11px; color:#a9b1d6; line-height: 1.4; margin-bottom: 10px;">
+      Set the amount of bulk cases (+6 items per case) your stockers will automatically purchase at the end of each day. Orders use store funds.
+    </p>
+    <div style="max-height: 280px; overflow-y: auto; margin-top: 10px; background: #121624; border: 1px solid var(--border); padding: 5px;">
+      <table style="width:100%; font-size: 11px; text-align: left;">
+        <thead>
+          <tr><th>Product</th><th>Case Cost</th><th>Auto-Order Cases</th><th>Total</th></tr>
+        </thead>
+        <tbody id="stocker-controls-table"></tbody>
+      </table>
+    </div>
+    <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 10px;">
+      <strong style="color: #f7768e; font-size: 12px;">Estimated Nightly Cost: $<span id="stocker-total-cost">0</span></strong>
+      <button class="btn-action" onclick="closeStockerControls()">Save & Close</button>
+    </div>
+  </div>
+
     <div id="tab-lair-intel" class="modal-content villain-feature" style="display:none;">
       <h4 style="color:var(--accent-evil);">Global Supervillain Syndicate Top 25</h4>
       <table style="font-size:11px;">
@@ -1034,21 +1055,21 @@ function rollDemand() {
 }
 
 let PRODUCTS = [
-  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 14, targetStock: 14, pendingTargetStock: 14, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68', backStock: 0 },
-  { id: 'soda', name: 'Toxic-Cola', popularity: 'popular', nextPopularity: 'popular', cost: 3, marketPrice: 8, price: 8, pendingPrice: 8, stock: 18, targetStock: 18, pendingTargetStock: 18, baseMax: 30, unlocked: true, unlockCost: 0, color: '#7aa2f7', backStock: 0 },
-  { id: 'meat', name: 'Mystery Meat', popularity: 'normal', nextPopularity: 'normal', cost: 10, marketPrice: 24, price: 24, pendingPrice: 24, stock: 8, targetStock: 8, pendingTargetStock: 8, baseMax: 15, unlocked: true, unlockCost: 0, color: '#f7768e', backStock: 0 },
-  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a', backStock: 0 },
-  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5', backStock: 0 },
-  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887', backStock: 0 },
-  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64', backStock: 0 },
-  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca', backStock: 0 },
-  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de', backStock: 0 },
-  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7', backStock: 0 },
-  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89', backStock: 0 },
-  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68', backStock: 0},
-  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e', backStock: 0 },
-  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8', backStock: 0 },
-  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e', backStock: 0 }
+  { id: 'cereal', name: 'Doom-Flakes', popularity: 'popular', nextPopularity: 'popular', cost: 5, marketPrice: 12, price: 12, pendingPrice: 12, stock: 15, targetStock: 14, pendingTargetStock: 14, baseMax: 20, unlocked: true, unlockCost: 0, color: '#e0af68', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'soda', name: 'Toxic-Cola', popularity: 'popular', nextPopularity: 'popular', cost: 3, marketPrice: 8, price: 8, pendingPrice: 8, stock: 18, targetStock: 18, pendingTargetStock: 18, baseMax: 30, unlocked: true, unlockCost: 0, color: '#7aa2f7', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'meat', name: 'Mystery Meat', popularity: 'normal', nextPopularity: 'normal', cost: 10, marketPrice: 24, price: 24, pendingPrice: 24, stock: 8, targetStock: 8, pendingTargetStock: 8, baseMax: 15, unlocked: true, unlockCost: 0, color: '#f7768e', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'apples', name: 'Bio-Apples', popularity: 'popular', nextPopularity: 'popular', cost: 4, marketPrice: 10, price: 10, pendingPrice: 10, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 80, color: '#9ece6a', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'milk', name: 'Synthetic Milk', popularity: 'normal', nextPopularity: 'normal', cost: 6, marketPrice: 15, price: 15, pendingPrice: 15, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 120, color: '#c0caf5', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'bread', name: 'Bunker Bread', popularity: 'normal', nextPopularity: 'normal', cost: 4, marketPrice: 11, price: 11, pendingPrice: 11, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 150, color: '#deb887', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'chips', name: 'Radioactive Chips', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 5, marketPrice: 14, price: 14, pendingPrice: 14, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 30, unlocked: false, unlockCost: 180, color: '#ff9e64', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'soup', name: 'Slime Broth Cans', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 7, marketPrice: 18, price: 18, pendingPrice: 18, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 220, color: '#73daca', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'frozen', name: 'Cryo-Dinners', popularity: 'normal', nextPopularity: 'normal', cost: 12, marketPrice: 30, price: 30, pendingPrice: 30, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 280, color: '#2ac3de', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'energy', name: 'Overcharge Tonic', popularity: 'popular', nextPopularity: 'popular', cost: 14, marketPrice: 36, price: 36, pendingPrice: 36, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 20, unlocked: false, unlockCost: 350, color: '#bb9af7', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'coffee', name: 'Midnight Espresso', popularity: 'popular', nextPopularity: 'popular', cost: 8, marketPrice: 22, price: 22, pendingPrice: 22, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 25, unlocked: false, unlockCost: 400, color: '#565f89', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'battery', name: 'Laser Power Cells', popularity: 'normal', nextPopularity: 'normal', cost: 20, marketPrice: 52, price: 52, pendingPrice: 52, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 500, color: '#e0af68', backStock: 0, autoOrder: 0, stockerEmptyAlert: false},
+  { id: 'meds', name: 'Nano-Bandages', popularity: 'normal', nextPopularity: 'normal', cost: 25, marketPrice: 65, price: 65, pendingPrice: 65, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 15, unlocked: false, unlockCost: 650, color: '#f7768e', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'spice', name: 'Dark Matter Sauce', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 30, marketPrice: 80, price: 80, pendingPrice: 80, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 12, unlocked: false, unlockCost: 800, color: '#9d7cd8', backStock: 0, autoOrder: 0, stockerEmptyAlert: false },
+  { id: 'caviar', name: 'Mutant Caviar', popularity: 'unpopular', nextPopularity: 'unpopular', cost: 45, marketPrice: 125, price: 125, pendingPrice: 125, stock: 0, targetStock: 0, pendingTargetStock: 0, baseMax: 10, unlocked: false, unlockCost: 1000, color: '#f7768e', backStock: 0, autoOrder: 0, stockerEmptyAlert: false }
 ];
 
 const MISSIONS = [
@@ -1223,6 +1244,38 @@ function sendApexSyndicateInvite() {
   
   updateUnreadCount();
   renderMailList();
+}
+
+function openStockerControls() {
+  renderStockerControls();
+  document.getElementById('modal-stocker-controls').style.display = 'flex';
+}
+
+function closeStockerControls() {
+  document.getElementById('modal-stocker-controls').style.display = 'none';
+}
+
+function updateAutoOrder(prodId, val) {
+  const p = PRODUCTS.find(x => x.id === prodId);
+  if (p) p.autoOrder = Math.max(0, parseInt(val) || 0);
+  renderStockerControls();
+}
+
+function renderStockerControls() {
+  let totalCost = 0;
+  const tbody = document.getElementById('stocker-controls-table');
+  tbody.innerHTML = PRODUCTS.filter(p => p.unlocked).map(p => {
+    const caseCost = p.cost * 3; // +6 items per case
+    const itemTotal = caseCost * p.autoOrder;
+    totalCost += itemTotal;
+    return `<tr>
+      <td><strong style="color:var(--accent-store);">${p.name}</strong></td>
+      <td>$${caseCost}</td>
+      <td><input type="number" min="0" max="99" value="${p.autoOrder}" onchange="updateAutoOrder('${p.id}', this.value)" style="width:50px;"></td>
+      <td style="color:#f7768e; font-weight:bold;">$${itemTotal}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('stocker-total-cost').innerText = totalCost;
 }
 
 function getTotalUsedStorage() {
@@ -3770,13 +3823,13 @@ class Employee {
       const c = Math.floor((this.x + 8) / TILE_SIZE);
       const r = Math.floor((this.y + 8) / TILE_SIZE);
 
-      // STATE 1: Look for an empty shelf that has backstock available
+      // STATE 1: Look for an empty shelf (Ignore items they already know are out of backstock)
       if (this.stockerState === 'idle') {
         let targetProd = null;
         let lowestRatio = 1.0;
 
         for (let p of PRODUCTS) {
-          if (p.unlocked && p.backStock > 0) {
+          if (p.unlocked && !p.stockerEmptyAlert) {
             const maxCap = Math.min(p.targetStock, p.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
             if (p.stock < maxCap) {
               const ratio = p.stock / maxCap;
@@ -3793,7 +3846,7 @@ class Employee {
           this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, storeMap);
           this.stockerState = 'walking_to_door_in';
         } else {
-          // Wander casually if all shelves are full
+          // Wander casually if all shelves are full or out of stock
           if (Math.random() < 0.02) {
             const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
             this.path = findPath(c, r, pt.col, pt.row, storeMap);
@@ -3804,7 +3857,7 @@ class Employee {
       // STATE 2: Arrived at door, teleport inside and walk to specific backstock shelf
       else if (this.stockerState === 'walking_to_door_in') {
         this.map = 'backroom';
-        this.x = 1 * TILE_SIZE; // Placed right inside the backroom door
+        this.x = 1 * TILE_SIZE; 
         this.y = 9 * TILE_SIZE;
         
         const backTarget = PRODUCT_BACKROOM_TILES[this.heldProduct.id] || { col: 5, row: 3 };
@@ -3815,11 +3868,11 @@ class Employee {
       // STATE 3: Arrived at backstock shelf
       else if (this.stockerState === 'walking_to_backstock') {
         this.stockerState = 'grabbing_stock';
-        this.stateTimer = 45; // Pause to visually grab stock
+        this.stateTimer = 45; 
         this.dir = 'up';
       }
       
-      // STATE 4: Stock is collected, walk back to the exit door
+      // STATE 4: Stock is collected (or discovered empty), walk back to the exit door
       else if (this.stockerState === 'grabbing_stock') {
         this.stateTimer--;
         if (this.stateTimer <= 0) {
@@ -3830,29 +3883,36 @@ class Employee {
             
             this.heldProduct.backStock -= grabAmount;
             this.heldCount = grabAmount;
-          } else {
-            this.heldProduct = null;
+          } else if (this.heldProduct && this.heldProduct.backStock <= 0) {
+            // Flag it as empty so the stocker doesn't check it again today
+            this.heldProduct.stockerEmptyAlert = true;
+            this.heldCount = 0;
           }
 
           const curC = Math.floor((this.x + 8) / TILE_SIZE);
           const curR = Math.floor((this.y + 8) / TILE_SIZE);
-          this.path = findPath(curC, curR, 1, 9, backroomMap); // Walk back to backroom door
+          this.path = findPath(curC, curR, 1, 9, backroomMap); 
           this.stockerState = 'walking_to_door_out';
         }
       }
 
-      // STATE 5: Arrived at backroom door, transition to Store Map and target real shelf
+      // STATE 5: Arrived at backroom door, transition to Store Map
       else if (this.stockerState === 'walking_to_door_out') {
         this.map = 'store';
         this.x = BACKROOM_DOOR_TILE.col * TILE_SIZE;
         this.y = BACKROOM_DOOR_TILE.row * TILE_SIZE;
 
-        if (this.heldProduct) {
+        if (this.heldProduct && this.heldCount > 0) {
           const shelfTile = PRODUCT_SHELF_TILES[this.heldProduct.id] || BROWSING_POINTS[0];
           this.path = findPath(BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, shelfTile.col, shelfTile.row, storeMap);
           this.stockerState = 'walking_to_shelf';
+        } else if (this.heldProduct && this.heldCount === 0) {
+          // Found it empty inside! Announce it on the floor and go idle
+          triggerSpeechBubble(this.x, this.y, `${this.heldProduct.name} backstock is empty!`, 3500, 'store');
+          this.heldProduct = null;
+          this.stockerState = 'idle';
         } else {
-          this.stockerState = 'idle'; // Backup fail-safe
+          this.stockerState = 'idle';
         }
       }
       
@@ -3875,7 +3935,6 @@ class Employee {
             this.heldProduct.stock += placed;
             this.heldCount -= placed;
 
-            // Return extra unused items to backstock
             if (this.heldCount > 0) {
               this.heldProduct.backStock += this.heldCount;
             }
@@ -4740,6 +4799,7 @@ function handleInteraction() {
       if (STATE.heldBackstock.product && STATE.heldBackstock.product === prod) {
         if (STATE.heldBackstock.count > 0) {
           prod.backStock += STATE.heldBackstock.count;
+          prod.stockerEmptyAlert = false;
           triggerSpeechBubble(player.x, player.y, `Returned ${STATE.heldBackstock.count}x ${prod.name}`, 2500, 'backroom');
           STATE.heldBackstock.product = null;
           STATE.heldBackstock.count = 0;
@@ -5018,6 +5078,32 @@ function closeShopForNight() {
   let wages = STAFF.reduce((acc, s) => acc + (s.count * s.wage), 0);
   STATE.money -= wages; 
   STATE.dayCosts = wages;
+
+  // --- Auto-Order Stocker Logic ---
+  let autoOrderCost = 0;
+  PRODUCTS.forEach(p => {
+    if (p.unlocked && p.autoOrder > 0) {
+      const caseCost = p.cost * 3;
+      for (let i = 0; i < p.autoOrder; i++) {
+        if (STATE.adminMode || STATE.money >= caseCost) {
+          const maxBackroom = STORE_TIERS[STATE.storeTier - 1].backroomStorage;
+          const currentBackStock = getTotalBackStock();
+          if (maxBackroom - currentBackStock >= 6) {
+            if (!STATE.adminMode) STATE.money -= caseCost;
+            autoOrderCost += STATE.adminMode ? 0 : caseCost;
+            p.backStock += 6;
+          } else {
+            break; // Stop ordering if the storage room is full
+          }
+        } else {
+          break; // Stop ordering if out of money
+        }
+      }
+    }
+    // Reset the "empty" alert flag for the new day so the stocker checks the shelf again
+    p.stockerEmptyAlert = false;
+  });
+  STATE.dayRestockCosts += autoOrderCost;
 
   let cloneMsg = "No decoy clone used.";
   if (STATE.robotTier > 0) {
@@ -5481,6 +5567,10 @@ function renderUI() {
     const unlockCost = STATE.adminMode ? 0 : p.unlockCost;
 
     if (p.unlocked) {
+      const isDay = STATE.phase === 'day';
+      const bulkBtnState = (!STATE.adminMode && (STATE.money < bulkCost || isDay)) ? 'disabled' : '';
+      const dayWarning = isDay ? `<div style="font-size:9px; color:#f7768e; margin-top:2px;">(Night Only)</div>` : '';
+
       return `<tr>
         <td><strong>${p.name}</strong></td>
         <td><span class="tag-pop ${tagClassToday}">${p.popularity.toUpperCase()}</span></td>
@@ -5495,7 +5585,8 @@ function renderUI() {
           <div style="font-size:9px; color:#7a819b; margin-top:2px;">(Aisle Pool: ${totalTargetSum} / ${maxStorage})</div>
         </td>
         <td>
-          <button class="btn-action" onclick="if (STATE.tutorialStep === 2) { STATE.tutorialStep = 3; updateTutorialBanner(); } buyStock('${p.id}')">Bulk +6 (${STATE.adminMode ? 'FREE' : `$${bulkCost}`})</button>
+          <button class="btn-action" ${bulkBtnState} onclick="if (STATE.tutorialStep === 2) { STATE.tutorialStep = 3; updateTutorialBanner(); } buyStock('${p.id}')">Bulk +6 (${STATE.adminMode ? 'FREE' : `$${bulkCost}`})</button>
+          ${dayWarning}
           <div style="font-size:9px; color:#ff9e64; margin-top:4px;">(In Backroom: ${p.backStock})</div>
         </td>
       </tr>`;
@@ -5588,12 +5679,13 @@ function renderUI() {
     const cost = STATE.adminMode ? 0 : 50;
     const hireBtn = `<button class="btn-action" ${limitReached || (!STATE.adminMode && STATE.money < cost) ? 'disabled' : ''} onclick="hireStaff('${s.role}')">Hire (${STATE.adminMode ? 'FREE' : `$${cost}`})</button>`;
     const fireBtn = `<button class="btn-action btn-danger" ${s.count <= 0 ? 'disabled' : ''} onclick="fireStaff('${s.role}')">Fire</button>`;
+    const controlsBtn = (s.role === 'stocker' && s.count > 0) ? `<button class="btn-action" style="margin-left: 30px; background:var(--accent-store); color:#120d1c;" onclick="openStockerControls()">Stocker Controls</button>` : '';
 
     return `<tr>
       <td>${s.name}</td>
       <td>${s.count} ${isCashier ? `(Max: ${maxCashiersAllowed})` : ''}</td>
       <td>$${s.wage}/day</td>
-      <td><div style="display:flex; gap:6px;">${hireBtn} ${fireBtn}</div></td>
+      <td><div style="display:flex; gap:6px;">${hireBtn} ${fireBtn} ${controlsBtn}</div></td>
     </tr>`;
   }).join('');
 
