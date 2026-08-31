@@ -492,10 +492,10 @@
 
 <div id="game-container">
   <!-- Title Screen Overlay -->
-  <div id="title-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: space-between; align-items: center; z-index: 160; padding: 40px 20px;">
+  <!-- <div id="title-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: space-between; align-items: center; z-index: 160; padding: 40px 20px;"> -->
+  <div id="title-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; z-index: 160; padding-bottom: 50px;">
     <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 40px;">
       <h1 style="color: var(--accent-store); font-size: 28px; text-align: center; text-shadow: 0 0 10px rgba(122,162,247,0.5);">A Bizzare Supermarket</h1>
-      <p style="color: var(--text); font-size: 12px;"></p>
     </div>
     <button class="btn-action" style="padding: 12px 32px; font-size: 14px; margin-bottom: 30px;" onclick="startGameFromTitle()">Play Game</button>
   </div>
@@ -4548,6 +4548,114 @@ function drawPerson(x, y, dir, isMoving, walkFrame, skinColor, shirtColor, pants
 
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // --- START SCREEN: Outside Storefront / Empty Building View ---
+  if (!STATE.gameStarted) {
+    const isFlicker = (Date.now() % 5000 < 500);
+
+    // Draw Sky
+    ctx.fillStyle = isFlicker ? '#1a1b26' : '#7aa2f7'; // Dark sky vs Bright sky
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw Sun / Moon
+    ctx.fillStyle = isFlicker ? '#c0caf5' : '#e0af68';
+    ctx.beginPath(); ctx.arc(100, 80, 40, 0, Math.PI * 2); ctx.fill();
+
+    // Draw Ground (Grass & Sidewalk)
+    ctx.fillStyle = isFlicker ? '#2d3f2d' : '#9ece6a'; // Dead grass vs fresh grass
+    ctx.fillRect(0, 350, canvas.width, 250);
+    ctx.fillStyle = isFlicker ? '#3b4252' : '#cbd5e1'; // Cracked sidewalk vs clean
+    ctx.fillRect(0, 420, canvas.width, 180);
+
+    if (isFlicker) {
+      // --- EMPTY BUILDING (Pre-Renovation) ---
+      // Building Base
+      ctx.fillStyle = '#4c566a';
+      ctx.fillRect(150, 150, 500, 270);
+      
+      // Dilapidated Roof
+      ctx.fillStyle = '#24283b';
+      ctx.beginPath(); ctx.moveTo(100, 150); ctx.lineTo(400, 50); ctx.lineTo(700, 150); ctx.fill();
+      
+      // Boarded Windows
+      ctx.fillStyle = '#1a1b26';
+      ctx.fillRect(200, 220, 100, 100);
+      ctx.fillRect(500, 220, 100, 100);
+      // Wood Boards
+      ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(190, 210); ctx.lineTo(310, 330); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(310, 210); ctx.lineTo(190, 330); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(490, 210); ctx.lineTo(610, 330); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(610, 210); ctx.lineTo(490, 330); ctx.stroke();
+      
+      // Old Door
+      ctx.fillStyle = '#2c1e16';
+      ctx.fillRect(360, 270, 80, 150);
+
+      // Real Estate "For Sale" Sign
+      ctx.fillStyle = '#4a2e18'; ctx.fillRect(620, 420, 10, 80); // Post
+      ctx.fillStyle = '#e0af68'; ctx.fillRect(550, 340, 150, 100); // Sign Board
+      ctx.strokeStyle = '#2c1e16'; ctx.lineWidth = 2; ctx.strokeRect(550, 340, 150, 100);
+      
+      // Sign Text
+      ctx.fillStyle = '#1a1b26';
+      ctx.font = 'bold 18px monospace'; ctx.fillText("FOR SALE", 585, 365);
+      ctx.font = '11px monospace'; ctx.fillText("Dimensions:", 560, 390);
+      ctx.fillText("800x600 sq ft", 560, 405);
+      
+      ctx.fillStyle = '#f7768e';
+      ctx.font = 'bold 10px monospace'; ctx.fillText("+ COMES WITH", 555, 425);
+      ctx.fillText("  BASEMENT!", 555, 435);
+
+    } else {
+      // --- RENOVATED STOREFRONT ---
+      // Clean Building Base
+      ctx.fillStyle = '#f0f3f8';
+      ctx.fillRect(150, 150, 500, 270);
+      
+      // Blue Awning / Roof
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(130, 130, 540, 40);
+      ctx.fillRect(130, 170, 540, 10);
+      
+      // Store Sign
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(200, 60, 400, 60);
+      ctx.strokeStyle = '#7aa2f7'; ctx.lineWidth = 3; ctx.strokeRect(200, 60, 400, 60);
+      
+      ctx.fillStyle = '#7aa2f7';
+      ctx.font = 'bold 28px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText("A BIZARRE SUPERMARKET", 400, 100);
+      ctx.textAlign = 'start';
+
+      // Clean Glass Windows
+      ctx.fillStyle = '#7dcfff';
+      ctx.fillRect(200, 220, 100, 100);
+      ctx.fillRect(500, 220, 100, 100);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)'; // Window Glare
+      ctx.beginPath(); ctx.moveTo(210, 310); ctx.lineTo(290, 230); ctx.lineTo(270, 230); ctx.lineTo(200, 300); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(510, 310); ctx.lineTo(590, 230); ctx.lineTo(570, 230); ctx.lineTo(500, 300); ctx.fill();
+      
+      // Window frames
+      ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 4;
+      ctx.strokeRect(200, 220, 100, 100);
+      ctx.strokeRect(500, 220, 100, 100);
+
+      // Glass Automatic Doors
+      ctx.fillStyle = '#e2e7ef';
+      ctx.fillRect(350, 250, 100, 170);
+      ctx.fillStyle = '#7dcfff';
+      ctx.fillRect(355, 255, 40, 160);
+      ctx.fillRect(405, 255, 40, 160);
+      
+      // Small decoration outside (Potted Plants)
+      ctx.fillStyle = '#8c4320'; ctx.fillRect(310, 390, 30, 30); ctx.fillRect(460, 390, 30, 30);
+      ctx.fillStyle = '#9ece6a'; ctx.beginPath(); ctx.arc(325, 380, 20, 0, Math.PI*2); ctx.arc(475, 380, 20, 0, Math.PI*2); ctx.fill();
+    }
+
+    return; // Exit render function early so the interior game map isn't drawn!
+  }
+
   const curMap = STATE.currentMap === 'store' ? storeMap : (STATE.currentMap === 'backroom' ? backroomMap : lairMap);
 
   let unlockedList = PRODUCTS.filter(p => p.unlocked);
