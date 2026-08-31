@@ -492,11 +492,7 @@
 
 <div id="game-container">
   <!-- Title Screen Overlay -->
-  <!-- <div id="title-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: space-between; align-items: center; z-index: 160; padding: 40px 20px;"> -->
   <div id="title-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; z-index: 160; padding-bottom: 50px;">
-    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 40px;">
-      <h1 style="color: var(--accent-store); font-size: 28px; text-align: center; text-shadow: 0 0 10px rgba(122,162,247,0.5);">A Bizzare Supermarket</h1>
-    </div>
     <button class="btn-action" style="padding: 12px 32px; font-size: 14px; margin-bottom: 30px;" onclick="startGameFromTitle()">Play Game</button>
   </div>
   
@@ -526,6 +522,8 @@
 
   <canvas id="gameCanvas" width="800" height="600"></canvas>
   <div id="action-prompt">[E / SPACE] Interact</div>
+
+  <div id="hover-tooltip" style="position: absolute; background: rgba(15, 17, 26, 0.95); border: 1px solid var(--accent-store); color: #fff; font-size: 10px; padding: 6px 10px; border-radius: 4px; pointer-events: none; z-index: 300; display: none; white-space: nowrap; box-shadow: 0 4px 8px rgba(0,0,0,0.8);"></div>
 
   <!-- Hero Dossier Modal -->
   <div id="modal-hero-dossier">
@@ -1950,21 +1948,10 @@ const ctx = canvas.getContext('2d');
 const miniCanvas = document.getElementById('minigame-canvas');
 const miniCtx = miniCanvas.getContext('2d');
 
-canvas.addEventListener('mousedown', (e) => {
+document.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-
-  for (let i = speechBubbles.length - 1; i >= 0; i--) {
-    const b = speechBubbles[i];
-    if (b.map === STATE.currentMap && b.closeBtnBounds) {
-      const cb = b.closeBtnBounds;
-      if (mx >= cb.x && mx <= cb.x + cb.w && my >= cb.y && my <= cb.y + cb.h) {
-        speechBubbles.splice(i, 1);
-        break;
-      }
-    }
-  }
+  STATE.mouseX = e.clientX - rect.left;
+  STATE.mouseY = e.clientY - rect.top;
 });
 
 canvas.addEventListener('mousemove', (e) => {
@@ -4924,20 +4911,24 @@ function render() {
     }
   });
 
-  drawPerson(player.x, player.y, player.dir, player.isMoving, player.walkFrame, player.skinColor, player.shirtColor, player.pantsColor, player.hairColor);
-
-  // Backroom hover tooltip display
-  if (STATE.currentMap === 'backroom' && STATE.backroomHoverText) {
-    ctx.fillStyle = 'rgba(15, 17, 26, 0.9)';
-    ctx.strokeStyle = '#7aa2f7';
-    ctx.lineWidth = 1;
-    ctx.fillRect(STATE.mouseX + 10, STATE.mouseY - 25, ctx.measureText(STATE.backroomHoverText).width + 16, 22);
-    ctx.strokeRect(STATE.mouseX + 10, STATE.mouseY - 25, ctx.measureText(STATE.backroomHoverText).width + 16, 22);
-
-    ctx.fillStyle = '#fff';
-    ctx.font = '10px monospace';
-    ctx.fillText(STATE.backroomHoverText, STATE.mouseX + 18, STATE.mouseY - 11);
-    STATE.backroomHoverText = null;
+  // --- NIGHT PHASE DIMMING OVERLAY ---
+  if (STATE.phase === 'night' && STATE.currentMap !== 'lair' && STATE.gameStarted) {
+    ctx.fillStyle = 'rgba(10, 15, 30, 0.65)'; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  
+  // Backroom hover tooltip display (HTML Overlay)
+  const tooltipEl = document.getElementById('hover-tooltip');
+  if (tooltipEl) {
+    if (STATE.currentMap === 'backroom' && STATE.backroomHoverText) {
+      tooltipEl.style.display = 'block';
+      tooltipEl.innerText = STATE.backroomHoverText;
+      tooltipEl.style.left = (STATE.mouseX + 15) + 'px';
+      tooltipEl.style.top = (STATE.mouseY + 46 - 30) + 'px'; 
+      STATE.backroomHoverText = null; 
+    } else {
+      tooltipEl.style.display = 'none';
+    }
   }
 }
 
