@@ -1643,11 +1643,11 @@ function respondApexInvite(accepted) {
     rivalVillains = rivalVillains.filter(v => !v.name.includes("Dr. Malevolent"));
 
     showNotification("☣ APEX PURGE PACT ACCEPTED: You have cut ties with standard syndicates. Your rival has abandoned you.");
-    (butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
+    triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
   } else {
     STATE.apexInviteDeclined = true;
     showNotification("❌ INVITATION DECLINED: You remain part of the standard syndicates. The Apex Purge watches in silence.");
-    (butler.x, butler.y, `Jarvis: "A bold refusal, master. We keep our standard syndicate connections for now."`, 5000, 'lair');
+    triggerSpeechBubble(butler.x, butler.y, `Jarvis: "A bold refusal, master. We keep our standard syndicate connections for now."`, 5000, 'lair');
   }
 
   renderMailList();
@@ -1816,7 +1816,7 @@ function checkCasualtyStatusEscalation() {
   if (STATE.totalCasualties >= 25 && !STATE.isSupervillain) {
     STATE.isSupervillain = true;
     showNotification("⚠️ WARNING: CASUALTIES EXCEEDED 25! Supervillain status unlocked.");
-    (butler.x, butler.y, `Jarvis: "Master, casualties have exceeded 25. You are now designated a SUPERVILLAIN. The Apex Purge Syndicate is watching."`, 5000, 'lair');
+    triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master, casualties have exceeded 25. You are now designated a SUPERVILLAIN. The Apex Purge Syndicate is watching."`, 5000, 'lair');
     
     // Stage Apex Purge invite for next morning
     stagingPendingMail('apexInvite');
@@ -3516,9 +3516,6 @@ function adminSkipToDay50() {
 
 function adminSetCasualties(val) {
   STATE.totalCasualties = Math.max(0, parseInt(val) || 0);
-  if (STATE.totalCasualties >= 25 && !STATE.isSupervillain) {
-    STATE.isSupervillain = true;
-  }
   checkCasualtyStatusEscalation();
   updateHUD();
 }
@@ -3656,7 +3653,7 @@ function updateTutorialBanner() {
     return;
   }
 
-  if (STATE.currentMap === 'lair' && STATE.lairTutorialStage > 8) {
+  if (STATE.currentMap === 'lair' && (STATE.tutorialBannerDismissed || STATE.lairTutorialStage > 8)) {
     banner.style.display = 'none';
     return;
   }
@@ -5281,6 +5278,7 @@ function toggleLairSecretEntrance() {
     if (!STATE.hasEnteredLair) {
       STATE.hasEnteredLair = true;
       STATE.lairTutorialStage = 1;
+      STATE.tutorialBannerDismissed = false;
       document.getElementById('hud-infamy-container').style.display = 'flex';
       document.getElementById('hud-suspicion-container').style.display = 'flex';
       document.getElementById('hud-lair-money-container').style.display = 'flex';
