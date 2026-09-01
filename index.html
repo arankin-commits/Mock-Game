@@ -1408,7 +1408,7 @@ function sendApexSyndicateInvite() {
 
   rivalMail.unshift({
     from: "☣ APEX PURGE SYNDICATE (INVITATION)",
-    text: "We are the Apex Purge. We do not play hero games; we cull weak villains and hunt targets ruthlessly. You have crossed 25 casualties. If you wish to join our ranks, accept this pact. Warning: Regular villains will distrust and fear you.",
+    text: "We are the Apex Purge. We do not play hero games; we cull weak villains and hunt targets ruthlessly. You have crossed 25 casualties. If you wish to join our ranks, accept this pact.",
     day: STATE.dayNumber,
     read: false,
     isInvite: true
@@ -1773,20 +1773,19 @@ function reassignAllHeroNemeses() {
 function processDailyVillainAttrition() {
   for (let i = rivalVillains.length - 1; i >= 0; i--) {
     const v = rivalVillains[i];
+    let deathChance = 0;
     if (v.name.includes("Dr. Malevolent")) continue;
 
-    if (Math.random() < 0.25) v.isSupervillain = true;
+    if (Math.random() < 0.05) v.isSupervillain = true;
 
-    if (v.isSupervillain && v.infamy <= 25000) {
-      let deathChance = 0;
-      if (v.infamy > 20000) deathChance = 0.01;
+    if (v.isSupervillain) {
+      if (v.infamy <= 25000) deathChance = 0;
+      else if (v.infamy > 20000) deathChance = 0.01;
       else if (v.infamy > 15000) deathChance = 0.03;
       else if (v.infamy > 10000) deathChance = 0.05;
       else if (v.infamy > 5000) deathChance = 0.10;
       else if (v.infamy > 1000) deathChance = 0.25;
       else deathChance = 0.50;
-
-      if (STATE.apexSyndicateMember) deathChance += 0.20;
 
       if (Math.random() < deathChance) {
         rivalVillains.splice(i, 1);
@@ -1798,7 +1797,7 @@ function processDailyVillainAttrition() {
             id: Date.now() + Math.random(),
             name: newName,
             infamy: Math.floor(200 + Math.random() * 1200),
-            isSupervillain: Math.random() < 0.30
+            isSupervillain: Math.random() < 0.05
           });
         }
       }
