@@ -1570,8 +1570,11 @@ function acceptApexInvite() {
   STATE.apexPurgeJoined = true;
   STATE.didAnyVillainy = true;
 
-  // 1. Rival stops seeing you as a rival (remove Dr. Malevolent or modify rivalry triggers)
-  rivalVillains = rivalVillains.filter(v => !v.name.includes("Dr. Malevolent"));
+  // 1. Rival stops seeing you as a rival
+  const rival = rivalVillains.find(v => v.name.includes("Dr. Malevolent"));
+  if (rival) {
+    rival.name = "Dr. Malevolent";
+  }
 
   // 2. Removed from standard leaderboard (handled in sorting/display)
   // 3. Cannot ally with other villains (disable regular syndicate interactions)
@@ -1640,7 +1643,10 @@ function respondApexInvite(accepted) {
     STATE.didAnyVillainy = true;
 
     // Remove Dr. Malevolent as a rival and isolate from standard syndicate leaderboard
-    rivalVillains = rivalVillains.filter(v => !v.name.includes("Dr. Malevolent"));
+    const rival = rivalVillains.find(v => v.name.includes("Dr. Malevolent"));
+    if (rival) {
+      rival.name = "Dr. Malevolent";
+    }
 
     showNotification("☣ APEX PURGE PACT ACCEPTED: You have cut ties with standard syndicates. Your rival has abandoned you.");
     triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
@@ -1823,6 +1829,8 @@ function checkCasualtyStatusEscalation() {
 }
 
 function checkRivalRankTriggers() {
+  if (STATE.apexPurgeJoined) return;
+  
   const syndicate = getSortedSyndicateLeaderboard();
   const playerRank = syndicate.findIndex(s => s.isPlayer) + 1;
   const rivalObj = rivalVillains.find(v => v.name.includes("Dr. Malevolent"));
