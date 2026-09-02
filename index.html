@@ -4111,9 +4111,9 @@ class Employee {
       // 1. Check for actual work: Unlocked, has backstock, AND shelf has less than 15 items
       const needsStocking = PRODUCTS.filter(p => p.unlocked && p.backStock > 0 && p.stock < 15);
 
-      if (this.stockerState === 'searching' || this.stockerState === 'break_time' || !this.stockerState) {
+      if (this.stockerState === 'searching' || this.stockerState === 'idle' || !this.stockerState) {
         if (needsStocking.length > 0) {
-          // Put the phone down, work to do!
+          // Work to do!
           this.heldProduct = needsStocking[Math.floor(Math.random() * needsStocking.length)];
           this.stockerState = 'walking_to_door_in';
           
@@ -4122,51 +4122,29 @@ class Employee {
           } else {
             // Already in backroom, skip straight to the shelf
             this.stockerState = 'walking_to_shelf';
-            // FIX: Use BACKROOM coordinates here!
-            const pt = PRODUCT_BACKROOM_TILES[this.heldProduct.id]; 
-            this.path = findPath(c, r, pt.col, pt.row, backroomMap);
+            const pt = PRODUCT_BACKROOM_TILES[this.heldProduct.id];
+            if (pt) this.path = findPath(c, r, pt.col, pt.row, backroomMap);
           }
         } else {
           // NO WORK! Go into Break Room mode.
-          this.stockerState = 'break_time';
+          this.stockerState = 'break_time_in';
           if (this.map === 'store') {
-            // Walk to the backroom
             this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, storeMap);
-          } else if (this.map === 'backroom') {
-            // Path to the break table area 
-            const breakCol = 2; 
-            const breakRow = 6;
-            
-            if (c !== breakCol || r !== breakRow) {
-              if (!this.path || this.path.length === 0) {
-                this.path = findPath(c, r, breakCol, breakRow, backroomMap);
-              }
-            } else {
-              // Sitting at the table chilling
-              if (Math.random() < 0.04) {
-                const msgs = [
-                  "*Scrolling social media*", 
-                  "*Playing mobile game*", 
-                  "I rolled a natural 20!", 
-                  "Wake me up when a customer buys something...",
-                  "*Texting*"
-                ];
-                triggerSpeechBubble(this.x, this.y, msgs[Math.floor(Math.random() * msgs.length)], 2500, 'backroom');
-              }
-            }
+          } else {
+            this.stockerState = 'break_time';
+            this.path = findPath(c, r, 2, 6, backroomMap); // Path to the backroom table
           }
         }
       }
       else if (this.stockerState === 'walking_to_door_in') {
         if (!this.path || this.path.length === 0) {
           this.map = 'backroom';
-          this.x = BACKROOM_DOOR_TILE.col * TILE_SIZE;
-          this.y = BACKROOM_DOOR_TILE.row * TILE_SIZE;
+          this.x = 1 * TILE_SIZE; // Spawn at the inside of the backroom door
+          this.y = 9 * TILE_SIZE;
           this.stockerState = 'walking_to_shelf';
           
-          // FIX: Use BACKROOM coordinates here!
           const pt = PRODUCT_BACKROOM_TILES[this.heldProduct.id];
-          if (pt) this.path = findPath(BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, pt.col, pt.row, backroomMap);
+          if (pt) this.path = findPath(1, 9, pt.col, pt.row, backroomMap);
         }
       }
       else if (this.stockerState === 'walking_to_shelf') {
@@ -4175,7 +4153,7 @@ class Employee {
              this.heldProduct.backStock--;
              this.heldCount = 1; // Picked up a box
              this.stockerState = 'walking_to_door_out';
-             this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, backroomMap);
+             this.path = findPath(c, r, 1, 9, backroomMap); // Path back to the backroom door
           } else {
              // Edge Case: Backstock ran out while walking to it!
              this.stockerState = 'searching'; 
@@ -4188,6 +4166,7 @@ class Employee {
           this.x = BACKROOM_DOOR_TILE.col * TILE_SIZE;
           this.y = BACKROOM_DOOR_TILE.row * TILE_SIZE;
           this.stockerState = 'restocking_store';
+          
           const pt = PRODUCT_SHELF_TILES[this.heldProduct.id];
           if (pt) this.path = findPath(BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, pt.col, pt.row, storeMap);
         }
@@ -4204,6 +4183,40 @@ class Employee {
           this.heldProduct = null;
           this.heldCount = 0;
           this.stockerState = 'searching'; // Re-evaluates next frame to see if they can go on break
+        }
+      }
+      else if (this.stockerState === 'break_time_in') {
+        // FIX: The missing logic that actually lets them into the backroom for break!
+        if (!this.path || this.path.length === 0) {
+          this.map = 'backroom';
+          this.x = 1 * TILE_SIZE;
+          this.y = 9 * TILE_SIZE;
+          this.stockerState = 'break_time';
+          this.path = findPath(1, 9, 2, 6, backroomMap);
+        }
+      }
+      else if (this.stockerState === 'break_time') {
+        if (needsStocking.length > 0) {
+          // Interrupt break! A customer bought something!
+          this.heldProduct = needsStocking[Math.floor(Math.random() * needsStocking.length)];
+          this.stockerState = 'walking_to_shelf';
+          
+          const pt = PRODUCT_BACKROOM_TILES[this.heldProduct.id];
+          if (pt) this.path = findPath(c, r, pt.col, pt.row, backroomMap);
+        } else {
+          // Sitting at the table chilling
+          if (!this.path || this.path.length === 0) {
+            if (Math.random() < 0.04) {
+              const msgs = [
+                "*Scrolling social media*", 
+                "*Playing mobile game*", 
+                "I rolled a natural 20!", 
+                "Wake me up when a customer buys something...",
+                "*Texting*"
+              ];
+              triggerSpeechBubble(this.x, this.y, msgs[Math.floor(Math.random() * msgs.length)], 2500, 'backroom');
+            }
+          }
         }
       }
     }
