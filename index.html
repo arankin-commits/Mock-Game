@@ -637,6 +637,12 @@
         <div class="report-line"><span>Total Finished:</span><span id="rep-finished">0</span></div>
         <div class="report-line"><span>Items Sold:</span><span id="rep-items-sold">0</span></div>
         <div class="report-line"><span>Price Satisfaction:</span><span id="rep-satisfaction">100%</span></div>
+
+        <!-- NEW: Admin Walkout Reasons -->
+        <div id="admin-walkout-reasons" style="display:none; margin-top:8px; padding:6px; background:#121624; border:1px solid #f7768e; border-radius:4px; max-height:80px; overflow-y:auto;">
+          <strong style="color:#f7768e; font-size:11px;">Admin: Walkout Log</strong>
+          <ul id="rep-reasons-list" style="color:#c0caf5; font-size:10px; margin-left:14px; margin-top:4px;"></ul>
+        </div>
       </div>
     </div>
 
@@ -980,6 +986,7 @@ const STATE = {
   mouseX: 0,
   mouseY: 0,
   heldBackstock: { product: null, count: 0 },
+  dayWalkoutReasons: [],
 
   // Supervillain & Casualty Tracking
   totalCasualties: 0,
@@ -1530,6 +1537,7 @@ function restartGame() {
   STATE.customersServedToday = 0;
   STATE.dayWalkouts = 0;
   STATE.customersSpawnedToday = 0;
+  STATE.dayWalkoutReasons = [];
   STATE.dayTotalCustomers = calculateDailyCustomers();
 
   // Reset Mail & Rival Milestones
@@ -1579,6 +1587,7 @@ function startGameFromTitle() {
 
   STATE.dayNumber = 0;
   STATE.phase = 'night';
+  STATE.dayWalkoutReasons = [];
 
   PRODUCTS.forEach(p => {
     p.stock = 0;
@@ -4319,7 +4328,7 @@ class Customer {
 
           if (unlockedProds.length === 0) {
             triggerSpeechBubble(this.x, this.y, "Nothing left on the shelves!", 1500, 'store');
-            this.rageQuit();
+            this.rageQuit("Store Empty / No Products");
             return;
           }
 
@@ -4329,7 +4338,7 @@ class Customer {
             triggerSpeechBubble(this.x, this.y, `They're out of ${picked.name}!`, 1500, 'store');
             this.dislikedCount++;
             if (this.dislikedCount >= 3) {
-              this.rageQuit();
+              this.rageQuit(`Out of Stock: ${picked.name}`);
             }
             return;
           }
@@ -4364,7 +4373,7 @@ class Customer {
             triggerSpeechBubble(this.x, this.y, `$${picked.price} for ${picked.name}?! Ripoff!`, 1500, 'store');
 
             if (this.dislikedCount >= 3 || (this.basket.length === 0 && this.dislikedCount >= this.itemGoal)) {
-              this.rageQuit();
+              this.rageQuit(`Price Too High: ${picked.name}`);
               return;
             }
             return;
@@ -4376,7 +4385,7 @@ class Customer {
         }
       } else {
         if (this.basket.length === 0) {
-          this.rageQuit();
+          this.rageQuit("Could not find requested items");
           return;
         }
         this.state = 'approaching_register';
@@ -4400,10 +4409,11 @@ class Customer {
     }
   }
 
-  rageQuit() {
+  rageQuit(reason = "Unknown Reason") {
     this.state = 'leaving';
     this.joinedQueueTime = Infinity;
     STATE.dayWalkouts++;
+    STATE.dayWalkoutReasons.push(reason); // <-- Logs the exact reason
     STATE.suspicion = Math.min(100, STATE.suspicion + 5);
     if (STATE.suspicion >= 100) {
       STATE.suspicionReached100 = true;
@@ -5069,17 +5079,19 @@ function render() {
     drawPerson(butler.x, butler.y, butler.dir, butler.isMoving, butler.walkFrame, butler.skinColor, butler.shirtColor, butler.pantsColor, butler.hairColor);
   }
 
-  REGISTERS.forEach(reg => {
-    if (reg.activeCustomer) {
-      const rx = reg.tile.col * TILE_SIZE;
-      const ry = (reg.tile.row - 1) * TILE_SIZE;
-      ctx.fillStyle = '#1a1b26';
-      ctx.fillRect(rx - 6, ry + 16, 44, 8);
-      ctx.fillStyle = '#9ece6a';
-      const pct = Math.min(1, reg.checkoutProgress / reg.checkoutDuration);
-      ctx.fillRect(rx - 5, ry + 17, 42 * pct, 6);
-    }
-  });
+  if (STATE.currentMap === 'store') {
+    REGISTERS.forEach(reg => {
+      if (reg.activeCustomer) {
+        const rx = reg.tile.col * TILE_SIZE;
+        const ry = (reg.tile.row - 1) * TILE_SIZE;
+        ctx.fillStyle = '#1a1b26';
+        ctx.fillRect(rx - 6, ry + 16, 44, 8);
+        ctx.fillStyle = '#9ece6a';
+        const pct = Math.min(1, reg.checkoutProgress / reg.checkoutDuration);
+        ctx.fillRect(rx - 5, ry + 17, 42 * pct, 6);
+      }
+    });
+  }
 
   // Draw NPCs based on the map they are currently in
   npcs.forEach(n => {
@@ -5482,7 +5494,8 @@ function closeShopForNight() {
 
   const remainingShoppers = npcs.filter(n => !n.isEmployee).length;
   
-  if (remainingShoppers > 0 && !STATE.autoProgress) {
+  // FIX: Removed !STATE.autoProgress so manual clicks always penalize you
+  if (remainingShoppers > 0) {
     STATE.suspicion = Math.min(100, STATE.suspicion + 15);
     if (STATE.suspicion >= 100) {
       STATE.suspicionReached100 = true;
@@ -5608,6 +5621,17 @@ function displayDailyReport(cloneStatus = "None Active") {
   document.getElementById('rep-items-sold').innerText = STATE.dayItemsSold;
   document.getElementById('rep-satisfaction').innerText = `${satisfactionRate}%`;
 
+  const reasonsContainer = document.getElementById('admin-walkout-reasons');
+  if (reasonsContainer) {
+    if (STATE.adminMode && STATE.dayWalkouts > 0) {
+      reasonsContainer.style.display = 'block';
+      const listHtml = STATE.dayWalkoutReasons.map(r => `<li>${r}</li>`).join('');
+      document.getElementById('rep-reasons-list').innerHTML = listHtml;
+    } else {
+      reasonsContainer.style.display = 'none';
+    }
+  }
+
   document.getElementById('rep-casualties').innerText = `${STATE.totalCasualties} (${STATE.civilianCasualties} Civ / ${STATE.vigilanteCasualties} Vig / ${STATE.heroCasualties} Hero)`;
   document.getElementById('rep-supervillain-status').innerText = STATE.isSupervillain ? (STATE.apexSyndicateMember ? 'APEX PURGE OVERLORD' : 'ACTIVE (CRITICAL HUNT)') : 'Inactive (Rogue Tier)';
   document.getElementById('rep-supervillain-status').style.color = STATE.isSupervillain ? '#f7768e' : 'var(--accent-green)';
@@ -5659,6 +5683,7 @@ function startNextDayShift() {
   STATE.dayRestockCosts = 0;
   STATE.dayItemsSold = 0;
   STATE.dayWalkouts = 0;
+  STATE.dayWalkoutReasons = [];
   STATE.dayCustomerDislikes = 0;
   STATE.customersSpawnedToday = 0; 
   STATE.customersServedToday = 0; 
