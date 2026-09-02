@@ -4122,7 +4122,8 @@ class Employee {
           } else {
             // Already in backroom, skip straight to the shelf
             this.stockerState = 'walking_to_shelf';
-            const pt = PRODUCT_SHELF_TILES[this.heldProduct.id];
+            // FIX: Use BACKROOM coordinates here!
+            const pt = PRODUCT_BACKROOM_TILES[this.heldProduct.id]; 
             this.path = findPath(c, r, pt.col, pt.row, backroomMap);
           }
         } else {
@@ -4132,7 +4133,7 @@ class Employee {
             // Walk to the backroom
             this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, storeMap);
           } else if (this.map === 'backroom') {
-            // Path to the break table area (Adjust col 2, row 6 to wherever your backroom table is!)
+            // Path to the break table area 
             const breakCol = 2; 
             const breakRow = 6;
             
@@ -4162,7 +4163,9 @@ class Employee {
           this.x = BACKROOM_DOOR_TILE.col * TILE_SIZE;
           this.y = BACKROOM_DOOR_TILE.row * TILE_SIZE;
           this.stockerState = 'walking_to_shelf';
-          const pt = PRODUCT_SHELF_TILES[this.heldProduct.id];
+          
+          // FIX: Use BACKROOM coordinates here!
+          const pt = PRODUCT_BACKROOM_TILES[this.heldProduct.id];
           if (pt) this.path = findPath(BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, pt.col, pt.row, backroomMap);
         }
       }
