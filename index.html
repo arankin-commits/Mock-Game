@@ -2238,9 +2238,13 @@ let minigameState = {
 
 miniCanvas.addEventListener('mousedown', (e) => {
   if (!STATE.minigameActive || STATE.minigameTutorialActive) return;
+  
+  // FIX: Properly scale mouse coordinates to match the internal 640x400 canvas grid
   const rect = miniCanvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
+  const scaleX = miniCanvas.width / rect.width;
+  const scaleY = miniCanvas.height / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
 
   if (minigameState.type === 0 && minigameState.startDelay <= 0) {
     if (mx >= 490 && mx <= 620 && my >= 15 && my <= 45 && minigameState.replaysRemaining > 0 && !minigameState.showingSeq) {
@@ -2271,11 +2275,8 @@ miniCanvas.addEventListener('mousedown', (e) => {
       }
     });
   } else if (minigameState.type === 2 && minigameState.startDelay <= 0) {
-    const camX = minigameState.px - 320;
-    const camY = minigameState.py - 200;
-    const worldMx = mx + camX;
-    const worldMy = my + camY;
-    const angle = Math.atan2(worldMy - minigameState.py, worldMx - minigameState.px);
+    // FIX: Because the camera follows the player, the player is ALWAYS exactly at 320, 200 on the canvas!
+    const angle = Math.atan2(my - 200, mx - 320);
 
     if (minigameState.selectedWeapon === 'pistol') {
       minigameState.playerBullets.push({
@@ -2523,7 +2524,9 @@ function initFreeAreaGame() {
   minigameState.targetCircles.push({
     x: pad + Math.random() * (minigameState.worldW - pad * 2),
     y: pad + Math.random() * (minigameState.worldH - pad * 2),
-    r: 40
+    r: 40,
+    progress: 0,
+    captured: false
   });
 
   if (minigameState.difficulty === 'easy') {
@@ -2533,21 +2536,27 @@ function initFreeAreaGame() {
     minigameState.targetCircles.push({
       x: pad + Math.random() * (minigameState.worldW - pad * 2),
       y: pad + Math.random() * (minigameState.worldH - pad * 2),
-      r: 40
+      r: 40,
+      progress: 0,
+      captured: false
     });
   } else if (minigameState.difficulty === 'hard') {
     minigameState.masterTimer = 240;
     minigameState.targetCircles.push({
       x: pad + Math.random() * (minigameState.worldW - pad * 2),
       y: pad + Math.random() * (minigameState.worldH - pad * 2),
-      r: 40
+      r: 40,
+      progress: 0,
+      captured: false
     });
   } else if (minigameState.difficulty === 'extreme') {
     minigameState.masterTimer = 270;
     minigameState.targetCircles.push({
       x: pad + Math.random() * (minigameState.worldW - pad * 2),
       y: pad + Math.random() * (minigameState.worldH - pad * 2),
-      r: 40
+      r: 40,
+      progress: 0,
+      captured: false
     });
   }
 
@@ -2878,15 +2887,26 @@ function updateAndRenderMinigame() {
       if (keys['d'] || keys['arrowright']) minigameState.px = Math.min(minigameState.worldW - minigameState.playerRadius, minigameState.px + moveSpeed);
 
       let isInsideAny = false;
+      const requiredPerCircle = minigameState.hackRequired / minigameState.targetCircles.length;
+
       minigameState.targetCircles.forEach(tc => {
-        if (Math.hypot(minigameState.px - tc.x, minigameState.py - tc.y) <= tc.r) isInsideAny = true;
+        if (!tc.captured) {
+          if (Math.hypot(minigameState.px - tc.x, minigameState.py - tc.y) <= tc.r) {
+            isInsideAny = true;
+            tc.progress += 1 / 60;
+            minigameState.hackTimer += 1 / 60; // Global progress
+            if (tc.progress >= requiredPerCircle) {
+              tc.captured = true;
+              showNotification("FIREWALL NODE BYPASSED!");
+            }
+          }
+        }
       });
 
       if (isInsideAny) {
         minigameState.hasStartedHacking = true;
-        minigameState.hackTimer = Math.min(minigameState.hackRequired, minigameState.hackTimer + 1 / 60);
         minigameState.graceTimer = 10;
-        if (minigameState.hackTimer >= minigameState.hackRequired) {
+        if (minigameState.hackTimer >= minigameState.hackRequired || minigameState.targetCircles.every(tc => tc.captured)) {
           closeMinigame(true);
           return;
         }
@@ -2895,7 +2915,13 @@ function updateAndRenderMinigame() {
           if (minigameState.graceTimer > 0) {
             minigameState.graceTimer -= 1 / 60;
           } else {
-            minigameState.hackTimer = Math.max(0, minigameState.hackTimer - 1 / 60);
+            // Degrade progress of all uncaptured circles if player steps out
+            minigameState.targetCircles.forEach(tc => {
+              if (!tc.captured && tc.progress > 0) {
+                tc.progress = Math.max(0, tc.progress - 1/60);
+                minigameState.hackTimer = Math.max(0, minigameState.hackTimer - 1/60);
+              }
+            });
           }
         }
       }
@@ -3134,10 +3160,16 @@ function updateAndRenderMinigame() {
     miniCtx.strokeRect(0, 0, minigameState.worldW, minigameState.worldH);
 
     const pulse = (Math.sin(Date.now() / 250) + 1) / 2;
-    minigameState.targetCircles.forEach(term => {
-      miniCtx.fillStyle = `rgba(158, 206, 106, ${0.25 + pulse * 0.2})`;
-      miniCtx.beginPath(); miniCtx.arc(term.x, term.y, term.r, 0, Math.PI * 2); miniCtx.fill();
-      miniCtx.strokeStyle = '#9ece6a'; miniCtx.lineWidth = 3; miniCtx.stroke();
+   minigameState.targetCircles.forEach(tc => {
+      if (!tc.captured) {
+        miniCtx.fillStyle = `rgba(158, 206, 106, ${0.25 + pulse * 0.2})`;
+        miniCtx.beginPath(); miniCtx.arc(tc.x, tc.y, tc.r, 0, Math.PI * 2); miniCtx.fill();
+        miniCtx.strokeStyle = '#9ece6a'; miniCtx.lineWidth = 3; miniCtx.stroke();
+        
+        // Draw inner capture progress ring
+        miniCtx.fillStyle = '#9ece6a';
+        miniCtx.beginPath(); miniCtx.arc(tc.x, tc.y, tc.r * (tc.progress / (minigameState.hackRequired / minigameState.targetCircles.length)), 0, Math.PI * 2); miniCtx.fill();
+      }
     });
 
     minigameState.explosions.forEach(exp => {
@@ -3995,6 +4027,22 @@ class Employee {
     }
   }
 
+  goOffDuty() {
+    this.isLeaving = true;
+    const c = Math.floor((this.x + 8) / TILE_SIZE);
+    const r = Math.floor((this.y + 8) / TILE_SIZE);
+    
+    if (this.map === 'backroom') {
+      // Teleport to store to avoid getting stuck pathfinding across maps
+      this.map = 'store';
+      this.x = BACKROOM_DOOR_TILE.col * TILE_SIZE;
+      this.y = BACKROOM_DOOR_TILE.row * TILE_SIZE;
+      this.path = findPath(BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, 11, 12, storeMap);
+    } else {
+      this.path = findPath(c, r, 11, 12, storeMap); // Route to the front door
+    }
+  }
+
   sendHome() {
     const c = Math.floor((this.x + 8) / TILE_SIZE);
     const r = Math.floor((this.y + 8) / TILE_SIZE);
@@ -4024,6 +4072,12 @@ class Employee {
         this.path.shift();
       }
       return; 
+    }
+
+    if (this.isLeaving) {
+      const idx = npcs.indexOf(this);
+      if (idx !== -1) npcs.splice(idx, 1);
+      return;
     }
 
     this.isMoving = false;
@@ -4077,8 +4131,13 @@ class Employee {
           this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, storeMap);
           this.stockerState = 'walking_to_door_in';
         } else {
-          // Wander casually if all shelves are full or out of stock
+          // Wander casually and announce why they are idle so the player isn't confused!
           if (Math.random() < 0.02) {
+            if (getTotalBackStock() <= 0) {
+              triggerSpeechBubble(this.x, this.y, "Backroom is completely empty!", 2500, 'store');
+            } else {
+              triggerSpeechBubble(this.x, this.y, "All shelves are fully stocked!", 2500, 'store');
+            }
             const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
             this.path = findPath(c, r, pt.col, pt.row, storeMap);
           }
@@ -5553,9 +5612,12 @@ function closeShopForNight() {
   });
 
   npcs.forEach(n => {
-    if (n.isEmployee) n.sendHome();
+    if (n.isEmployee) {
+      n.goOffDuty();
+    } else {
+      n.rageQuit("Kicked out at closing");
+    }
   });
-  npcs = npcs.filter(n => n.isEmployee);
 
   let firedOrArrested = false;
 
