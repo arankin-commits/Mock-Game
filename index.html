@@ -1613,7 +1613,7 @@ function acceptApexInvite() {
   // 3. Cannot ally with other villains (disable regular syndicate interactions)
 
   showNotification("☣ APEX PURGE PACT ACCEPTED: You have cut ties with standard syndicates. Your rival has abandoned you.");
-  (butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
+  triggerSpeechBubble(butler.x, butler.y, `Jarvis: "Master... the Apex Purge is absolute. We stand completely alone against the world now."`, 6000, 'lair');
   renderMailList();
   renderUI();
 }
@@ -1968,7 +1968,7 @@ function speakButler() {
   ];
 
   const chosen = quotes[Math.floor(Math.random() * quotes.length)];
-  (butler.x, butler.y, `Jarvis: "${chosen}"`, 5000, 'lair');
+  triggerSpeechBubble(butler.x, butler.y, `Jarvis: "${chosen}"`, 5000, 'lair');
 }
 
 function openHeroDossier(heroId) {
@@ -5519,6 +5519,8 @@ function checkProximityPrompts() {
 
 function closeShopForNight() {
   if (STATE.tutorialStep === 14) { STATE.tutorialStep = 15; updateTutorialBanner(); }
+  
+  const remainingShoppers = npcs.filter(n => !n.isEmployee).length;
 
   STATE.closedEarly = remainingShoppers > 0;
   
