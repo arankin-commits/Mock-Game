@@ -4108,130 +4108,99 @@ class Employee {
       const c = Math.floor((this.x + 8) / TILE_SIZE);
       const r = Math.floor((this.y + 8) / TILE_SIZE);
 
-      // STATE 1: Look for an empty shelf (Ignore items they already know are out of backstock)
-      if (this.stockerState === 'idle') {
-        let targetProd = null;
-        let lowestRatio = 1.0;
+      // 1. Check for actual work: Unlocked, has backstock, AND shelf has less than 15 items
+      const needsStocking = PRODUCTS.filter(p => p.unlocked && p.backStock > 0 && p.stock < 15);
 
-        for (let p of PRODUCTS) {
-          if (p.unlocked && !p.stockerEmptyAlert) {
-            const maxCap = Math.min(p.targetStock, p.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
-            if (p.stock < maxCap) {
-              const ratio = p.stock / maxCap;
-              if (ratio < lowestRatio) {
-                lowestRatio = ratio;
-                targetProd = p;
+      if (this.stockerState === 'searching' || this.stockerState === 'break_time' || !this.stockerState) {
+        if (needsStocking.length > 0) {
+          // Put the phone down, work to do!
+          this.heldProduct = needsStocking[Math.floor(Math.random() * needsStocking.length)];
+          this.stockerState = 'walking_to_door_in';
+          
+          if (this.map === 'store') {
+            this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, storeMap);
+          } else {
+            // Already in backroom, skip straight to the shelf
+            this.stockerState = 'walking_to_shelf';
+            const pt = PRODUCT_SHELF_TILES[this.heldProduct.id];
+            this.path = findPath(c, r, pt.col, pt.row, backroomMap);
+          }
+        } else {
+          // NO WORK! Go into Break Room mode.
+          this.stockerState = 'break_time';
+          if (this.map === 'store') {
+            // Walk to the backroom
+            this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, storeMap);
+          } else if (this.map === 'backroom') {
+            // Path to the break table area (Adjust col 2, row 6 to wherever your backroom table is!)
+            const breakCol = 2; 
+            const breakRow = 6;
+            
+            if (c !== breakCol || r !== breakRow) {
+              if (!this.path || this.path.length === 0) {
+                this.path = findPath(c, r, breakCol, breakRow, backroomMap);
+              }
+            } else {
+              // Sitting at the table chilling
+              if (Math.random() < 0.04) {
+                const msgs = [
+                  "*Scrolling social media*", 
+                  "*Playing mobile game*", 
+                  "I rolled a natural 20!", 
+                  "Wake me up when a customer buys something...",
+                  "*Texting*"
+                ];
+                triggerSpeechBubble(this.x, this.y, msgs[Math.floor(Math.random() * msgs.length)], 2500, 'backroom');
               }
             }
           }
         }
-
-        if (targetProd) {
-          this.heldProduct = targetProd;
-          this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, storeMap);
-          this.stockerState = 'walking_to_door_in';
-        } else {
-          // Wander casually and announce why they are idle so the player isn't confused!
-          if (Math.random() < 0.02) {
-            if (getTotalBackStock() <= 0) {
-              triggerSpeechBubble(this.x, this.y, "Backroom is completely empty!", 2500, 'store');
-            } else {
-              triggerSpeechBubble(this.x, this.y, "All shelves are fully stocked!", 2500, 'store');
-            }
-            const pt = BROWSING_POINTS[Math.floor(Math.random() * BROWSING_POINTS.length)];
-            this.path = findPath(c, r, pt.col, pt.row, storeMap);
-          }
-        }
       }
-      
-      // STATE 2: Arrived at door, teleport inside and walk to specific backstock shelf
       else if (this.stockerState === 'walking_to_door_in') {
-        this.map = 'backroom';
-        this.x = 1 * TILE_SIZE; 
-        this.y = 9 * TILE_SIZE;
-        
-        const backTarget = PRODUCT_BACKROOM_TILES[this.heldProduct.id] || { col: 5, row: 3 };
-        this.path = findPath(1, 9, backTarget.col, backTarget.row, backroomMap);
-        this.stockerState = 'walking_to_backstock';
-      }
-
-      // STATE 3: Arrived at backstock shelf
-      else if (this.stockerState === 'walking_to_backstock') {
-        this.stockerState = 'grabbing_stock';
-        this.stateTimer = 45; 
-        this.dir = 'up';
-      }
-      
-      // STATE 4: Stock is collected (or discovered empty), walk back to the exit door
-      else if (this.stockerState === 'grabbing_stock') {
-        this.stateTimer--;
-        if (this.stateTimer <= 0) {
-          if (this.heldProduct && this.heldProduct.backStock > 0) {
-            const maxCap = Math.min(this.heldProduct.targetStock, this.heldProduct.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
-            const needed = maxCap - this.heldProduct.stock;
-            const grabAmount = Math.min(5, this.heldProduct.backStock, Math.max(1, needed));
-            
-            this.heldProduct.backStock -= grabAmount;
-            this.heldCount = grabAmount;
-          } else if (this.heldProduct && this.heldProduct.backStock <= 0) {
-            // Flag it as empty so the stocker doesn't check it again today
-            this.heldProduct.stockerEmptyAlert = true;
-            this.heldCount = 0;
-          }
-
-          const curC = Math.floor((this.x + 8) / TILE_SIZE);
-          const curR = Math.floor((this.y + 8) / TILE_SIZE);
-          this.path = findPath(curC, curR, 1, 9, backroomMap); 
-          this.stockerState = 'walking_to_door_out';
-        }
-      }
-
-      // STATE 5: Arrived at backroom door, transition to Store Map
-      else if (this.stockerState === 'walking_to_door_out') {
-        this.map = 'store';
-        this.x = BACKROOM_DOOR_TILE.col * TILE_SIZE;
-        this.y = BACKROOM_DOOR_TILE.row * TILE_SIZE;
-
-        if (this.heldProduct && this.heldCount > 0) {
-          const shelfTile = PRODUCT_SHELF_TILES[this.heldProduct.id] || BROWSING_POINTS[0];
-          this.path = findPath(BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, shelfTile.col, shelfTile.row, storeMap);
+        if (!this.path || this.path.length === 0) {
+          this.map = 'backroom';
+          this.x = BACKROOM_DOOR_TILE.col * TILE_SIZE;
+          this.y = BACKROOM_DOOR_TILE.row * TILE_SIZE;
           this.stockerState = 'walking_to_shelf';
-        } else if (this.heldProduct && this.heldCount === 0) {
-          // Found it empty inside! Announce it on the floor and go idle
-          triggerSpeechBubble(this.x, this.y, `${this.heldProduct.name} backstock is empty!`, 3500, 'store');
-          this.heldProduct = null;
-          this.stockerState = 'idle';
-        } else {
-          this.stockerState = 'idle';
+          const pt = PRODUCT_SHELF_TILES[this.heldProduct.id];
+          if (pt) this.path = findPath(BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, pt.col, pt.row, backroomMap);
         }
       }
-      
-      // STATE 6: Arrived at main store aisle
       else if (this.stockerState === 'walking_to_shelf') {
-        this.stockerState = 'restocking';
-        this.stateTimer = 45; 
-        triggerSpeechBubble(this.x, this.y, "I need to stock this", 2000, 'store');
+        if (!this.path || this.path.length === 0) {
+          if (this.heldProduct.backStock > 0) {
+             this.heldProduct.backStock--;
+             this.heldCount = 1; // Picked up a box
+             this.stockerState = 'walking_to_door_out';
+             this.path = findPath(c, r, BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, backroomMap);
+          } else {
+             // Edge Case: Backstock ran out while walking to it!
+             this.stockerState = 'searching'; 
+          }
+        }
       }
-      
-      // STATE 7: Finish the restock and reset
-      else if (this.stockerState === 'restocking') {
-        this.stateTimer--;
-        if (this.stateTimer <= 0) {
-          if (this.heldProduct) {
-            const maxCap = Math.min(this.heldProduct.targetStock, this.heldProduct.baseMax + STORE_TIERS[STATE.storeTier - 1].maxStockBoost);
-            const space = maxCap - this.heldProduct.stock;
-            const placed = Math.min(this.heldCount, Math.max(0, space));
-
-            this.heldProduct.stock += placed;
-            this.heldCount -= placed;
-
-            if (this.heldCount > 0) {
-              this.heldProduct.backStock += this.heldCount;
-            }
+      else if (this.stockerState === 'walking_to_door_out') {
+        if (!this.path || this.path.length === 0) {
+          this.map = 'store';
+          this.x = BACKROOM_DOOR_TILE.col * TILE_SIZE;
+          this.y = BACKROOM_DOOR_TILE.row * TILE_SIZE;
+          this.stockerState = 'restocking_store';
+          const pt = PRODUCT_SHELF_TILES[this.heldProduct.id];
+          if (pt) this.path = findPath(BACKROOM_DOOR_TILE.col, BACKROOM_DOOR_TILE.row, pt.col, pt.row, storeMap);
+        }
+      }
+      else if (this.stockerState === 'restocking_store') {
+        if (!this.path || this.path.length === 0) {
+          if (this.heldProduct.stock < 15) {
+             this.heldProduct.stock++;
+             triggerSpeechBubble(this.x, this.y, `Restocked ${this.heldProduct.name}!`, 1500, 'store');
+          } else {
+             // Edge Case: Shelf filled up before they got there, return the box.
+             this.heldProduct.backStock++; 
           }
           this.heldProduct = null;
           this.heldCount = 0;
-          this.stockerState = 'idle';
+          this.stockerState = 'searching'; // Re-evaluates next frame to see if they can go on break
         }
       }
     }
@@ -5551,15 +5520,14 @@ function checkProximityPrompts() {
 function closeShopForNight() {
   if (STATE.tutorialStep === 14) { STATE.tutorialStep = 15; updateTutorialBanner(); }
 
-  const remainingShoppers = npcs.filter(n => !n.isEmployee).length;
+  STATE.closedEarly = remainingShoppers > 0;
   
-  // FIX: Removed !STATE.autoProgress so manual clicks always penalize you
-  if (remainingShoppers > 0) {
-    STATE.suspicion = Math.min(100, STATE.suspicion + 15);
+  if (STATE.closedEarly) {
+    STATE.suspicion = Math.min(100, Math.floor(STATE.suspicion + 15));
     if (STATE.suspicion >= 100) {
       STATE.suspicionReached100 = true;
     }
-    showNotification(`You closed shop with ${remainingShoppers} customers still inside. if you keep closing the shop early you may get fired`);
+    showNotification(`You closed shop with ${remainingShoppers} customers still inside. If you keep closing early you may get fired.`);
   }
   
   STATE.phase = 'night';
@@ -5666,8 +5634,8 @@ function closeShopForNight() {
 function displayDailyReport(cloneStatus = "None Active") {
   const net = STATE.daySales - (STATE.dayCosts + STATE.dayRestockCosts);
   const totalFinished = STATE.customersServedToday + STATE.dayWalkouts;
-  const satisfactionRate = totalFinished > 0 ? Math.round((STATE.customersServedToday / totalFinished) * 100) : 100;
-
+  const satisfactionRate = STATE.customersServedToday > 0 ? Math.round((STATE.customersServedToday / totalFinished) * 100) : 0;
+  
   document.getElementById('report-title').innerText = `Day ${STATE.dayNumber} Financial Audit & Performance`;
   document.getElementById('rep-rev').innerText = `+$${STATE.daySales}`;
   document.getElementById('rep-costs').innerText = `-$${STATE.dayCosts}`;
@@ -5757,10 +5725,10 @@ function startNextDayShift() {
   updateDailyRivalLeaderboard();
 
   // 1. Check if suspicion increased since yesterday
-  if (STATE.suspicion < STATE.lastRecordedSuspicion) {
-    // Suspicion went down or stayed stable, check if it stayed flat or decreased
-    // (We track increases below)
+  if (!STATE.closedEarly) {
+    STATE.suspicion = Math.max(0, STATE.suspicion - 10);
   }
+  STATE.closedEarly = false;
 
   // 2. Determine daily suspicion drop based on walkouts (no one left angry)
   let suspicionDrop = 5;
