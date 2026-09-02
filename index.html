@@ -1521,6 +1521,26 @@ function restartGame() {
   STATE.marketingMultiplier = 1.0;
   STATE.gameStarted = false; // Brings back the title screen if you want, or set to true to skip straight to gameplay
 
+  STATE.currentMap = 'store';
+  player.x = 12 * TILE_SIZE;
+  player.y = 9 * TILE_SIZE;
+  player.dir = 'down';
+  
+  // Reset HUD shoppers & daily metrics
+  STATE.customersServedToday = 0;
+  STATE.dayWalkouts = 0;
+  STATE.customersSpawnedToday = 0;
+  STATE.dayTotalCustomers = calculateDailyCustomers();
+
+  // Reset Mail & Rival Milestones
+  rivalMail = [];
+  pendingMorningMail = [];
+  STATE.rivalMilestonesSent = { top15: false, top10: false, top5: false, top3: false, top1: false, supervillain: false, vigilanteWarning: false };
+  STATE.rivalPassed = false;
+  STATE.supervillainSyndicateMailSent = false;
+  STATE.apexInviteDeclined = false;
+  STATE.apexPurgeJoined = false;
+  
   // Reset products stock and unlock states
   PRODUCTS.forEach((p, idx) => {
     p.stock = idx < 3 ? 15 : 0;
@@ -1531,9 +1551,13 @@ function restartGame() {
     p.popularity = 'normal';
   });
 
+  STAFF.forEach(s => s.count = 0);
+
   // Reset NPCs and layout
   npcs = [];
   applyLayoutMap(1);
+
+  renderUI();
 
   // Show the title screen again so the player can click Play
 const titleScreen = document.getElementById('title-screen');
@@ -1845,25 +1869,27 @@ function checkRivalRankTriggers() {
     }
   }
 
-  if (playerRank <= 15 && !STATE.rivalMilestonesSent.top15) {
-    STATE.rivalMilestonesSent.top15 = true;
-    sendRivalMessage('top15');
-  }
-  if (playerRank <= 10 && !STATE.rivalMilestonesSent.top10) {
-    STATE.rivalMilestonesSent.top10 = true;
-    sendRivalMessage('top10');
-  }
-  if (playerRank <= 5 && !STATE.rivalMilestonesSent.top5) {
-    STATE.rivalMilestonesSent.top5 = true;
-    sendRivalMessage('top5');
-  }
-  if (playerRank <= 3 && !STATE.rivalMilestonesSent.top3) {
-    STATE.rivalMilestonesSent.top3 = true;
-    sendRivalMessage('top3');
-  }
-  if (playerRank === 1 && !STATE.rivalMilestonesSent.top1) {
-    STATE.rivalMilestonesSent.top1 = true;
-    sendRivalMessage('top1');
+  if (playerRank > 0) {
+    if (playerRank <= 15 && !STATE.rivalMilestonesSent.top15) {
+      STATE.rivalMilestonesSent.top15 = true;
+      sendRivalMessage('top15');
+    }
+    if (playerRank <= 10 && !STATE.rivalMilestonesSent.top10) {
+      STATE.rivalMilestonesSent.top10 = true;
+      sendRivalMessage('top10');
+    }
+    if (playerRank <= 5 && !STATE.rivalMilestonesSent.top5) {
+      STATE.rivalMilestonesSent.top5 = true;
+      sendRivalMessage('top5');
+    }
+    if (playerRank <= 3 && !STATE.rivalMilestonesSent.top3) {
+      STATE.rivalMilestonesSent.top3 = true;
+      sendRivalMessage('top3');
+    }
+    if (playerRank === 1 && !STATE.rivalMilestonesSent.top1) {
+      STATE.rivalMilestonesSent.top1 = true;
+      sendRivalMessage('top1');
+    }
   }
 }
 
@@ -2793,7 +2819,7 @@ function updateAndRenderMinigame() {
       minigameState.masterTimer -= 1 / 60;
       if (minigameState.masterTimer <= 0) {
         closeMinigame(false);
-        triggerDeathEnding();
+        showNotification("HACK FAILED: Time expired! Mainframe connection lost.");
         return;
       }
 
@@ -2970,7 +2996,7 @@ function updateAndRenderMinigame() {
             continue;
           }
           closeMinigame(false);
-          triggerDeathEnding();
+          showNotification("HACK FAILED: Avatar destroyed by Counter-Measures!");
           return;
         }
         if (eb.x < 0 || eb.x > minigameState.worldW || eb.y < 0 || eb.y > minigameState.worldH) {
@@ -3072,7 +3098,7 @@ function updateAndRenderMinigame() {
               return;
             }
             closeMinigame(false);
-            triggerDeathEnding();
+            showNotification("HACK FAILED: Avatar destroyed by Counter-Measures!");
           }
         });
         minigameState.enemies = minigameState.enemies.filter(em => em.hp > 0);
